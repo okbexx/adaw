@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
   addEvidence,
@@ -15,6 +16,7 @@ import {
   ok,
   pathsForGoal,
   profileCompliance,
+  PROTOCOL_VERSION,
   readJson,
   recomputeWorkflowStatus,
   renderAcceptanceMarkdown,
@@ -24,6 +26,27 @@ import {
   validateContract,
   writeJson
 } from "./core.js";
+
+const PACKAGE_JSON = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "..", "package.json"), "utf8"));
+const MANIFEST_SCHEMA_VERSION = "adaw/manifest-v1";
+const REQUIRED_ADAW_DIRS = ["active", "completed", "blocked", "reports", "brainstorms"];
+const ADAW_CAPABILITIES = [
+  "acceptance-contract",
+  "evidence-ledger",
+  "brainstorm",
+  "capability-profile",
+  "archive",
+  "report",
+  "doctor"
+];
+
+function sameStringSet(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right)) return false;
+  const leftSet = new Set(left);
+  const rightSet = new Set(right);
+  if (leftSet.size !== rightSet.size) return false;
+  return [...leftSet].every((item) => rightSet.has(item));
+}
 
 const BRAINSTORM_CANDIDATES = [
   {
@@ -133,6 +156,11 @@ function exportedSkillMarkdown() {
     "If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, translate the natural-language preference into a Capability Profile with `adaw profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
     "Before answering complete, add profile evidence with `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json` for must/avoid items. Must items without satisfied or waived evidence block completion.",
     "",
+    "## Project setup and health",
+    "If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize created, skipped, overwritten, or updated assets. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.",
+    "",
+    "If the user asks whether ADAW is set up, healthy, recoverable, or ready in a project, run `adaw doctor --root <repo> --json` and summarize the `ready`, `needs-action`, or `broken` status plus recovery actions. Do not make the user remember the doctor command.",
+    "",
     "## Resume",
     "At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.",
     "",
@@ -177,6 +205,315 @@ function protocolTemplate() {
     "Use `adaw init`, `adaw resume`, `adaw next`, `adaw evidence add`, `adaw evaluate`, `adaw status`, and `adaw report`.",
     ""
   ].join("\n");
+}
+
+function manifestPath(root) {
+  return path.join(root, ".adaw", "manifest.json");
+}
+
+function fileHash(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function projectSkillState(root) {
+  const skillPath = path.join(root, ".agents", "skills", "adaw", "SKILL.md");
+  const exists = fs.existsSync(skillPath);
+  const expectedHash = createHash("sha256").update(exportedSkillMarkdown()).digest("hex");
+  const actualHash = fileHash(skillPath);
+  return {
+    installed: exists,
+    path: relativeTo(root, skillPath),
+    in_sync: exists ? actualHash === expectedHash : false,
+    expected_sha256: expectedHash,
+    actual_sha256: actualHash
+  };
+}
+
+function activeGoalSummaries(root) {
+  return findActivePairs(root).map((pair) => {
+    try {
+      const payload = readJson(pair.evidencePath);
+      return {
+        goal_id: pair.goalId,
+        status: payload.ledger?.status || "unknown",
+        current_gap: currentGap(payload.contract, payload.ledger),
+        acceptance_path: relativeTo(root, pair.acceptancePath),
+        evidence_path: relativeTo(root, pair.evidencePath),
+        recoverable: true
+      };
+    } catch (error) {
+      return {
+        goal_id: pair.goalId,
+        status: "unreadable",
+        current_gap: null,
+        acceptance_path: relativeTo(root, pair.acceptancePath),
+        evidence_path: relativeTo(root, pair.evidencePath),
+        recoverable: false,
+        error: error.message
+      };
+    }
+  });
+}
+
+function managedFiles(root, skill = projectSkillState(root), { assumeManifestExists = false } = {}) {
+  const entries = [
+    { path: ".adaw/manifest.json", kind: "manifest", required: true },
+    { path: ".adaw/protocol.md", kind: "protocol", required: true },
+    ...REQUIRED_ADAW_DIRS.map((dir) => ({ path: `.adaw/${dir}`, kind: "directory", required: true }))
+  ];
+  if (skill.installed) {
+    entries.push({ path: skill.path, kind: "skill", required: false });
+  }
+  return entries.map((entry) => ({
+    ...entry,
+    exists: entry.path === ".adaw/manifest.json" && assumeManifestExists
+      ? true
+      : fs.existsSync(path.join(root, entry.path))
+  }));
+}
+
+function safeReadManifest(root) {
+  try {
+    return readJson(manifestPath(root));
+  } catch {
+    return null;
+  }
+}
+
+function buildManifest(root, options = {}) {
+  const existing = safeReadManifest(root);
+  const skill = projectSkillState(root);
+  const now = new Date().toISOString();
+  return {
+    schema_version: MANIFEST_SCHEMA_VERSION,
+    protocol_version: PROTOCOL_VERSION,
+    adaw_version: PACKAGE_JSON.version,
+    created_at: existing?.created_at || now,
+    updated_at: now,
+    capabilities: ADAW_CAPABILITIES,
+    managed_files: managedFiles(root, skill, options),
+    active_goals: activeGoalSummaries(root),
+    skill
+  };
+}
+
+function writeManifest(root, { dryRun = false } = {}) {
+  const target = manifestPath(root);
+  const exists = fs.existsSync(target);
+  const manifest = buildManifest(root, { assumeManifestExists: !dryRun || exists });
+  if (!dryRun) {
+    writeJson(target, manifest);
+  }
+  return {
+    path: target,
+    action: exists ? "update" : "create",
+    manifest
+  };
+}
+
+function inspectActiveGoals(root) {
+  const activeDir = path.join(root, ".adaw", "active");
+  const details = [];
+  const issues = [];
+  if (!fs.existsSync(activeDir)) return { details, issues };
+
+  const files = fs.readdirSync(activeDir);
+  const evidenceFiles = files.filter((fileName) => fileName.endsWith(".evidence.json"));
+  const acceptanceFiles = files.filter((fileName) => fileName.endsWith(".acceptance.md"));
+  const evidenceGoalIds = new Set(evidenceFiles.map((fileName) => fileName.replace(/\.evidence\.json$/, "")));
+
+  for (const fileName of acceptanceFiles) {
+    const goalId = fileName.replace(/\.acceptance\.md$/, "");
+    if (!evidenceGoalIds.has(goalId)) {
+      issues.push({ goal_id: goalId, message: "Acceptance contract has no matching evidence ledger." });
+    }
+  }
+
+  for (const fileName of evidenceFiles) {
+    const goalId = fileName.replace(/\.evidence\.json$/, "");
+    const acceptancePath = path.join(activeDir, `${goalId}.acceptance.md`);
+    const evidencePath = path.join(activeDir, fileName);
+    if (!fs.existsSync(acceptancePath)) {
+      issues.push({ goal_id: goalId, message: "Evidence ledger has no matching acceptance contract." });
+      continue;
+    }
+    try {
+      const payload = readJson(evidencePath);
+      const validationIssues = validateContract(payload.contract, payload.ledger);
+      details.push({
+        goal_id: goalId,
+        status: payload.ledger?.status || "unknown",
+        current_gap: currentGap(payload.contract, payload.ledger),
+        acceptance_path: relativeTo(root, acceptancePath),
+        evidence_path: relativeTo(root, evidencePath),
+        recoverable: validationIssues.length === 0
+      });
+      for (const issue of validationIssues) {
+        issues.push({ goal_id: goalId, message: issue.message, path: issue.path });
+      }
+    } catch (error) {
+      issues.push({ goal_id: goalId, message: error.message });
+    }
+  }
+
+  return { details, issues };
+}
+
+function doctorCheck(name, condition, summary, recovery = undefined, severity = "needs-action") {
+  const check = { name, ok: Boolean(condition), summary };
+  if (!condition && recovery) check.recovery = recovery;
+  if (!condition) check.severity = severity;
+  return check;
+}
+
+function doctor(root) {
+  const checks = [];
+  const adawDir = path.join(root, ".adaw");
+  const protocolPath = path.join(root, ".adaw", "protocol.md");
+  const manifestFile = manifestPath(root);
+  const active = inspectActiveGoals(root);
+
+  const nodeMajor = Number(process.versions.node.split(".")[0]);
+  checks.push(doctorCheck(
+    "node_runtime",
+    nodeMajor >= 20,
+    `Node runtime is ${process.version}.`,
+    "Use Node.js 20 or newer."
+  ));
+  checks.push(doctorCheck(
+    "adaw_directory",
+    fs.existsSync(adawDir),
+    fs.existsSync(adawDir) ? ".adaw directory exists." : ".adaw directory is missing.",
+    "Run adaw install --root <project> --json."
+  ));
+
+  for (const dir of REQUIRED_ADAW_DIRS) {
+    const dirPath = path.join(adawDir, dir);
+    checks.push(doctorCheck(
+      `dir_${dir}`,
+      fs.existsSync(dirPath),
+      fs.existsSync(dirPath) ? `.adaw/${dir} exists.` : `.adaw/${dir} is missing.`,
+      "Run adaw install --root <project> --json."
+    ));
+  }
+
+  checks.push(doctorCheck(
+    "protocol_file",
+    fs.existsSync(protocolPath),
+    fs.existsSync(protocolPath) ? ".adaw/protocol.md exists." : ".adaw/protocol.md is missing.",
+    "Run adaw install --root <project> --json."
+  ));
+
+  let manifest = null;
+  let manifestReadable = false;
+  try {
+    manifest = readJson(manifestFile);
+    manifestReadable = true;
+  } catch (error) {
+    checks.push(doctorCheck(
+      "manifest_file",
+      false,
+      fs.existsSync(manifestFile) ? `.adaw/manifest.json is unreadable: ${error.message}` : ".adaw/manifest.json is missing.",
+      "Run adaw install --root <project> --json to create or refresh the ADAW manifest.",
+      fs.existsSync(manifestFile) ? "broken" : "needs-action"
+    ));
+  }
+
+  if (manifestReadable) {
+    checks.push(doctorCheck(
+      "manifest_file",
+      manifest.schema_version === MANIFEST_SCHEMA_VERSION,
+      `.adaw/manifest.json uses schema ${manifest.schema_version || "<missing>"}.`,
+      "Refresh the manifest with adaw install --root <project> --json.",
+      "broken"
+    ));
+    checks.push(doctorCheck(
+      "manifest_protocol",
+      manifest.protocol_version === PROTOCOL_VERSION,
+      `.adaw/manifest.json records protocol ${manifest.protocol_version || "<missing>"}.`,
+      "Refresh the manifest with adaw install --root <project> --json.",
+      "broken"
+    ));
+    checks.push(doctorCheck(
+      "manifest_cli_version",
+      manifest.adaw_version === PACKAGE_JSON.version,
+      `.adaw/manifest.json records ADAW version ${manifest.adaw_version || "<missing>"}.`,
+      "Refresh the manifest with adaw install --root <project> --json."
+    ));
+    checks.push(doctorCheck(
+      "manifest_capabilities",
+      sameStringSet(manifest.capabilities, ADAW_CAPABILITIES),
+      Array.isArray(manifest.capabilities) ? "Manifest protocol capabilities are readable." : "Manifest protocol capabilities are missing.",
+      "Refresh the manifest with adaw install --root <project> --json."
+    ));
+
+    const currentGoals = new Set(active.details.filter((goal) => goal.recoverable).map((goal) => goal.goal_id));
+    const manifestGoals = new Set((manifest.active_goals || []).map((goal) => goal.goal_id));
+    const staleGoals = [
+      ...[...currentGoals].filter((goalId) => !manifestGoals.has(goalId)),
+      ...[...manifestGoals].filter((goalId) => !currentGoals.has(goalId))
+    ];
+    checks.push(doctorCheck(
+      "manifest_active_goals",
+      staleGoals.length === 0,
+      staleGoals.length === 0 ? "Manifest active goals match recoverable active goals." : `Manifest active goals differ: ${staleGoals.join(", ")}.`,
+      "Run any ADAW state-changing command, or run adaw install --root <project> --json, to refresh the manifest."
+    ));
+
+    const missingManaged = (manifest.managed_files || [])
+      .filter((entry) => entry.required !== false)
+      .filter((entry) => !fs.existsSync(path.join(root, entry.path)))
+      .map((entry) => entry.path);
+    checks.push(doctorCheck(
+      "managed_files",
+      missingManaged.length === 0,
+      missingManaged.length === 0 ? "Required ADAW managed files are present." : `Missing managed files: ${missingManaged.join(", ")}.`,
+      "Run adaw install --root <project> --json."
+    ));
+  }
+
+  checks.push(doctorCheck(
+    "active_goals_recoverable",
+    active.issues.length === 0,
+    active.issues.length === 0 ? `${active.details.length} active goal(s) are recoverable.` : `${active.issues.length} active goal issue(s) found.`,
+    "Fix the reported active goal pair, or archive/remove the broken pair after preserving needed content.",
+    "broken"
+  ));
+
+  const skill = projectSkillState(root);
+  const manifestSkillInstalled = manifest?.skill?.installed === true;
+  const skillOk = !skill.installed && !manifestSkillInstalled ? true : skill.installed && skill.in_sync;
+  if (manifestReadable) {
+    checks.push(doctorCheck(
+      "manifest_skill_state",
+      Boolean(manifest.skill) && manifest.skill.installed === skill.installed && manifest.skill.path === skill.path,
+      "Manifest Skill state matches the project Skill location.",
+      "Refresh the manifest with adaw install --root <project> --json."
+    ));
+  }
+  checks.push(doctorCheck(
+    "skill_sync",
+    skillOk,
+    skill.installed
+      ? (skill.in_sync ? "Project ADAW Skill is installed and in sync." : "Project ADAW Skill is installed but stale.")
+      : "Project ADAW Skill is not installed; this is optional unless the manifest expects it.",
+    "Run adaw install --root <project> --skill --force --json."
+  ));
+
+  const status = checks.every((check) => check.ok)
+    ? "ready"
+    : checks.some((check) => !check.ok && check.severity === "broken")
+      ? "broken"
+      : "needs-action";
+  return {
+    status,
+    checks,
+    active_goals: active.details,
+    active_goal_issues: active.issues,
+    manifest_path: manifestFile,
+    skill
+  };
 }
 
 function brainstormPaths(root, brainstormId) {
@@ -298,6 +635,19 @@ function savePair(acceptancePath, evidencePath, contract, ledger) {
   syncAcceptanceMarkdown(acceptancePath, contract, ledger);
 }
 
+function inferRootFromAcceptancePath(acceptancePath) {
+  const parts = path.resolve(acceptancePath).split(path.sep);
+  const adawIndex = parts.lastIndexOf(".adaw");
+  if (adawIndex <= 0) return process.cwd();
+  return parts.slice(0, adawIndex).join(path.sep) || path.sep;
+}
+
+function refreshManifest(root) {
+  if (fs.existsSync(path.join(root, ".adaw"))) {
+    writeManifest(root);
+  }
+}
+
 function loadPair(args) {
   const explicitAcceptance = argValue(args, "--acceptance");
   const explicitEvidence = argValue(args, "--evidence");
@@ -312,7 +662,8 @@ function loadPair(args) {
       contract: payload.contract,
       ledger: payload.ledger,
       acceptancePath,
-      evidencePath
+      evidencePath,
+      root: inferRootFromAcceptancePath(acceptancePath)
     };
   }
 
@@ -331,7 +682,8 @@ function loadPair(args) {
     contract: payload.contract,
     ledger: payload.ledger,
     acceptancePath: pair.acceptancePath,
-    evidencePath: pair.evidencePath
+    evidencePath: pair.evidencePath,
+    root
   };
 }
 
@@ -343,13 +695,11 @@ export async function main(args) {
   }
 
   if (command === "doctor") {
+    const root = resolveRoot(args);
     printJson(ok({
       name: "adaw",
-      checks: [
-        { name: "node_runtime", ok: true, version: process.version },
-        { name: "json_contract", ok: true },
-        { name: "acceptance_surface", ok: true }
-      ],
+      root,
+      ...doctor(root),
       side_effect: "none"
     }));
     return;
@@ -387,12 +737,15 @@ export async function main(args) {
     if (hasFlag(args, "--skill")) {
       actions.push(writeIfSafe(path.join(root, ".agents", "skills", "adaw", "SKILL.md"), exportedSkillMarkdown(), { dryRun, force }));
     }
+    const manifestAction = writeManifest(root, { dryRun });
+    actions.push(manifestAction);
 
     printJson(ok({
       root,
       dry_run: dryRun,
       force,
-      actions: actions.map((action) => ({ ...action, path: relativeTo(root, action.path) }))
+      actions: actions.map((action) => ({ path: relativeTo(root, action.path), action: action.action })),
+      manifest: manifestAction.manifest
     }));
     return;
   }
@@ -406,6 +759,7 @@ export async function main(args) {
     writeJson(paths.jsonPath, brainstorm);
     fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
     fs.writeFileSync(paths.markdownPath, renderBrainstormMarkdown(brainstorm));
+    refreshManifest(root);
     printJson(ok(
       {
         brainstorm_id: brainstorm.id,
@@ -451,6 +805,7 @@ export async function main(args) {
     fs.mkdirSync(path.dirname(paths.acceptancePath), { recursive: true });
     fs.writeFileSync(paths.acceptancePath, renderAcceptanceMarkdown(contract, ledger));
     writeJson(paths.evidencePath, { contract, ledger });
+    refreshManifest(root);
     printJson(ok(
       {
         goal_id: contract.goal_id,
@@ -488,6 +843,7 @@ export async function main(args) {
     fs.mkdirSync(path.dirname(paths.acceptancePath), { recursive: true });
     fs.writeFileSync(paths.acceptancePath, renderAcceptanceMarkdown(contract, ledger));
     writeJson(paths.evidencePath, evidencePayload);
+    refreshManifest(root);
 
     printJson(ok(
       {
@@ -524,7 +880,7 @@ export async function main(args) {
   }
 
   if (command === "approve") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     contract.acceptance_basis = {
       status: "approved",
       summary: argValue(args, "--summary", "User approved acceptance criteria."),
@@ -532,6 +888,7 @@ export async function main(args) {
     };
     recomputeWorkflowStatus(contract, ledger);
     savePair(acceptancePath, evidencePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       acceptance_basis: contract.acceptance_basis,
@@ -542,7 +899,7 @@ export async function main(args) {
   }
 
   if (command === "criterion" && args[1] === "update") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const criterionId = argValue(args, "--criterion");
     if (!criterionId) throw new Error("--criterion is required");
     const criterion = contract.criteria.find((item) => item.id === criterionId);
@@ -587,6 +944,7 @@ export async function main(args) {
 
     recomputeWorkflowStatus(contract, ledger);
     savePair(acceptancePath, evidencePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       criterion,
@@ -598,7 +956,7 @@ export async function main(args) {
   }
 
   if (command === "profile" && args[1] === "add") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const item = {
       id: argValue(args, "--id"),
       type: argValue(args, "--type", "constraint"),
@@ -611,6 +969,7 @@ export async function main(args) {
     addProfileItem(ledger, item);
     recomputeWorkflowStatus(contract, ledger);
     savePair(acceptancePath, evidencePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       profile: ledger.capability_profile,
@@ -622,7 +981,7 @@ export async function main(args) {
   }
 
   if (command === "profile" && args[1] === "evidence") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const itemId = argValue(args, "--item");
     if (!itemId) throw new Error("--item is required");
     const evidence = {
@@ -634,6 +993,7 @@ export async function main(args) {
     addProfileEvidence(ledger, itemId, evidence);
     recomputeWorkflowStatus(contract, ledger);
     savePair(acceptancePath, evidencePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       item: itemId,
@@ -681,7 +1041,7 @@ export async function main(args) {
   }
 
   if (command === "evidence" && args[1] === "add") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const criterionId = argValue(args, "--criterion");
     if (!criterionId) throw new Error("--criterion is required");
     const evidence = {
@@ -695,6 +1055,7 @@ export async function main(args) {
     addEvidence(contract, ledger, criterionId, evidence);
     writeJson(evidencePath, { contract, ledger });
     syncAcceptanceMarkdown(acceptancePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       criterion: criterionId,
@@ -708,10 +1069,11 @@ export async function main(args) {
   }
 
   if (command === "evaluate") {
-    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     recomputeWorkflowStatus(contract, ledger);
     writeJson(evidencePath, { contract, ledger });
     syncAcceptanceMarkdown(acceptancePath, contract, ledger);
+    refreshManifest(root);
     printJson(ok({
       goal_id: contract.goal_id,
       workflow_status: ledger.status,
@@ -733,10 +1095,11 @@ export async function main(args) {
   }
 
   if (command === "report") {
-    const { contract, ledger } = loadPair(args);
-    const output = path.resolve(argValue(args, "--output") || pathsForGoal(resolveRoot(args), contract.goal_id).reportPath);
+    const { contract, ledger, root } = loadPair(args);
+    const output = path.resolve(argValue(args, "--output") || pathsForGoal(root, contract.goal_id).reportPath);
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, renderReport(contract, ledger));
+    refreshManifest(root);
     printJson(ok(
       { goal_id: contract.goal_id, report_path: output, workflow_status: ledger.status },
       [{ kind: "acceptance_report", path: output }]
@@ -791,6 +1154,7 @@ export async function main(args) {
     fs.mkdirSync(path.dirname(targetAcceptance), { recursive: true });
     fs.renameSync(acceptancePath, targetAcceptance);
     fs.renameSync(evidencePath, targetEvidence);
+    refreshManifest(root);
     printJson(ok(
       {
         goal_id: contract.goal_id,

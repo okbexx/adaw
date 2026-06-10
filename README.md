@@ -10,6 +10,7 @@ plan internally, but progress is determined by acceptance evidence.
 
 ```text
 .adaw/
+  manifest.json
   protocol.md
   active/
     <goal>.acceptance.md
@@ -23,6 +24,9 @@ plan internally, but progress is determined by acceptance evidence.
 ## Quick Start
 
 ```bash
+node ./bin/adaw.js install --root . --dry-run --json
+node ./bin/adaw.js install --root . --skill --json
+node ./bin/adaw.js doctor --root . --json
 node ./bin/adaw.js brainstorm --idea "Explore a fuzzy goal before acceptance" --root . --json
 node ./bin/adaw.js draft --from-brainstorm explore-a-fuzzy-goal-before-acceptance --candidate A --root . --json
 node ./bin/adaw.js draft --goal "Ship a user-visible task" --root . --json
@@ -40,6 +44,11 @@ node ./bin/adaw.js profile evidence --root . --item skill-design-taste-frontend 
 node ./bin/adaw.js evaluate --root . --json
 node ./bin/adaw.js report --root . --json
 ```
+
+`adaw install` writes `.adaw/manifest.json` with the ADAW version, managed files, active goals,
+optional project Skill state, and supported protocol capabilities. `adaw doctor` reports whether a
+project is `ready`, `needs-action`, or `broken`, with recovery actions for missing structure, stale
+manifest data, broken active goals, and stale Skills.
 
 ## Development
 

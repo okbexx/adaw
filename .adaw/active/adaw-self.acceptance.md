@@ -38,6 +38,8 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-Z-4 | productization | 作为用户，我运行 adaw list 后，能看到多个 active goals，并能明确选择要继续的目标。 | 创建多个 active goals 后运行 adaw list，并用 --goal 指定 resume/status/report 的目标。 | 多个目标不会被 agent 随机选择；用户能看见目标列表、状态、当前缺口和对应路径。 | passing |
 | AC-Z-5 | productization | 作为用户，我运行归档入口后，completed 或 blocked 中保留报告，active 中不再出现这个目标。 | 对 complete 或 blocked goal 执行归档，再运行 adaw list 并打开归档产物。 | 归档不会丢失 acceptance contract、evidence ledger 或 report；active 列表只显示仍需推进的目标。 | passing |
 | AC-Z-6 | productization | 作为用户，我在项目目录运行 ADAW 后，能看到 ADAW 状态集中在 .adaw 目录里，而不是散落到通用 process 目录。 | 运行 adaw install、draft、brainstorm、report 或 archive 后查看项目目录。 | ADAW 默认只把协议、active goal、报告、归档和 brainstorm 写入 .adaw；不创建 process/acceptance 或 process/development-protocols。 | passing |
+| AC-Z-7 | productization | 作为用户，我运行 adaw install 后，能看到当前项目的 ADAW 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。 | 运行 adaw install --dry-run 或 adaw install 后查看输出和项目中的接入登记。 | 输出包含 create、skip、overwrite 或 update 语义；接入登记说明 ADAW 版本、managed files、active goals、Skill 状态和协议能力；已有用户内容默认不被覆盖。 | passing |
+| AC-Z-8 | productization | 作为用户，我运行 adaw doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。 | 在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 adaw doctor。 | 输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。 | passing |
 
 ## Rule
 

@@ -157,6 +157,22 @@
       "measurement": "运行 adaw install、draft、brainstorm、report 或 archive 后查看项目目录。",
       "threshold": "ADAW 默认只把协议、active goal、报告、归档和 brainstorm 写入 .adaw；不创建 process/acceptance 或 process/development-protocols。",
       "risk": "medium"
+    },
+    {
+      "id": "AC-Z-7",
+      "layer": "productization",
+      "user_story": "作为用户，我运行 adaw install 后，能看到当前项目的 ADAW 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。",
+      "measurement": "运行 adaw install --dry-run 或 adaw install 后查看输出和项目中的接入登记。",
+      "threshold": "输出包含 create、skip、overwrite 或 update 语义；接入登记说明 ADAW 版本、managed files、active goals、Skill 状态和协议能力；已有用户内容默认不被覆盖。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-Z-8",
+      "layer": "productization",
+      "user_story": "作为用户，我运行 adaw doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。",
+      "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 adaw doctor。",
+      "threshold": "输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。",
+      "risk": "high"
     }
   ]
 }

@@ -314,11 +314,11 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 19);
+  assert.equal(brief.criteria.length, 21);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 6);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 8);
 
   const expectedTools = [
     "Codex 对话",
@@ -329,6 +329,7 @@ test("protocol v1 example contains concrete user tool operations", () => {
     "ADAW 报告",
     "Git 或 PR diff",
     "adaw install",
+    "adaw doctor",
     "adaw list"
   ];
 
@@ -354,6 +355,8 @@ test("skill export gives agents the full ADAW command loop", () => {
   assert.match(payload.data.skill_md, /Capability Profile/);
   assert.match(payload.data.skill_md, /adaw profile add/);
   assert.match(payload.data.skill_md, /adaw profile evidence/);
+  assert.match(payload.data.skill_md, /adaw install --root <repo> --dry-run --json/);
+  assert.match(payload.data.skill_md, /adaw doctor --root <repo> --json/);
   assert.match(payload.data.skill_md, /Do not treat brainstorm output as an acceptance contract/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 });
@@ -364,13 +367,66 @@ test("install creates project assets and skips existing user content by default"
   fs.mkdirSync(path.dirname(protocolPath), { recursive: true });
   fs.writeFileSync(protocolPath, "custom protocol\n");
 
+  const dryRun = run(["install", "--root", root, "--skill", "--dry-run", "--json"]);
+  assert.equal(dryRun.data.dry_run, true);
+  assert.equal(dryRun.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
+
   const payload = run(["install", "--root", root, "--skill", "--json"]);
   assert.equal(payload.data.actions.find((action) => action.path === ".adaw/protocol.md").action, "skip");
+  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
   assert.equal(fs.readFileSync(protocolPath, "utf8"), "custom protocol\n");
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "active")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "brainstorms")), true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
   assert.equal(fs.existsSync(path.join(root, "process")), false);
+
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, ".adaw", "manifest.json"), "utf8"));
+  assert.equal(manifest.schema_version, "adaw/manifest-v1");
+  assert.equal(manifest.adaw_version, "0.1.0");
+  assert.equal(manifest.skill.installed, true);
+  assert.equal(manifest.skill.in_sync, true);
+  assert.equal(manifest.managed_files.some((entry) => entry.path === ".adaw/protocol.md" && entry.exists), true);
+  assert.equal(manifest.capabilities.includes("doctor"), true);
+});
+
+test("doctor reports ready, needs-action, and broken project health", () => {
+  const readyRoot = tempRoot();
+  run(["install", "--root", readyRoot, "--skill", "--json"]);
+  const ready = run(["doctor", "--root", readyRoot, "--json"]);
+  assert.equal(ready.data.status, "ready");
+  assert.equal(ready.data.checks.every((check) => check.ok), true);
+  assert.equal(ready.data.skill.in_sync, true);
+
+  const missingManifestRoot = tempRoot();
+  run(["install", "--root", missingManifestRoot, "--json"]);
+  fs.unlinkSync(path.join(missingManifestRoot, ".adaw", "manifest.json"));
+  const needsAction = run(["doctor", "--root", missingManifestRoot, "--json"]);
+  assert.equal(needsAction.data.status, "needs-action");
+  assert.equal(needsAction.data.checks.find((check) => check.name === "manifest_file").ok, false);
+  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /adaw install/);
+
+  const staleManifestRoot = tempRoot();
+  run(["install", "--root", staleManifestRoot, "--json"]);
+  const manifestPath = path.join(staleManifestRoot, ".adaw", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.adaw_version = "0.0.0";
+  manifest.capabilities = ["acceptance-contract"];
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const stale = run(["doctor", "--root", staleManifestRoot, "--json"]);
+  assert.equal(stale.data.status, "needs-action");
+  assert.equal(stale.data.checks.find((check) => check.name === "manifest_cli_version").ok, false);
+  assert.equal(stale.data.checks.find((check) => check.name === "manifest_capabilities").ok, false);
+
+  const brokenRoot = tempRoot();
+  run(["install", "--root", brokenRoot, "--json"]);
+  fs.writeFileSync(path.join(brokenRoot, ".adaw", "active", "broken.evidence.json"), "{ bad json");
+  const broken = run(["doctor", "--root", brokenRoot, "--json"]);
+  assert.equal(broken.data.status, "broken");
+  assert.equal(broken.data.checks.find((check) => check.name === "active_goals_recoverable").ok, false);
+  assert.equal(broken.data.active_goal_issues.length, 1);
+  assert.match(broken.data.checks.find((check) => check.name === "active_goals_recoverable").recovery, /Fix the reported active goal pair/);
 });
 
 test("changes groups acceptance artifacts separately from implementation files", () => {

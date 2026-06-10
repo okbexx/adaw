@@ -71,6 +71,8 @@ a durable workflow asset.
 | AC-Z-4 | CLI | Run `adaw list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
 | AC-Z-5 | CLI | Archive a completed or blocked goal | The user removes it from active work while preserving evidence and report. | Active no longer lists the goal; contract, ledger, and report remain recoverable. |
 | AC-Z-6 | Project file browser | Inspect the project after running ADAW | The user sees ADAW-owned state under `.adaw/` instead of a generic project `process/` directory. | Install, draft, brainstorm, report, and archive write ADAW state under `.adaw/` by default. |
+| AC-Z-7 | CLI / project file browser | Run `adaw install` | The user can inspect project ADAW registration and judge version, managed entries, active goals, Skill status, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.adaw/manifest.json` records version, managed files, active goals, Skill state, and capabilities. |
+| AC-Z-8 | CLI | Run `adaw doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.adaw` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
 
 ## Required Artifact Pair
 
@@ -78,6 +80,7 @@ ADAW writes its project-local state under `.adaw/`.
 
 ```text
 .adaw/
+  manifest.json
   protocol.md
   active/
     <goal>.acceptance.md
@@ -92,6 +95,18 @@ Each active goal has:
 
 - `<goal>.acceptance.md` for human review
 - `<goal>.evidence.json` for deterministic agent/tool updates
+
+`.adaw/manifest.json` records the project-local ADAW registration:
+
+- manifest schema and ADAW protocol version
+- ADAW package version
+- managed `.adaw` files and directories
+- active goals recoverable from `.adaw/active`
+- optional repo-local ADAW Skill state
+- protocol capabilities exposed by this CLI
+
+`adaw install` creates or refreshes the manifest. State-changing ADAW commands refresh it when
+`.adaw/` already exists.
 
 ## Capability Profile
 
@@ -184,6 +199,8 @@ Useful commands:
 - `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
 - `adaw profile show --root <repo>`: show profile compliance and blocking items.
 - `adaw list --root <repo>`: list active ADAW goals.
+- `adaw install --root <repo>`: create or refresh project-local ADAW assets and manifest.
+- `adaw doctor --root <repo>`: inspect project ADAW health and recovery actions.
 - `adaw resume --root <repo>`: recover the active goal, current gap, completion answer, and intervention state.
 - `adaw status --root <repo>`: answer whether the goal is complete and whether the user needs to act.
 - `adaw report --root <repo>`: generate the human acceptance report.

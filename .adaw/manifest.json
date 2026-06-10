@@ -1,0 +1,83 @@
+{
+  "schema_version": "adaw/manifest-v1",
+  "protocol_version": "adaw/v1",
+  "adaw_version": "0.1.0",
+  "created_at": "2026-06-10T09:12:16.646Z",
+  "updated_at": "2026-06-10T09:17:18.602Z",
+  "capabilities": [
+    "acceptance-contract",
+    "evidence-ledger",
+    "brainstorm",
+    "capability-profile",
+    "archive",
+    "report",
+    "doctor"
+  ],
+  "managed_files": [
+    {
+      "path": ".adaw/manifest.json",
+      "kind": "manifest",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/protocol.md",
+      "kind": "protocol",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/active",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/completed",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/blocked",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/reports",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".adaw/brainstorms",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/adaw/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    }
+  ],
+  "active_goals": [
+    {
+      "goal_id": "adaw-self",
+      "status": "complete",
+      "current_gap": null,
+      "acceptance_path": ".adaw/active/adaw-self.acceptance.md",
+      "evidence_path": ".adaw/active/adaw-self.evidence.json",
+      "recoverable": true
+    }
+  ],
+  "skill": {
+    "installed": true,
+    "path": ".agents/skills/adaw/SKILL.md",
+    "in_sync": true,
+    "expected_sha256": "11350ab9024226204bef9c7b8e459ba85312e1721af650571702aa7b4dd0ade8",
+    "actual_sha256": "11350ab9024226204bef9c7b8e459ba85312e1721af650571702aa7b4dd0ade8"
+  }
+}
