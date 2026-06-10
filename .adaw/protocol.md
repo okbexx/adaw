@@ -70,8 +70,23 @@ a durable workflow asset.
 | AC-Z-3 | Git / PR diff | Review the agent's changes | The user can separate acceptance evidence changes from implementation noise. | Summary defaults to AC status changes, evidence changes, and user impact. |
 | AC-Z-4 | CLI | Run `adaw list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
 | AC-Z-5 | CLI | Archive a completed or blocked goal | The user removes it from active work while preserving evidence and report. | Active no longer lists the goal; contract, ledger, and report remain recoverable. |
+| AC-Z-6 | Project file browser | Inspect the project after running ADAW | The user sees ADAW-owned state under `.adaw/` instead of a generic project `process/` directory. | Install, draft, brainstorm, report, and archive write ADAW state under `.adaw/` by default. |
 
 ## Required Artifact Pair
+
+ADAW writes its project-local state under `.adaw/`.
+
+```text
+.adaw/
+  protocol.md
+  active/
+    <goal>.acceptance.md
+    <goal>.evidence.json
+  completed/
+  blocked/
+  reports/
+  brainstorms/
+```
 
 Each active goal has:
 

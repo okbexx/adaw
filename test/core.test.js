@@ -314,17 +314,18 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 18);
+  assert.equal(brief.criteria.length, 19);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 5);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 6);
 
   const expectedTools = [
     "Codex 对话",
     "编辑器或文件浏览器",
     "新的 Codex 会话",
     "Capability Profile",
+    ".adaw",
     "ADAW 报告",
     "Git 或 PR diff",
     "adaw install",
@@ -359,28 +360,30 @@ test("skill export gives agents the full ADAW command loop", () => {
 
 test("install creates project assets and skips existing user content by default", () => {
   const root = tempRoot();
-  const protocolPath = path.join(root, "process", "development-protocols", "adaw.md");
+  const protocolPath = path.join(root, ".adaw", "protocol.md");
   fs.mkdirSync(path.dirname(protocolPath), { recursive: true });
   fs.writeFileSync(protocolPath, "custom protocol\n");
 
   const payload = run(["install", "--root", root, "--skill", "--json"]);
-  assert.equal(payload.data.actions.find((action) => action.path === "process/development-protocols/adaw.md").action, "skip");
+  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/protocol.md").action, "skip");
   assert.equal(fs.readFileSync(protocolPath, "utf8"), "custom protocol\n");
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), true);
-  assert.equal(fs.existsSync(path.join(root, "process", "acceptance", "active")), true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "active")), true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "brainstorms")), true);
+  assert.equal(fs.existsSync(path.join(root, "process")), false);
 });
 
 test("changes groups acceptance artifacts separately from implementation files", () => {
   const root = tempRoot();
   spawnSync("git", ["init"], { cwd: root, encoding: "utf8" });
-  fs.mkdirSync(path.join(root, "process", "acceptance", "active"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".adaw", "active"), { recursive: true });
   fs.mkdirSync(path.join(root, "src"), { recursive: true });
-  fs.writeFileSync(path.join(root, "process", "acceptance", "active", "demo.acceptance.md"), "acceptance\n");
+  fs.writeFileSync(path.join(root, ".adaw", "active", "demo.acceptance.md"), "acceptance\n");
   fs.writeFileSync(path.join(root, "src", "index.js"), "console.log('demo')\n");
 
   const payload = run(["changes", "--root", root, "--json"]);
   assert.equal(payload.data.changed_files.available, true);
-  assert.equal(payload.data.changed_files.acceptance.some((item) => item.path === "process/acceptance/active/demo.acceptance.md"), true);
+  assert.equal(payload.data.changed_files.acceptance.some((item) => item.path === ".adaw/active/demo.acceptance.md"), true);
   assert.equal(payload.data.changed_files.implementation.some((item) => item.path === "src/index.js"), true);
 });
 
@@ -467,7 +470,7 @@ test("archive can preserve blocked goals outside active work", () => {
   const archived = run(["archive", "--root", root, "--goal", "adaw-self", "--json"]);
   assert.equal(archived.data.archived_as, "blocked");
   assert.equal(fs.existsSync(init.data.acceptance_path), false);
-  assert.equal(fs.existsSync(path.join(root, "process", "acceptance", "blocked", "adaw-self.acceptance.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "blocked", "adaw-self.acceptance.md")), true);
 
   const report = fs.readFileSync(archived.data.report_path, "utf8");
   assert.match(report, /Current status: blocked/);

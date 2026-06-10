@@ -167,7 +167,7 @@ function ensureDir(dirPath, { dryRun = false } = {}) {
 }
 
 function protocolTemplate() {
-  const source = path.resolve(import.meta.dirname, "..", "process", "development-protocols", "adaw.md");
+  const source = path.resolve(import.meta.dirname, "..", ".adaw", "protocol.md");
   if (fs.existsSync(source)) return fs.readFileSync(source, "utf8");
   return [
     "# ADAW Protocol",
@@ -180,7 +180,7 @@ function protocolTemplate() {
 }
 
 function brainstormPaths(root, brainstormId) {
-  const dir = path.join(root, "process", "brainstorms");
+  const dir = path.join(root, ".adaw", "brainstorms");
   return {
     jsonPath: path.join(dir, `${brainstormId}.json`),
     markdownPath: path.join(dir, `${brainstormId}.md`)
@@ -224,8 +224,7 @@ function renderBrainstormMarkdown(brainstorm) {
 
 function classifyChangedFile(filePath) {
   if (
-    filePath.startsWith("process/acceptance/") ||
-    filePath.startsWith("process/development-protocols/") ||
+    filePath.startsWith(".adaw/") ||
     filePath.startsWith("examples/")
   ) {
     return "acceptance";
@@ -377,12 +376,12 @@ export async function main(args) {
     const dryRun = hasFlag(args, "--dry-run");
     const force = hasFlag(args, "--force");
     const actions = [
-      ensureDir(path.join(root, "process", "acceptance", "active"), { dryRun }),
-      ensureDir(path.join(root, "process", "acceptance", "completed"), { dryRun }),
-      ensureDir(path.join(root, "process", "acceptance", "blocked"), { dryRun }),
-      ensureDir(path.join(root, "process", "acceptance", "reports"), { dryRun }),
-      ensureDir(path.join(root, "process", "development-protocols"), { dryRun }),
-      writeIfSafe(path.join(root, "process", "development-protocols", "adaw.md"), protocolTemplate(), { dryRun, force })
+      ensureDir(path.join(root, ".adaw", "active"), { dryRun }),
+      ensureDir(path.join(root, ".adaw", "completed"), { dryRun }),
+      ensureDir(path.join(root, ".adaw", "blocked"), { dryRun }),
+      ensureDir(path.join(root, ".adaw", "reports"), { dryRun }),
+      ensureDir(path.join(root, ".adaw", "brainstorms"), { dryRun }),
+      writeIfSafe(path.join(root, ".adaw", "protocol.md"), protocolTemplate(), { dryRun, force })
     ];
 
     if (hasFlag(args, "--skill")) {
@@ -774,8 +773,8 @@ export async function main(args) {
     }
 
     const archiveDir = ledger.status === "complete" ? "completed" : "blocked";
-    const targetAcceptance = path.join(root, "process", "acceptance", archiveDir, path.basename(acceptancePath));
-    const targetEvidence = path.join(root, "process", "acceptance", archiveDir, path.basename(evidencePath));
+    const targetAcceptance = path.join(root, ".adaw", archiveDir, path.basename(acceptancePath));
+    const targetEvidence = path.join(root, ".adaw", archiveDir, path.basename(evidencePath));
     const reportPath = pathsForGoal(root, contract.goal_id).reportPath;
     for (const target of [targetAcceptance, targetEvidence]) {
       if (fs.existsSync(target) && !hasFlag(args, "--force")) {

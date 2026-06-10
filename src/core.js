@@ -87,16 +87,16 @@ export function slugify(input) {
 }
 
 export function pathsForGoal(rootDir, goalId) {
-  const activeDir = path.join(rootDir, "process", "acceptance", "active");
+  const activeDir = path.join(rootDir, ".adaw", "active");
   return {
     acceptancePath: path.join(activeDir, `${goalId}.acceptance.md`),
     evidencePath: path.join(activeDir, `${goalId}.evidence.json`),
-    reportPath: path.join(rootDir, "process", "acceptance", "reports", `${goalId}.report.md`)
+    reportPath: path.join(rootDir, ".adaw", "reports", `${goalId}.report.md`)
   };
 }
 
 export function findActivePairs(rootDir) {
-  const activeDir = path.join(rootDir, "process", "acceptance", "active");
+  const activeDir = path.join(rootDir, ".adaw", "active");
   if (!fs.existsSync(activeDir)) return [];
   return fs.readdirSync(activeDir)
     .filter((fileName) => fileName.endsWith(".evidence.json"))
@@ -106,7 +106,7 @@ export function findActivePairs(rootDir) {
         goalId,
         acceptancePath: path.join(activeDir, `${goalId}.acceptance.md`),
         evidencePath: path.join(activeDir, fileName),
-        reportPath: path.join(rootDir, "process", "acceptance", "reports", `${goalId}.report.md`)
+        reportPath: path.join(rootDir, ".adaw", "reports", `${goalId}.report.md`)
       };
     })
     .filter((pair) => fs.existsSync(pair.acceptancePath))

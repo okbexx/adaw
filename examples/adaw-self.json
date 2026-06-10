@@ -10,7 +10,7 @@
       "id": "AC-P-1",
       "layer": "protocol",
       "user_story": "作为用户，我在编辑器或文件浏览器里打开 active acceptance contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。",
-      "measurement": "打开 process/acceptance/active/<goal>.acceptance.md 并阅读。",
+      "measurement": "打开 .adaw/active/<goal>.acceptance.md 并阅读。",
       "threshold": "不读聊天历史、不读实现说明，60 秒内能判断任务在验收层面的状态和下一条缺口。",
       "risk": "medium"
     },
@@ -149,6 +149,14 @@
       "measurement": "对 complete 或 blocked goal 执行归档，再运行 adaw list 并打开归档产物。",
       "threshold": "归档不会丢失 acceptance contract、evidence ledger 或 report；active 列表只显示仍需推进的目标。",
       "risk": "high"
+    },
+    {
+      "id": "AC-Z-6",
+      "layer": "productization",
+      "user_story": "作为用户，我在项目目录运行 ADAW 后，能看到 ADAW 状态集中在 .adaw 目录里，而不是散落到通用 process 目录。",
+      "measurement": "运行 adaw install、draft、brainstorm、report 或 archive 后查看项目目录。",
+      "threshold": "ADAW 默认只把协议、active goal、报告、归档和 brainstorm 写入 .adaw；不创建 process/acceptance 或 process/development-protocols。",
+      "risk": "medium"
     }
   ]
 }

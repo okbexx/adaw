@@ -19,7 +19,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 
 | ID | Layer | User acceptance criterion | Measurement | Passing threshold | Status |
 | --- | --- | --- | --- | --- | --- |
-| AC-P-1 | protocol | 作为用户，我在编辑器或文件浏览器里打开 active acceptance contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。 | 打开 process/acceptance/active/<goal>.acceptance.md 并阅读。 | 不读聊天历史、不读实现说明，60 秒内能判断任务在验收层面的状态和下一条缺口。 | passing |
+| AC-P-1 | protocol | 作为用户，我在编辑器或文件浏览器里打开 active acceptance contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。 | 打开 .adaw/active/<goal>.acceptance.md 并阅读。 | 不读聊天历史、不读实现说明，60 秒内能判断任务在验收层面的状态和下一条缺口。 | passing |
 | AC-P-2 | protocol | 作为用户，我运行 adaw check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。 | 对当前 active goal 或故意写坏的验收草案运行 adaw check。 | “存在文件、字段、命令、测试通过、实现某模块”这类内容不能作为用户验收标准通过校验。 | passing |
 | AC-P-3 | protocol | 作为用户，我运行 adaw next 或 adaw status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。 | 运行 adaw next/status 并查看返回的 current_gap、completion 和 intervention。 | 输出默认回答“当前差哪条 AC、是否完成、是否需要人类动作”，不把过程任务当作主线。 | passing |
 | AC-P-4 | protocol | 作为用户，我查看高风险 AC 的状态时，能看到弱证据不能让它变成 passing。 | 给 high risk AC 添加弱 passing 证据，再查看 status 或 report。 | 高风险 passing 不能只由 agent 自我总结证明；缺少强证据时必须保持 failing、unknown 或 blocked。 | passing |
@@ -37,6 +37,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-Z-3 | productization | 作为用户，我在 Git 或 PR diff 中审查 agent 本轮改动后，能区分验收证据变化和实现过程噪音。 | 查看本轮 diff 或报告变更摘要。 | 默认摘要围绕 AC 状态变化、证据变化和用户影响组织；实现过程只作为附属证据出现。 | passing |
 | AC-Z-4 | productization | 作为用户，我运行 adaw list 后，能看到多个 active goals，并能明确选择要继续的目标。 | 创建多个 active goals 后运行 adaw list，并用 --goal 指定 resume/status/report 的目标。 | 多个目标不会被 agent 随机选择；用户能看见目标列表、状态、当前缺口和对应路径。 | passing |
 | AC-Z-5 | productization | 作为用户，我运行归档入口后，completed 或 blocked 中保留报告，active 中不再出现这个目标。 | 对 complete 或 blocked goal 执行归档，再运行 adaw list 并打开归档产物。 | 归档不会丢失 acceptance contract、evidence ledger 或 report；active 列表只显示仍需推进的目标。 | passing |
+| AC-Z-6 | productization | 作为用户，我在项目目录运行 ADAW 后，能看到 ADAW 状态集中在 .adaw 目录里，而不是散落到通用 process 目录。 | 运行 adaw install、draft、brainstorm、report 或 archive 后查看项目目录。 | ADAW 默认只把协议、active goal、报告、归档和 brainstorm 写入 .adaw；不创建 process/acceptance 或 process/development-protocols。 | passing |
 
 ## Rule
 

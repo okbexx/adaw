@@ -9,17 +9,15 @@ plan internally, but progress is determined by acceptance evidence.
 ## Shape
 
 ```text
-process/
-  acceptance/
-    active/
-      <goal>.acceptance.md
-      <goal>.evidence.json
-    completed/
-    blocked/
-    reports/
-    evidence/
-  development-protocols/
-    adaw.md
+.adaw/
+  protocol.md
+  active/
+    <goal>.acceptance.md
+    <goal>.evidence.json
+  completed/
+  blocked/
+  reports/
+  brainstorms/
 ```
 
 ## Quick Start
