@@ -3,7 +3,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "goal": "让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
-    "created_at": "2026-06-10T07:12:49.727Z",
+    "created_at": "2026-06-10T07:43:45.472Z",
     "acceptance_basis": {
       "status": "approved",
       "summary": "User agreed to the layered ADAW self acceptance criteria."
@@ -118,6 +118,15 @@
         "risk": "medium"
       },
       {
+        "id": "AC-O-8",
+        "layer": "operator",
+        "user_story": "作为用户，我在 Codex 对话里声明必须使用某个 Skill、偏好某个技术栈或避免某个工具后，agent 能记录这些偏好并在完成前告诉我是否遵守。",
+        "measurement": "在 Codex 对话中提出能力偏好后，查看 active contract、status 或 report 中的 Capability Profile。",
+        "threshold": "用户不需要记住 CLI；must 或 avoid 的违反会阻止 complete，prefer 会被展示但不阻止 complete；这些偏好不会被写成用户 AC。",
+        "required": true,
+        "risk": "high"
+      },
+      {
         "id": "AC-Z-1",
         "layer": "productization",
         "user_story": "作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。",
@@ -168,7 +177,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-10T07:12:50.365Z",
+    "updated_at": "2026-06-10T07:46:32.172Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -178,10 +187,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "Acceptance contract renders layered ACs with status and current gap readable from process/acceptance/active/adaw-self.acceptance.md.",
+            "summary": "Acceptance contract renders goal, Capability Profile, layered ACs, status, and current gap in process/acceptance/active/adaw-self.acceptance.md.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.764Z"
+            "created_at": "2026-06-10T07:44:33.988Z"
           }
         ]
       },
@@ -196,7 +205,7 @@
             "summary": "adaw check validates contracts and rejects implementation-detail ACs.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.800Z"
+            "created_at": "2026-06-10T07:44:34.024Z"
           }
         ]
       },
@@ -211,7 +220,7 @@
             "summary": "adaw next/status return current_gap, completion, and intervention instead of process steps.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.842Z"
+            "created_at": "2026-06-10T07:44:34.061Z"
           }
         ]
       },
@@ -226,7 +235,7 @@
             "summary": "High-risk gate downgrades weak passing evidence and accepts only strong evidence kinds or confidence.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.879Z"
+            "created_at": "2026-06-10T07:44:34.115Z"
           }
         ]
       },
@@ -238,10 +247,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw report renders layered AC status, evidence summary, current gap, user intervention, and conclusion.",
+            "summary": "adaw report renders layered AC status, Capability Profile, evidence summary, current gap, user intervention, and conclusion.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.915Z"
+            "created_at": "2026-06-10T07:44:34.157Z"
           }
         ]
       },
@@ -257,7 +266,7 @@
             "result": "passing",
             "path": ".agents/skills/adaw/SKILL.md",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.952Z"
+            "created_at": "2026-06-10T07:44:34.194Z"
           }
         ]
       },
@@ -272,7 +281,7 @@
             "summary": "adaw draft keeps acceptance_basis=draft and cannot become complete until adaw approve records user approval; tests cover draft gate and approval.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:49.988Z"
+            "created_at": "2026-06-10T07:44:34.229Z"
           }
         ]
       },
@@ -287,7 +296,7 @@
             "summary": "resume --root . restores adaw-self from repo files and reports current gap without relying on prior chat context.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.024Z"
+            "created_at": "2026-06-10T07:44:34.266Z"
           }
         ]
       },
@@ -299,10 +308,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "status/completion answers are computed only from required AC statuses and evidence; incomplete goals report the current unmet AC instead of complete.",
+            "summary": "status/completion answers are computed only from required AC statuses, profile compliance, and evidence; incomplete goals report the current unmet AC instead of complete.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.061Z"
+            "created_at": "2026-06-10T07:44:34.304Z"
           }
         ]
       },
@@ -314,10 +323,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "blocked evidence produces status.intervention with a concrete human action, verified by blocked criteria tests.",
+            "summary": "blocked evidence and profile blockers produce status.intervention with a concrete human action.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.096Z"
+            "created_at": "2026-06-10T07:44:34.340Z"
           }
         ]
       },
@@ -332,7 +341,7 @@
             "summary": "adaw criterion update records the user revision as approved acceptance basis and clears stale evidence for the changed AC.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.134Z"
+            "created_at": "2026-06-10T07:44:34.376Z"
           }
         ]
       },
@@ -347,7 +356,22 @@
             "summary": "adaw brainstorm creates selectable acceptance directions, not a process plan; Skill tells Codex to invoke it from natural language and not treat output as contract or completion evidence.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.175Z"
+            "created_at": "2026-06-10T07:44:34.413Z"
+          }
+        ]
+      },
+      "AC-O-8": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "summary": "Capability Profile records user-declared Skills/stacks/constraints separately from ACs; must/avoid compliance affects completion and appears in status/report.",
+            "result": "passing",
+            "gate": "accepted",
+            "created_at": "2026-06-10T07:44:34.449Z"
           }
         ]
       },
@@ -359,10 +383,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw skill export emits a Codex Skill draft covering brainstorm, draft, approve, criterion update, resume, next, evidence add, evaluate, status, and report.",
+            "summary": "adaw skill export emits a Codex Skill draft covering brainstorm, draft, approve, criterion update, profile add/evidence/show, resume, next, evidence add, evaluate, status, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.214Z"
+            "created_at": "2026-06-10T07:44:34.487Z"
           }
         ]
       },
@@ -377,7 +401,7 @@
             "summary": "adaw install creates process assets and optional repo-local Skill while skipping existing content by default.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.257Z"
+            "created_at": "2026-06-10T07:44:34.522Z"
           }
         ]
       },
@@ -392,7 +416,7 @@
             "summary": "adaw changes groups acceptance artifacts separately from implementation files for review.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.293Z"
+            "created_at": "2026-06-10T07:44:34.559Z"
           }
         ]
       },
@@ -407,7 +431,7 @@
             "summary": "adaw list shows multiple active goals and resume/status/report require --goal instead of random selection.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.330Z"
+            "created_at": "2026-06-10T07:44:34.595Z"
           }
         ]
       },
@@ -422,10 +446,41 @@
             "summary": "adaw archive moves complete and blocked goals out of active while preserving contract, evidence ledger, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T07:12:50.364Z"
+            "created_at": "2026-06-10T07:44:34.631Z"
           }
         ]
       }
+    },
+    "capability_profile": {
+      "items": [
+        {
+          "id": "constraint-profile-stays-out-of-user-acs",
+          "type": "constraint",
+          "name": "profile-stays-out-of-user-acs",
+          "strength": "must",
+          "purpose": "Capability Profile records agent execution preferences without turning them into user acceptance criteria.",
+          "scope": "ADAW self-development",
+          "install_policy": "existing_only",
+          "evidence": [
+            {
+              "item_id": "constraint-profile-stays-out-of-user-acs",
+              "result": "satisfied",
+              "summary": "AC-O-8 is user-facing, while the profile constraint is recorded separately in Capability Profile and rendered outside the AC table.",
+              "path": "process/acceptance/active/adaw-self.acceptance.md",
+              "created_at": "2026-06-10T07:46:32.171Z"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "item_id": "constraint-profile-stays-out-of-user-acs",
+          "result": "satisfied",
+          "summary": "AC-O-8 is user-facing, while the profile constraint is recorded separately in Capability Profile and rendered outside the AC table.",
+          "path": "process/acceptance/active/adaw-self.acceptance.md",
+          "created_at": "2026-06-10T07:46:32.171Z"
+        }
+      ]
     }
   }
 }

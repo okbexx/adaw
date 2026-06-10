@@ -103,6 +103,14 @@
       "risk": "medium"
     },
     {
+      "id": "AC-O-8",
+      "layer": "operator",
+      "user_story": "作为用户，我在 Codex 对话里声明必须使用某个 Skill、偏好某个技术栈或避免某个工具后，agent 能记录这些偏好并在完成前告诉我是否遵守。",
+      "measurement": "在 Codex 对话中提出能力偏好后，查看 active contract、status 或 report 中的 Capability Profile。",
+      "threshold": "用户不需要记住 CLI；must 或 avoid 的违反会阻止 complete，prefer 会被展示但不阻止 complete；这些偏好不会被写成用户 AC。",
+      "risk": "high"
+    },
+    {
       "id": "AC-Z-1",
       "layer": "productization",
       "user_story": "作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。",

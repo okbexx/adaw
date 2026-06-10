@@ -5,6 +5,9 @@ export const PROTOCOL_VERSION = "adaw/v1";
 
 export const VALID_STATUSES = new Set(["unknown", "failing", "passing", "blocked", "waived"]);
 export const VALID_EVIDENCE_RESULTS = new Set(["failing", "passing", "blocked", "waived"]);
+export const VALID_PROFILE_STRENGTHS = new Set(["must", "prefer", "avoid"]);
+export const VALID_PROFILE_ITEM_TYPES = new Set(["skill", "stack", "constraint"]);
+export const VALID_PROFILE_RESULTS = new Set(["satisfied", "violated", "waived"]);
 export const STRONG_EVIDENCE_KINDS = new Set([
   "test-summary",
   "screenshot",
@@ -150,7 +153,98 @@ export function buildEvidenceLedger(contract) {
     goal_id: contract.goal_id,
     status: "active",
     updated_at: nowIso(),
-    criteria
+    criteria,
+    capability_profile: {
+      items: [],
+      evidence: []
+    }
+  };
+}
+
+export function addProfileItem(ledger, item) {
+  if (!ledger.capability_profile) {
+    ledger.capability_profile = { items: [], evidence: [] };
+  }
+  const type = item.type || "constraint";
+  const strength = item.strength || "prefer";
+  if (!VALID_PROFILE_ITEM_TYPES.has(type)) {
+    throw new Error(`Invalid profile item type: ${type}`);
+  }
+  if (!VALID_PROFILE_STRENGTHS.has(strength)) {
+    throw new Error(`Invalid profile strength: ${strength}`);
+  }
+  const id = item.id || slugify(`${type}-${item.name}`);
+  const existingIndex = ledger.capability_profile.items.findIndex((entry) => entry.id === id);
+  const entry = {
+    id,
+    type,
+    name: String(item.name || "").trim(),
+    strength,
+    purpose: String(item.purpose || "").trim(),
+    scope: String(item.scope || "").trim(),
+    install_policy: item.install_policy || "ask_before_install",
+    evidence: []
+  };
+  if (!entry.name) throw new Error("--name is required");
+  if (existingIndex === -1) {
+    ledger.capability_profile.items.push(entry);
+  } else {
+    ledger.capability_profile.items[existingIndex] = {
+      ...ledger.capability_profile.items[existingIndex],
+      ...entry,
+      evidence: ledger.capability_profile.items[existingIndex].evidence || []
+    };
+  }
+  return ledger;
+}
+
+export function addProfileEvidence(ledger, itemId, evidence) {
+  if (!ledger.capability_profile) {
+    ledger.capability_profile = { items: [], evidence: [] };
+  }
+  const item = ledger.capability_profile.items.find((entry) => entry.id === itemId);
+  if (!item) throw new Error(`Capability profile item not found: ${itemId}`);
+  if (!VALID_PROFILE_RESULTS.has(evidence.result)) {
+    throw new Error(`Invalid profile evidence result: ${evidence.result}`);
+  }
+  const entry = {
+    item_id: itemId,
+    result: evidence.result,
+    summary: evidence.summary,
+    path: evidence.path,
+    created_at: nowIso()
+  };
+  item.evidence = [...(item.evidence || []), entry];
+  ledger.capability_profile.evidence.push(entry);
+  ledger.updated_at = nowIso();
+  return ledger;
+}
+
+export function profileCompliance(ledger) {
+  const items = ledger.capability_profile?.items || [];
+  const statuses = items.map((item) => {
+    const latest = item.evidence?.at(-1);
+    let status = "unknown";
+    if (latest?.result === "satisfied") status = "satisfied";
+    if (latest?.result === "waived") status = "waived";
+    if (latest?.result === "violated") status = "violated";
+    return {
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      strength: item.strength,
+      purpose: item.purpose,
+      status,
+      summary: latest?.summary || "<none>"
+    };
+  });
+  const blocking = statuses.filter((item) => item.strength === "must" && (item.status === "unknown" || item.status === "violated"));
+  const avoidedViolations = statuses.filter((item) => item.strength === "avoid" && item.status === "violated");
+  return {
+    required: items.length > 0,
+    complete: blocking.length === 0 && avoidedViolations.length === 0,
+    blocking: [...blocking, ...avoidedViolations],
+    statuses
   };
 }
 
@@ -166,6 +260,10 @@ export function renderAcceptanceMarkdown(contract, ledger) {
     "",
     `Status: ${contract.acceptance_basis?.status || "draft"}`,
     contract.acceptance_basis?.summary ? `Summary: ${contract.acceptance_basis.summary}` : "Summary: <none>",
+    "",
+    "## Capability Profile",
+    "",
+    ...renderProfileLines(ledger),
     "",
     "## User Acceptance Criteria",
     "",
@@ -190,6 +288,16 @@ export function renderAcceptanceMarkdown(contract, ledger) {
 
 export function syncAcceptanceMarkdown(acceptancePath, contract, ledger) {
   fs.writeFileSync(acceptancePath, renderAcceptanceMarkdown(contract, ledger));
+}
+
+function renderProfileLines(ledger) {
+  const compliance = profileCompliance(ledger);
+  if (!compliance.required) return ["<none>"];
+  return [
+    "| ID | Type | Name | Strength | Compliance | Purpose |",
+    "| --- | --- | --- | --- | --- | --- |",
+    ...compliance.statuses.map((item) => `| ${item.id} | ${item.type} | ${item.name} | ${item.strength} | ${item.status} | ${item.purpose || "<none>"} |`)
+  ];
 }
 
 export function parseAcceptanceMarkdown(markdown) {
@@ -300,6 +408,14 @@ export function validateContract(contract, ledger = null) {
         issues.push({ path: `ledger.criteria.${criterionId}.status`, message: `Invalid status: ${state.status}` });
       }
     }
+    for (const item of ledger.capability_profile?.items || []) {
+      if (!VALID_PROFILE_ITEM_TYPES.has(item.type)) {
+        issues.push({ path: `ledger.capability_profile.items.${item.id}.type`, message: `Invalid profile item type: ${item.type}` });
+      }
+      if (!VALID_PROFILE_STRENGTHS.has(item.strength)) {
+        issues.push({ path: `ledger.capability_profile.items.${item.id}.strength`, message: `Invalid profile strength: ${item.strength}` });
+      }
+    }
   }
 
   return issues;
@@ -366,8 +482,11 @@ export function recomputeWorkflowStatus(contract, ledger) {
     .filter((criterion) => criterion.required !== false)
     .map((criterion) => ledger.criteria[criterion.id]?.status || "unknown");
   const approved = contract.acceptance_basis?.status === "approved";
+  const compliance = profileCompliance(ledger);
 
   if (requiredStates.some((status) => status === "blocked")) {
+    ledger.status = "blocked";
+  } else if (compliance.required && !compliance.complete) {
     ledger.status = "blocked";
   } else if (approved && requiredStates.length > 0 && requiredStates.every((status) => status === "passing" || status === "waived")) {
     ledger.status = "complete";
@@ -385,6 +504,17 @@ export function currentGap(contract, ledger) {
       user_story: "作为用户，我需要先确认或修改验收标准，才能让 agent 判断任务完成。",
       status: "unknown",
       reason: "Acceptance criteria have not been approved by the user yet."
+    };
+  }
+
+  const compliance = profileCompliance(ledger);
+  if (compliance.required && !compliance.complete) {
+    const item = compliance.blocking[0];
+    return {
+      id: `PROFILE-${item.id}`,
+      user_story: `作为用户，我需要 agent 遵守能力偏好：${item.name}。`,
+      status: item.status === "violated" ? "failing" : "blocked",
+      reason: `Capability profile item ${item.name} is ${item.status}.`
     };
   }
 
@@ -407,6 +537,19 @@ export function currentGap(contract, ledger) {
 }
 
 export function intervention(contract, ledger) {
+  const compliance = profileCompliance(ledger);
+  if (compliance.required && !compliance.complete) {
+    const item = compliance.blocking[0];
+    return {
+      required: true,
+      criterion: `PROFILE-${item.id}`,
+      user_story: `作为用户，我需要确认 agent 是否必须遵守能力偏好：${item.name}。`,
+      action: item.status === "violated"
+        ? `Capability profile item ${item.name} was violated. Waive it or revise the work.`
+        : `Provide evidence that capability profile item ${item.name} was satisfied, or waive it.`
+    };
+  }
+
   for (const criterion of contract.criteria) {
     const state = ledger.criteria[criterion.id];
     if (state?.status === "blocked") {
@@ -460,6 +603,10 @@ export function renderReport(contract, ledger) {
     "",
     `Status: ${contract.acceptance_basis?.status || "draft"}`,
     contract.acceptance_basis?.summary ? `Summary: ${contract.acceptance_basis.summary}` : "Summary: <none>",
+    "",
+    "## Capability Profile",
+    "",
+    ...renderProfileLines(ledger),
     "",
     "## Acceptance Status",
     "",

@@ -56,6 +56,7 @@ The operator layer proves that Codex can actually use ADAW as the work protocol 
 | AC-O-5 | Codex conversation | Ask "what do I need to do?" | If blocked, the user sees a concrete human action. | Blocked output asks for a decision, input, permission, cost approval, or similar human action. |
 | AC-O-6 | Codex conversation | Revise an AC after new facts appear | The changed acceptance basis is preserved. | Updated ACs become the basis for `current_gap` and completion; old criteria are not silently reused. |
 | AC-O-7 | Codex conversation | Ask ADAW to brainstorm a fuzzy idea | The user sees selectable acceptance directions without remembering CLI syntax. | Brainstorm candidates describe user value, observable acceptance direction, and risk; they are not treated as a contract or completion evidence. |
+| AC-O-8 | Codex conversation | State required Skills, preferred stacks, avoided tools, or execution constraints | The agent records a Capability Profile without making the user remember CLI syntax. | Must/avoid profile items are shown in contract and report; unsatisfied must items or violated avoid items block completion unless waived. |
 
 ### L3 Productization AC
 
@@ -76,6 +77,33 @@ Each active goal has:
 
 - `<goal>.acceptance.md` for human review
 - `<goal>.evidence.json` for deterministic agent/tool updates
+
+## Capability Profile
+
+Acceptance criteria remain human-facing outcomes. A Capability Profile is separate execution
+guidance for the agent when the user says things like:
+
+- must use an existing Skill
+- prefer a library or stack
+- avoid a tool
+- ask before installing a dependency
+- follow a project-specific constraint
+
+Profile items have:
+
+- `type`: `skill`, `stack`, or `constraint`
+- `strength`: `must`, `prefer`, or `avoid`
+- `purpose`: why the user wants it
+- `install_policy`: `existing_only`, `ask_before_install`, or `allowed`
+
+Completion rules:
+
+- `must` blocks completion until satisfied or waived.
+- `prefer` is reported but does not block completion.
+- `avoid` blocks completion if violated.
+
+Agents translate the user's natural-language preferences into profile records. Users should not
+need to remember `adaw profile` commands.
 
 ## Status Model
 
@@ -122,12 +150,13 @@ On every turn:
 4. If the user starts with "use ADAW" / "用 ADAW 跑这个任务", run `adaw draft --goal "<goal>" --root <repo> --json`.
 5. Show the draft acceptance criteria and ask the user to approve or revise them.
 6. After approval, run `adaw approve --root <repo> --summary "<approval>" --json`.
-7. If the user revises a criterion later, run `adaw criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-8. Run `adaw resume --root <repo>` or `adaw next --root <repo>` to recover the active goal and current acceptance gap from repository files.
-9. Work only to produce evidence for that gap.
-10. Add evidence with `adaw evidence add`.
-11. Run `adaw evaluate`.
-12. Report acceptance state, not implementation steps.
+7. If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, run `adaw profile add --root <repo> ... --json` and keep those items out of the user acceptance criteria.
+8. If the user revises a criterion later, run `adaw criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
+9. Run `adaw resume --root <repo>` or `adaw next --root <repo>` to recover the active goal and current acceptance gap from repository files.
+10. Work only to produce evidence for that gap.
+11. Add acceptance evidence with `adaw evidence add`, and add profile compliance evidence with `adaw profile evidence` when profile items exist.
+12. Run `adaw evaluate`.
+13. Report acceptance state, profile compliance, and evidence, not implementation steps.
 
 Useful commands:
 
@@ -136,6 +165,9 @@ Useful commands:
 - `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
 - `adaw approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
 - `adaw criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
+- `adaw profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid>`: record user execution preferences separately from ACs.
+- `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
+- `adaw profile show --root <repo>`: show profile compliance and blocking items.
 - `adaw list --root <repo>`: list active ADAW goals.
 - `adaw resume --root <repo>`: recover the active goal, current gap, completion answer, and intervention state.
 - `adaw status --root <repo>`: answer whether the goal is complete and whether the user needs to act.

@@ -35,6 +35,10 @@ node ./bin/adaw.js next --root . --json
 node ./bin/adaw.js status --root . --json
 node ./bin/adaw.js criterion update --root . --criterion AC-P-1 --user-story "作为用户，我能判断当前验收缺口。" --json
 node ./bin/adaw.js evidence add --root . --criterion AC-P-1 --kind test-summary --summary "User can inspect the acceptance contract." --result passing --json
+node ./bin/adaw.js profile add --root . --type skill --name design-taste-frontend --strength must --purpose "Use this Skill for the design read and theme token pass." --install-policy existing_only --json
+node ./bin/adaw.js profile add --root . --type stack --name radix-ui --strength prefer --purpose "Use accessible primitives for custom components." --install-policy ask_before_install --json
+node ./bin/adaw.js profile show --root . --json
+node ./bin/adaw.js profile evidence --root . --item skill-design-taste-frontend --result satisfied --summary "Agent used the required Skill before implementation." --json
 node ./bin/adaw.js evaluate --root . --json
 node ./bin/adaw.js report --root . --json
 ```

@@ -9,6 +9,12 @@
 Status: approved
 Summary: User agreed to the layered ADAW self acceptance criteria.
 
+## Capability Profile
+
+| ID | Type | Name | Strength | Compliance | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| constraint-profile-stays-out-of-user-acs | constraint | profile-stays-out-of-user-acs | must | satisfied | Capability Profile records agent execution preferences without turning them into user acceptance criteria. |
+
 ## User Acceptance Criteria
 
 | ID | Layer | User acceptance criterion | Measurement | Passing threshold | Status |
@@ -25,6 +31,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-O-5 | operator | 作为用户，我在 Codex 对话里问“我需要做什么？”后，如果任务 blocked，能看到一个明确的人类动作。 | 制造或查看 blocked 状态下的 ADAW 报告或 agent 回复。 | blocked 说明必须是用户可执行动作，例如确认取舍、提供权限、批准成本或选择方案，而不是技术日志。 | passing |
 | AC-O-6 | operator | 作为用户，我发现新事实后在对话中修改某条 AC，agent 后续只按更新后的验收标准判断完成。 | 用户提出 AC 修改后，查看 active contract、status 和 report。 | 更新后的 AC 成为后续 completion 和 current_gap 的唯一验收依据；旧标准不会继续被当成完成条件。 | passing |
 | AC-O-7 | operator | 作为用户，我说“ADAW 先头脑风暴：想法 X”后，能看到几个可选择的验收方向，而不需要记住 CLI 用法。 | 在 Codex 对话中触发 brainstorm，查看 agent 展示的候选方向。 | 候选项围绕用户价值、可观察验收方式和风险组织；用户能选择或改写方向进入 draft；brainstorm 输出不能被当作 acceptance contract 或完成证据。 | passing |
+| AC-O-8 | operator | 作为用户，我在 Codex 对话里声明必须使用某个 Skill、偏好某个技术栈或避免某个工具后，agent 能记录这些偏好并在完成前告诉我是否遵守。 | 在 Codex 对话中提出能力偏好后，查看 active contract、status 或 report 中的 Capability Profile。 | 用户不需要记住 CLI；must 或 avoid 的违反会阻止 complete，prefer 会被展示但不阻止 complete；这些偏好不会被写成用户 AC。 | passing |
 | AC-Z-1 | productization | 作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。 | 运行 adaw skill export --json 并查看输出内容。 | 输出说明能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。 | passing |
 | AC-Z-2 | productization | 作为用户，我运行 adaw install 后，能把 ADAW 放入当前项目的可用入口，并且不会意外覆盖已有内容。 | 在一个已有项目中运行安装入口并查看安装结果。 | 安装前能看到将创建或跳过的入口；已有内容默认不被覆盖；失败时说明用户需要做什么。 | passing |
 | AC-Z-3 | productization | 作为用户，我在 Git 或 PR diff 中审查 agent 本轮改动后，能区分验收证据变化和实现过程噪音。 | 查看本轮 diff 或报告变更摘要。 | 默认摘要围绕 AC 状态变化、证据变化和用户影响组织；实现过程只作为附属证据出现。 | passing |

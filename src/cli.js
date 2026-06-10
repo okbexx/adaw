@@ -3,6 +3,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import {
   addEvidence,
+  addProfileEvidence,
+  addProfileItem,
   buildContractFromBrief,
   buildEvidenceLedger,
   completionAnswer,
@@ -12,6 +14,7 @@ import {
   intervention,
   ok,
   pathsForGoal,
+  profileCompliance,
   readJson,
   recomputeWorkflowStatus,
   renderAcceptanceMarkdown,
@@ -127,6 +130,9 @@ function exportedSkillMarkdown() {
     "",
     "After the user approves the criteria, run `adaw approve --root <repo> --summary \"user approved acceptance criteria\" --json`. If the user revises a criterion, run `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
     "",
+    "If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, translate the natural-language preference into a Capability Profile with `adaw profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
+    "Before answering complete, add profile evidence with `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json` for must/avoid items. Must items without satisfied or waived evidence block completion.",
+    "",
     "## Resume",
     "At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.",
     "",
@@ -137,6 +143,7 @@ function exportedSkillMarkdown() {
     "Progress is determined by acceptance evidence, not by implementation steps.",
     "Do not answer complete while the acceptance basis is draft.",
     "Do not treat brainstorm output as an acceptance contract or completion evidence.",
+    "Do not turn Capability Profile items into user acceptance criteria; they are agent execution guidance and compliance evidence.",
     ""
   ].join("\n");
 }
@@ -332,7 +339,7 @@ function loadPair(args) {
 export async function main(args) {
   const command = args[0];
   if (!command || command === "--help" || command === "-h") {
-    printJson(ok({ usage: "adaw <doctor|install|brainstorm|draft|init|list|check|approve|criterion|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
+    printJson(ok({ usage: "adaw <doctor|install|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
     return;
   }
 
@@ -585,6 +592,65 @@ export async function main(args) {
       goal_id: contract.goal_id,
       criterion,
       acceptance_basis: contract.acceptance_basis,
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    }));
+    return;
+  }
+
+  if (command === "profile" && args[1] === "add") {
+    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const item = {
+      id: argValue(args, "--id"),
+      type: argValue(args, "--type", "constraint"),
+      name: argValue(args, "--name"),
+      strength: argValue(args, "--strength", "prefer"),
+      purpose: argValue(args, "--purpose", ""),
+      scope: argValue(args, "--scope", ""),
+      install_policy: argValue(args, "--install-policy", "ask_before_install")
+    };
+    addProfileItem(ledger, item);
+    recomputeWorkflowStatus(contract, ledger);
+    savePair(acceptancePath, evidencePath, contract, ledger);
+    printJson(ok({
+      goal_id: contract.goal_id,
+      profile: ledger.capability_profile,
+      compliance: profileCompliance(ledger),
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    }));
+    return;
+  }
+
+  if (command === "profile" && args[1] === "evidence") {
+    const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const itemId = argValue(args, "--item");
+    if (!itemId) throw new Error("--item is required");
+    const evidence = {
+      result: argValue(args, "--result", "satisfied"),
+      summary: argValue(args, "--summary", ""),
+      path: argValue(args, "--path")
+    };
+    if (!evidence.summary) throw new Error("--summary is required");
+    addProfileEvidence(ledger, itemId, evidence);
+    recomputeWorkflowStatus(contract, ledger);
+    savePair(acceptancePath, evidencePath, contract, ledger);
+    printJson(ok({
+      goal_id: contract.goal_id,
+      item: itemId,
+      compliance: profileCompliance(ledger),
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    }));
+    return;
+  }
+
+  if (command === "profile" && args[1] === "show") {
+    const { contract, ledger } = loadPair(args);
+    printJson(ok({
+      goal_id: contract.goal_id,
+      profile: ledger.capability_profile || { items: [], evidence: [] },
+      compliance: profileCompliance(ledger),
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger)
     }));

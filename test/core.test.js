@@ -154,6 +154,68 @@ test("brainstorm creates selectable acceptance directions, not a process plan", 
   assert.equal(draft.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
 });
 
+test("capability profile records required skills and blocks completion until satisfied", () => {
+  const root = tempRoot();
+  const init = run(["draft", "--goal", "Build a frontend page", "--root", root, "--json"]);
+  const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
+
+  run(["approve", "--root", root, "--summary", "User approved frontend acceptance criteria.", "--json"]);
+  for (const criterion of Object.keys(ledger.ledger.criteria)) {
+    run([
+      "evidence", "add",
+      "--root", root,
+      "--criterion", criterion,
+      "--kind", "test-summary",
+      "--summary", `${criterion} is satisfied.`,
+      "--result", "passing",
+      "--json"
+    ]);
+  }
+
+  const must = run([
+    "profile", "add",
+    "--root", root,
+    "--type", "skill",
+    "--name", "design-taste-frontend",
+    "--strength", "must",
+    "--purpose", "Generate design read and global theme tokens before implementation.",
+    "--scope", "landing pages, portfolios, and redesigns",
+    "--install-policy", "existing_only",
+    "--json"
+  ]);
+  assert.equal(must.data.workflow_status, "blocked");
+  assert.equal(must.data.current_gap.id, "PROFILE-skill-design-taste-frontend");
+
+  const prefer = run([
+    "profile", "add",
+    "--root", root,
+    "--type", "stack",
+    "--name", "radix-ui",
+    "--strength", "prefer",
+    "--purpose", "Use accessible primitives for custom components.",
+    "--install-policy", "ask_before_install",
+    "--json"
+  ]);
+  assert.equal(prefer.data.compliance.statuses.some((item) => item.name === "radix-ui" && item.strength === "prefer"), true);
+
+  const afterEvidence = run([
+    "profile", "evidence",
+    "--root", root,
+    "--item", "skill-design-taste-frontend",
+    "--result", "satisfied",
+    "--summary", "Agent used design-taste-frontend for the design read and theme token pass.",
+    "--path", "/Users/jarl/.agents/skills/design-taste-frontend/SKILL.md",
+    "--json"
+  ]);
+  assert.equal(afterEvidence.data.workflow_status, "complete");
+
+  const report = run(["report", "--root", root, "--json"]);
+  const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.match(text, /Capability Profile/);
+  assert.match(text, /design-taste-frontend/);
+  assert.match(text, /radix-ui/);
+});
+
 test("evidence can drive the workflow to complete and render a human report", () => {
   const root = tempRoot();
   const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
@@ -252,16 +314,17 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 17);
+  assert.equal(brief.criteria.length, 18);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 7);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 5);
 
   const expectedTools = [
     "Codex 对话",
     "编辑器或文件浏览器",
     "新的 Codex 会话",
+    "Capability Profile",
     "ADAW 报告",
     "Git 或 PR diff",
     "adaw install",
@@ -287,6 +350,9 @@ test("skill export gives agents the full ADAW command loop", () => {
   assert.match(payload.data.skill_md, /adaw evaluate/);
   assert.match(payload.data.skill_md, /adaw status/);
   assert.match(payload.data.skill_md, /adaw report/);
+  assert.match(payload.data.skill_md, /Capability Profile/);
+  assert.match(payload.data.skill_md, /adaw profile add/);
+  assert.match(payload.data.skill_md, /adaw profile evidence/);
   assert.match(payload.data.skill_md, /Do not treat brainstorm output as an acceptance contract/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 });

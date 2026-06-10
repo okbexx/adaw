@@ -16,6 +16,9 @@ If the user chooses a brainstorm candidate, run `adaw draft --from-brainstorm <b
 
 After the user approves the criteria, run `adaw approve --root <repo> --summary "user approved acceptance criteria" --json`. If the user revises a criterion, run `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.
 
+If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, translate the natural-language preference into a Capability Profile with `adaw profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid> --purpose "<why>" --install-policy <existing_only|ask_before_install|allowed> --json`.
+Before answering complete, add profile evidence with `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary "<evidence>" --json` for must/avoid items. Must items without satisfied or waived evidence block completion.
+
 ## Resume
 At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.
 
@@ -26,3 +29,4 @@ Work only to produce evidence for the current acceptance gap. Add evidence with 
 Progress is determined by acceptance evidence, not by implementation steps.
 Do not answer complete while the acceptance basis is draft.
 Do not treat brainstorm output as an acceptance contract or completion evidence.
+Do not turn Capability Profile items into user acceptance criteria; they are agent execution guidance and compliance evidence.
