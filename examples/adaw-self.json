@@ -173,6 +173,22 @@
       "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 adaw doctor。",
       "threshold": "输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。",
       "risk": "high"
+    },
+    {
+      "id": "AC-Z-9",
+      "layer": "productization",
+      "user_story": "作为用户，我预览 ADAW 安装时，能判断每个项目入口会被创建、跳过、更新还是覆盖，并确认 dry-run 不会写入项目。",
+      "measurement": "运行 adaw install --dry-run，查看 install plan，再检查项目文件是否未被写入。",
+      "threshold": "install plan 对每个入口显示 action、kind、managed、would_write、will_write、destructive 和 reason；dry-run 下 will_write 为 0；覆盖类动作必须被标记为 destructive。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-Z-10",
+      "layer": "productization",
+      "user_story": "作为用户，我执行可能覆盖已有 ADAW 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。",
+      "measurement": "在已有 ADAW 入口的项目中运行 adaw install --force、adaw install --force --dry-run 和确认后的安装。",
+      "threshold": "未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。",
+      "risk": "high"
     }
   ]
 }

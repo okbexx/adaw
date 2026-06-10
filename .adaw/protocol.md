@@ -73,6 +73,8 @@ a durable workflow asset.
 | AC-Z-6 | Project file browser | Inspect the project after running ADAW | The user sees ADAW-owned state under `.adaw/` instead of a generic project `process/` directory. | Install, draft, brainstorm, report, and archive write ADAW state under `.adaw/` by default. |
 | AC-Z-7 | CLI / project file browser | Run `adaw install` | The user can inspect project ADAW registration and judge version, managed entries, active goals, Skill status, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.adaw/manifest.json` records version, managed files, active goals, Skill state, and capabilities. |
 | AC-Z-8 | CLI | Run `adaw doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.adaw` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
+| AC-Z-9 | CLI | Preview install with `adaw install --dry-run` | The user can judge what ADAW would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
+| AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `adaw install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 
 ## Required Artifact Pair
 
@@ -107,6 +109,21 @@ Each active goal has:
 
 `adaw install` creates or refreshes the manifest. State-changing ADAW commands refresh it when
 `.adaw/` already exists.
+
+`adaw install --dry-run` returns an install plan. The plan uses deterministic action semantics:
+
+- `create`: missing ADAW asset would be created
+- `exists`: required ADAW directory already exists
+- `skip`: existing file is preserved because `--force` was not used
+- `overwrite`: existing file would be overwritten because `--force` was used
+- `update`: generated ADAW state, such as the manifest, would be refreshed
+
+Each planned action also reports `kind`, `managed`, `would_write`, `will_write`, `destructive`,
+and a short human-readable reason.
+
+Real `adaw install --force` can overwrite ADAW-managed files, so it requires explicit confirmation.
+Run `adaw install --dry-run --force` first to inspect destructive actions, then rerun with
+`--confirm` only if those writes are acceptable.
 
 ## Capability Profile
 

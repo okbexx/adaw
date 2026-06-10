@@ -50,6 +50,13 @@ optional project Skill state, and supported protocol capabilities. `adaw doctor`
 project is `ready`, `needs-action`, or `broken`, with recovery actions for missing structure, stale
 manifest data, broken active goals, and stale Skills.
 
+`adaw install --dry-run` returns an `install_plan` that shows each planned action, asset kind,
+managed status, write intent, destructive overwrite flag, and reason. Dry-run plans report
+`will_write: 0` so users can review install impact before applying it.
+
+Real `adaw install --force` requires `--confirm`. Preview destructive actions with
+`adaw install --force --dry-run --json` before applying a confirmed overwrite.
+
 ## Development
 
 ```bash

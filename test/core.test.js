@@ -314,11 +314,11 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 21);
+  assert.equal(brief.criteria.length, 23);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 8);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 10);
 
   const expectedTools = [
     "Codex 对话",
@@ -370,11 +370,21 @@ test("install creates project assets and skips existing user content by default"
   const dryRun = run(["install", "--root", root, "--skill", "--dry-run", "--json"]);
   assert.equal(dryRun.data.dry_run, true);
   assert.equal(dryRun.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
+  assert.equal(dryRun.data.install_plan.schema_version, "adaw/install-plan-v1");
+  assert.equal(dryRun.data.install_plan.summary.would_write > 0, true);
+  assert.equal(dryRun.data.install_plan.summary.will_write, 0);
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").kind, "protocol");
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").will_write, false);
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").would_write, false);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
 
   const payload = run(["install", "--root", root, "--skill", "--json"]);
   assert.equal(payload.data.actions.find((action) => action.path === ".adaw/protocol.md").action, "skip");
   assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
+  assert.equal(payload.data.install_plan.summary.will_write > 0, true);
+  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").kind, "manifest");
+  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").managed, true);
+  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").will_write, true);
   assert.equal(fs.readFileSync(protocolPath, "utf8"), "custom protocol\n");
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "active")), true);
@@ -389,6 +399,27 @@ test("install creates project assets and skips existing user content by default"
   assert.equal(manifest.skill.in_sync, true);
   assert.equal(manifest.managed_files.some((entry) => entry.path === ".adaw/protocol.md" && entry.exists), true);
   assert.equal(manifest.capabilities.includes("doctor"), true);
+
+  const forced = run(["install", "--root", root, "--skill", "--force", "--dry-run", "--json"]);
+  const protocolAction = forced.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md");
+  assert.equal(protocolAction.action, "overwrite");
+  assert.equal(protocolAction.destructive, true);
+  assert.equal(forced.data.install_plan.summary.destructive > 0, true);
+  assert.equal(forced.data.install_plan.summary.will_write, 0);
+
+  const unconfirmed = spawnSync(process.execPath, [CLI, "install", "--root", root, "--skill", "--force", "--json"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(unconfirmed.status, 1);
+  const unconfirmedPayload = JSON.parse(unconfirmed.stdout);
+  assert.equal(unconfirmedPayload.error.type, "confirm_required");
+  assert.match(unconfirmedPayload.error.fix, /--dry-run --force/);
+
+  const confirmed = run(["install", "--root", root, "--skill", "--force", "--confirm", "--json"]);
+  assert.equal(confirmed.data.confirmed, true);
+  assert.equal(confirmed.data.install_plan.summary.destructive > 0, true);
+  assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
 });
 
 test("doctor reports ready, needs-action, and broken project health", () => {

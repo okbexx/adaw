@@ -39,6 +39,7 @@ const ADAW_CAPABILITIES = [
   "report",
   "doctor"
 ];
+const WRITING_INSTALL_ACTIONS = new Set(["create", "overwrite", "update"]);
 
 function sameStringSet(left, right) {
   if (!Array.isArray(left) || !Array.isArray(right)) return false;
@@ -46,6 +47,57 @@ function sameStringSet(left, right) {
   const rightSet = new Set(right);
   if (leftSet.size !== rightSet.size) return false;
   return [...leftSet].every((item) => rightSet.has(item));
+}
+
+function installActionReason(action, kind) {
+  if (action === "create") return `Missing ADAW ${kind} will be created.`;
+  if (action === "exists") return `Required ADAW ${kind} already exists.`;
+  if (action === "skip") return `Existing ADAW ${kind} is not overwritten without --force.`;
+  if (action === "overwrite") return `Existing ADAW ${kind} will be overwritten because --force was provided.`;
+  if (action === "update") return `ADAW ${kind} will be refreshed from current project state.`;
+  return `ADAW ${kind} action: ${action}.`;
+}
+
+function enrichInstallAction(root, action, { dryRun = false } = {}) {
+  const wouldWrite = WRITING_INSTALL_ACTIONS.has(action.action);
+  return {
+    path: relativeTo(root, action.path),
+    kind: action.kind || "file",
+    action: action.action,
+    managed: action.managed !== false,
+    would_write: wouldWrite,
+    will_write: wouldWrite && !dryRun,
+    destructive: action.action === "overwrite",
+    reason: action.reason || installActionReason(action.action, action.kind || "file")
+  };
+}
+
+function summarizeInstallPlan(actions) {
+  const byAction = {};
+  for (const action of actions) {
+    byAction[action.action] = (byAction[action.action] || 0) + 1;
+  }
+  return {
+    total: actions.length,
+    by_action: byAction,
+    would_write: actions.filter((action) => action.would_write).length,
+    will_write: actions.filter((action) => action.will_write).length,
+    destructive: actions.filter((action) => action.destructive).length,
+    managed: actions.filter((action) => action.managed).length
+  };
+}
+
+function buildInstallPlan(root, actions, { dryRun = false, force = false, requestedSkill = false } = {}) {
+  const enrichedActions = actions.map((action) => enrichInstallAction(root, action, { dryRun }));
+  return {
+    schema_version: "adaw/install-plan-v1",
+    root,
+    dry_run: dryRun,
+    force,
+    requested_skill: requestedSkill,
+    summary: summarizeInstallPlan(enrichedActions),
+    actions: enrichedActions
+  };
 }
 
 const BRAINSTORM_CANDIDATES = [
@@ -157,7 +209,8 @@ function exportedSkillMarkdown() {
     "Before answering complete, add profile evidence with `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json` for must/avoid items. Must items without satisfied or waived evidence block completion.",
     "",
     "## Project setup and health",
-    "If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize created, skipped, overwritten, or updated assets. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.",
+    "If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize `install_plan`: created, skipped, overwritten, or updated assets; write intent; destructive actions; and reasons. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.",
+    "If a destructive install action is needed, preview it with `adaw install --root <repo> --force --dry-run --json` and wait for explicit user acceptance before running `adaw install --root <repo> --force --confirm --json`.",
     "",
     "If the user asks whether ADAW is set up, healthy, recoverable, or ready in a project, run `adaw doctor --root <repo> --json` and summarize the `ready`, `needs-action`, or `broken` status plus recovery actions. Do not make the user remember the doctor command.",
     "",
@@ -176,22 +229,22 @@ function exportedSkillMarkdown() {
   ].join("\n");
 }
 
-function writeIfSafe(filePath, content, { dryRun = false, force = false } = {}) {
+function writeIfSafe(filePath, content, { dryRun = false, force = false, kind = "file", managed = true } = {}) {
   const exists = fs.existsSync(filePath);
   const action = exists ? (force ? "overwrite" : "skip") : "create";
   if (!dryRun && (!exists || force)) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content);
   }
-  return { path: filePath, action };
+  return { path: filePath, action, kind, managed };
 }
 
-function ensureDir(dirPath, { dryRun = false } = {}) {
+function ensureDir(dirPath, { dryRun = false, kind = "directory", managed = true } = {}) {
   const exists = fs.existsSync(dirPath);
   if (!dryRun && !exists) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-  return { path: dirPath, action: exists ? "exists" : "create" };
+  return { path: dirPath, action: exists ? "exists" : "create", kind, managed };
 }
 
 function protocolTemplate() {
@@ -308,6 +361,8 @@ function writeManifest(root, { dryRun = false } = {}) {
   return {
     path: target,
     action: exists ? "update" : "create",
+    kind: "manifest",
+    managed: true,
     manifest
   };
 }
@@ -725,26 +780,40 @@ export async function main(args) {
     const root = resolveRoot(args);
     const dryRun = hasFlag(args, "--dry-run");
     const force = hasFlag(args, "--force");
+    const confirmed = hasFlag(args, "--confirm");
+    const requestedSkill = hasFlag(args, "--skill");
+    if (force && !dryRun && !confirmed) {
+      printJson(fail(
+        "confirm_required",
+        "Install --force may overwrite existing ADAW-managed files.",
+        "Run adaw install --root <project> --dry-run --force --json first, then rerun with --confirm if the destructive actions are acceptable."
+      ));
+      process.exitCode = 1;
+      return;
+    }
     const actions = [
       ensureDir(path.join(root, ".adaw", "active"), { dryRun }),
       ensureDir(path.join(root, ".adaw", "completed"), { dryRun }),
       ensureDir(path.join(root, ".adaw", "blocked"), { dryRun }),
       ensureDir(path.join(root, ".adaw", "reports"), { dryRun }),
       ensureDir(path.join(root, ".adaw", "brainstorms"), { dryRun }),
-      writeIfSafe(path.join(root, ".adaw", "protocol.md"), protocolTemplate(), { dryRun, force })
+      writeIfSafe(path.join(root, ".adaw", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" })
     ];
 
-    if (hasFlag(args, "--skill")) {
-      actions.push(writeIfSafe(path.join(root, ".agents", "skills", "adaw", "SKILL.md"), exportedSkillMarkdown(), { dryRun, force }));
+    if (requestedSkill) {
+      actions.push(writeIfSafe(path.join(root, ".agents", "skills", "adaw", "SKILL.md"), exportedSkillMarkdown(), { dryRun, force, kind: "skill" }));
     }
     const manifestAction = writeManifest(root, { dryRun });
     actions.push(manifestAction);
+    const installPlan = buildInstallPlan(root, actions, { dryRun, force, requestedSkill });
 
     printJson(ok({
       root,
       dry_run: dryRun,
       force,
-      actions: actions.map((action) => ({ path: relativeTo(root, action.path), action: action.action })),
+      confirmed,
+      install_plan: installPlan,
+      actions: installPlan.actions,
       manifest: manifestAction.manifest
     }));
     return;
