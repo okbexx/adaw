@@ -1,0 +1,25 @@
+{
+  "name": "@okbexx/adaw",
+  "version": "0.1.0",
+  "description": "Acceptance-Driven Agent Workflow: human-centered acceptance contracts and evidence ledgers for coding agents.",
+  "type": "module",
+  "bin": {
+    "adaw": "./bin/adaw.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --test && node ./bin/adaw.js doctor --json"
+  },
+  "keywords": [
+    "agent",
+    "workflow",
+    "acceptance",
+    "codex",
+    "claude"
+  ],
+  "author": "okbexx <okbexx@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

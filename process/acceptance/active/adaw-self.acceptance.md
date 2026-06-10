@@ -1,0 +1,35 @@
+# adaw-self Acceptance Contract
+
+## Goal
+
+让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。
+
+## Acceptance Basis
+
+Status: approved
+Summary: User agreed to the layered ADAW self acceptance criteria and the operator work direction.
+
+## User Acceptance Criteria
+
+| ID | Layer | User acceptance criterion | Measurement | Passing threshold | Status |
+| --- | --- | --- | --- | --- | --- |
+| AC-P-1 | protocol | 作为用户，我在编辑器或文件浏览器里打开 active acceptance contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。 | 打开 process/acceptance/active/<goal>.acceptance.md 并阅读。 | 不读聊天历史、不读实现说明，60 秒内能判断任务在验收层面的状态和下一条缺口。 | passing |
+| AC-P-2 | protocol | 作为用户，我运行 adaw check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。 | 对当前 active goal 或故意写坏的验收草案运行 adaw check。 | “存在文件、字段、命令、测试通过、实现某模块”这类内容不能作为用户验收标准通过校验。 | passing |
+| AC-P-3 | protocol | 作为用户，我运行 adaw next 或 adaw status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。 | 运行 adaw next/status 并查看返回的 current_gap、completion 和 intervention。 | 输出默认回答“当前差哪条 AC、是否完成、是否需要人类动作”，不把过程任务当作主线。 | passing |
+| AC-P-4 | protocol | 作为用户，我查看高风险 AC 的状态时，能看到弱证据不能让它变成 passing。 | 给 high risk AC 添加弱 passing 证据，再查看 status 或 report。 | 高风险 passing 不能只由 agent 自我总结证明；缺少强证据时必须保持 failing、unknown 或 blocked。 | passing |
+| AC-P-5 | protocol | 作为用户，我运行 adaw report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。 | 运行 adaw report 或让 Codex 生成 ADAW 报告。 | 报告默认围绕验收状态和证据组织，不把过程任务当作主线。 | passing |
+| AC-O-1 | operator | 作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。 | 在 Codex 对话中查看 agent 返回的验收草案。 | 草案只描述用户通过工具执行操作后能完成的判断或动作；用户能直接 approve 或 revise。 | passing |
+| AC-O-2 | operator | 作为用户，我在 Codex 对话里 approve 或 revise 验收标准后，能控制什么叫完成，而不是让 agent 自动决定完成定义。 | 查看 active acceptance contract 中是否反映用户确认后的验收标准。 | agent 在用户确认前不能进入 complete 判断；用户修改过的 AC 会成为后续状态判断依据。 | passing |
+| AC-O-3 | operator | 作为用户，我在新的 Codex 会话里说“继续 ADAW”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。 | 在新会话触发 ADAW 恢复流程，观察 agent 返回内容。 | 不依赖旧聊天上下文；能返回 goal id、当前状态、当前关键缺口和下一条需要证据的 AC。 | passing |
+| AC-O-4 | operator | 作为用户，我在 Codex 对话里问“现在完成了吗？”后，agent 只能基于 required AC 的状态和证据回答。 | 向 agent 询问完成状态并检查回答依据。 | 只有 required AC 全部 passing 或 waived 时才能回答 complete；否则必须指出未通过或 blocked 的 AC。 | passing |
+| AC-O-5 | operator | 作为用户，我在 Codex 对话里问“我需要做什么？”后，如果任务 blocked，能看到一个明确的人类动作。 | 制造或查看 blocked 状态下的 ADAW 报告或 agent 回复。 | blocked 说明必须是用户可执行动作，例如确认取舍、提供权限、批准成本或选择方案，而不是技术日志。 | passing |
+| AC-O-6 | operator | 作为用户，我发现新事实后在对话中修改某条 AC，agent 后续只按更新后的验收标准判断完成。 | 用户提出 AC 修改后，查看 active contract、status 和 report。 | 更新后的 AC 成为后续 completion 和 current_gap 的唯一验收依据；旧标准不会继续被当成完成条件。 | passing |
+| AC-Z-1 | productization | 作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。 | 运行 adaw skill export --json 并查看输出内容。 | 输出说明能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。 | passing |
+| AC-Z-2 | productization | 作为用户，我运行 adaw install 后，能把 ADAW 放入当前项目的可用入口，并且不会意外覆盖已有内容。 | 在一个已有项目中运行安装入口并查看安装结果。 | 安装前能看到将创建或跳过的入口；已有内容默认不被覆盖；失败时说明用户需要做什么。 | passing |
+| AC-Z-3 | productization | 作为用户，我在 Git 或 PR diff 中审查 agent 本轮改动后，能区分验收证据变化和实现过程噪音。 | 查看本轮 diff 或报告变更摘要。 | 默认摘要围绕 AC 状态变化、证据变化和用户影响组织；实现过程只作为附属证据出现。 | passing |
+| AC-Z-4 | productization | 作为用户，我运行 adaw list 后，能看到多个 active goals，并能明确选择要继续的目标。 | 创建多个 active goals 后运行 adaw list，并用 --goal 指定 resume/status/report 的目标。 | 多个目标不会被 agent 随机选择；用户能看见目标列表、状态、当前缺口和对应路径。 | passing |
+| AC-Z-5 | productization | 作为用户，我运行归档入口后，completed 或 blocked 中保留报告，active 中不再出现这个目标。 | 对 complete 或 blocked goal 执行归档，再运行 adaw list 并打开归档产物。 | 归档不会丢失 acceptance contract、evidence ledger 或 report；active 列表只显示仍需推进的目标。 | passing |
+
+## Rule
+
+Progress is determined by acceptance evidence, not by implementation steps.
