@@ -6,9 +6,20 @@
   "bin": {
     "adaw": "./bin/adaw.js"
   },
+  "files": [
+    ".adaw/protocol.md",
+    "bin/",
+    "src/",
+    "examples/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test",
     "check": "node --test && node ./bin/adaw.js doctor --json"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "agent",
