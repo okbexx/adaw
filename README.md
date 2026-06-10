@@ -25,6 +25,8 @@ process/
 ## Quick Start
 
 ```bash
+node ./bin/adaw.js brainstorm --idea "Explore a fuzzy goal before acceptance" --root . --json
+node ./bin/adaw.js draft --from-brainstorm explore-a-fuzzy-goal-before-acceptance --candidate A --root . --json
 node ./bin/adaw.js draft --goal "Ship a user-visible task" --root . --json
 node ./bin/adaw.js approve --root . --summary "User approved acceptance criteria." --json
 node ./bin/adaw.js init examples/adaw-self.json --root . --json

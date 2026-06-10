@@ -7,7 +7,7 @@
 ## Acceptance Basis
 
 Status: approved
-Summary: User agreed to the layered ADAW self acceptance criteria and the operator work direction.
+Summary: User agreed to the layered ADAW self acceptance criteria.
 
 ## Acceptance Status
 
@@ -18,13 +18,14 @@ Summary: User agreed to the layered ADAW self acceptance criteria and the operat
 | AC-P-3 | protocol | 作为用户，我运行 adaw next 或 adaw status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。 | passing | verified | test-summary: adaw next/status return current_gap, completion, and intervention instead of process steps. |
 | AC-P-4 | protocol | 作为用户，我查看高风险 AC 的状态时，能看到弱证据不能让它变成 passing。 | passing | verified | test-summary: High-risk gate downgrades weak passing evidence and accepts only strong evidence kinds or confidence. |
 | AC-P-5 | protocol | 作为用户，我运行 adaw report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。 | passing | verified | test-summary: adaw report renders layered AC status, evidence summary, current gap, user intervention, and conclusion. |
-| AC-O-1 | operator | 作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。 | passing | verified | artifact: Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'; operator smoke produced a draft acceptance contract with approval/revision next action. |
+| AC-O-1 | operator | 作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。 | passing | verified | artifact: Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'. |
 | AC-O-2 | operator | 作为用户，我在 Codex 对话里 approve 或 revise 验收标准后，能控制什么叫完成，而不是让 agent 自动决定完成定义。 | passing | verified | test-summary: adaw draft keeps acceptance_basis=draft and cannot become complete until adaw approve records user approval; tests cover draft gate and approval. |
-| AC-O-3 | operator | 作为用户，我在新的 Codex 会话里说“继续 ADAW”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。 | passing | verified | review-result: resume --root . restores adaw-self from repo files and reports current gap AC-O-3 without relying on prior chat context. |
+| AC-O-3 | operator | 作为用户，我在新的 Codex 会话里说“继续 ADAW”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。 | passing | verified | review-result: resume --root . restores adaw-self from repo files and reports current gap without relying on prior chat context. |
 | AC-O-4 | operator | 作为用户，我在 Codex 对话里问“现在完成了吗？”后，agent 只能基于 required AC 的状态和证据回答。 | passing | verified | test-summary: status/completion answers are computed only from required AC statuses and evidence; incomplete goals report the current unmet AC instead of complete. |
 | AC-O-5 | operator | 作为用户，我在 Codex 对话里问“我需要做什么？”后，如果任务 blocked，能看到一个明确的人类动作。 | passing | verified | test-summary: blocked evidence produces status.intervention with a concrete human action, verified by blocked criteria tests. |
 | AC-O-6 | operator | 作为用户，我发现新事实后在对话中修改某条 AC，agent 后续只按更新后的验收标准判断完成。 | passing | verified | test-summary: adaw criterion update records the user revision as approved acceptance basis and clears stale evidence for the changed AC. |
-| AC-Z-1 | productization | 作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。 | passing | verified | test-summary: adaw skill export emits a Codex Skill draft covering resume, next, evidence add, evaluate, status, and report. |
+| AC-O-7 | operator | 作为用户，我说“ADAW 先头脑风暴：想法 X”后，能看到几个可选择的验收方向，而不需要记住 CLI 用法。 | passing | verified | test-summary: adaw brainstorm creates selectable acceptance directions, not a process plan; Skill tells Codex to invoke it from natural language and not treat output as contract or completion evidence. |
+| AC-Z-1 | productization | 作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。 | passing | verified | test-summary: adaw skill export emits a Codex Skill draft covering brainstorm, draft, approve, criterion update, resume, next, evidence add, evaluate, status, and report. |
 | AC-Z-2 | productization | 作为用户，我运行 adaw install 后，能把 ADAW 放入当前项目的可用入口，并且不会意外覆盖已有内容。 | passing | verified | test-summary: adaw install creates process assets and optional repo-local Skill while skipping existing content by default. |
 | AC-Z-3 | productization | 作为用户，我在 Git 或 PR diff 中审查 agent 本轮改动后，能区分验收证据变化和实现过程噪音。 | passing | verified | test-summary: adaw changes groups acceptance artifacts separately from implementation files for review. |
 | AC-Z-4 | productization | 作为用户，我运行 adaw list 后，能看到多个 active goals，并能明确选择要继续的目标。 | passing | verified | test-summary: adaw list shows multiple active goals and resume/status/report require --goal instead of random selection. |

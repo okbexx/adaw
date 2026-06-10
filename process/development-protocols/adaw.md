@@ -55,6 +55,7 @@ The operator layer proves that Codex can actually use ADAW as the work protocol 
 | AC-O-4 | Codex conversation | Ask "is it done?" | The agent answers only from required AC status and evidence. | Complete is allowed only when required ACs are all `passing` or `waived`. |
 | AC-O-5 | Codex conversation | Ask "what do I need to do?" | If blocked, the user sees a concrete human action. | Blocked output asks for a decision, input, permission, cost approval, or similar human action. |
 | AC-O-6 | Codex conversation | Revise an AC after new facts appear | The changed acceptance basis is preserved. | Updated ACs become the basis for `current_gap` and completion; old criteria are not silently reused. |
+| AC-O-7 | Codex conversation | Ask ADAW to brainstorm a fuzzy idea | The user sees selectable acceptance directions without remembering CLI syntax. | Brainstorm candidates describe user value, observable acceptance direction, and risk; they are not treated as a contract or completion evidence. |
 
 ### L3 Productization AC
 
@@ -115,19 +116,24 @@ This keeps high-risk completion from relying on agent self-summary.
 
 On every turn:
 
-1. If the user starts with "use ADAW" / "用 ADAW 跑这个任务", run `adaw draft --goal "<goal>" --root <repo> --json`.
-2. Show the draft acceptance criteria and ask the user to approve or revise them.
-3. After approval, run `adaw approve --root <repo> --summary "<approval>" --json`.
-4. If the user revises a criterion later, run `adaw criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-5. Run `adaw resume --root <repo>` or `adaw next --root <repo>` to recover the active goal and current acceptance gap from repository files.
-6. Work only to produce evidence for that gap.
-7. Add evidence with `adaw evidence add`.
-8. Run `adaw evaluate`.
-9. Report acceptance state, not implementation steps.
+1. If the user wants to discuss, brainstorm, explore, or is not ready to define acceptance criteria, run `adaw brainstorm --idea "<idea>" --root <repo> --json`.
+2. Show only candidate acceptance directions and ask the user to choose or revise a direction. Brainstorm output is not a contract or completion evidence.
+3. If the user chooses a candidate, run `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
+4. If the user starts with "use ADAW" / "用 ADAW 跑这个任务", run `adaw draft --goal "<goal>" --root <repo> --json`.
+5. Show the draft acceptance criteria and ask the user to approve or revise them.
+6. After approval, run `adaw approve --root <repo> --summary "<approval>" --json`.
+7. If the user revises a criterion later, run `adaw criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
+8. Run `adaw resume --root <repo>` or `adaw next --root <repo>` to recover the active goal and current acceptance gap from repository files.
+9. Work only to produce evidence for that gap.
+10. Add evidence with `adaw evidence add`.
+11. Run `adaw evaluate`.
+12. Report acceptance state, not implementation steps.
 
 Useful commands:
 
+- `adaw brainstorm --idea "<idea>" --root <repo>`: create selectable acceptance directions before a contract exists.
 - `adaw draft --goal "<goal>" --root <repo>`: create a draft acceptance contract that needs user approval.
+- `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
 - `adaw approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
 - `adaw criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
 - `adaw list --root <repo>`: list active ADAW goals.

@@ -3,7 +3,11 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "goal": "让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
-    "created_at": "2026-06-10T06:20:12.459Z",
+    "created_at": "2026-06-10T07:12:49.727Z",
+    "acceptance_basis": {
+      "status": "approved",
+      "summary": "User agreed to the layered ADAW self acceptance criteria."
+    },
     "criteria": [
       {
         "id": "AC-P-1",
@@ -105,6 +109,15 @@
         "risk": "high"
       },
       {
+        "id": "AC-O-7",
+        "layer": "operator",
+        "user_story": "作为用户，我说“ADAW 先头脑风暴：想法 X”后，能看到几个可选择的验收方向，而不需要记住 CLI 用法。",
+        "measurement": "在 Codex 对话中触发 brainstorm，查看 agent 展示的候选方向。",
+        "threshold": "候选项围绕用户价值、可观察验收方式和风险组织；用户能选择或改写方向进入 draft；brainstorm 输出不能被当作 acceptance contract 或完成证据。",
+        "required": true,
+        "risk": "medium"
+      },
+      {
         "id": "AC-Z-1",
         "layer": "productization",
         "user_story": "作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。",
@@ -149,18 +162,13 @@
         "required": true,
         "risk": "high"
       }
-    ],
-    "acceptance_basis": {
-      "status": "approved",
-      "summary": "User agreed to the layered ADAW self acceptance criteria and the operator work direction.",
-      "approved_at": "2026-06-10T06:38:39.458Z"
-    }
+    ]
   },
   "ledger": {
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-10T06:38:51.633Z",
+    "updated_at": "2026-06-10T07:12:50.365Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -173,7 +181,7 @@
             "summary": "Acceptance contract renders layered ACs with status and current gap readable from process/acceptance/active/adaw-self.acceptance.md.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.535Z"
+            "created_at": "2026-06-10T07:12:49.764Z"
           }
         ]
       },
@@ -188,7 +196,7 @@
             "summary": "adaw check validates contracts and rejects implementation-detail ACs.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.570Z"
+            "created_at": "2026-06-10T07:12:49.800Z"
           }
         ]
       },
@@ -203,7 +211,7 @@
             "summary": "adaw next/status return current_gap, completion, and intervention instead of process steps.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.608Z"
+            "created_at": "2026-06-10T07:12:49.842Z"
           }
         ]
       },
@@ -218,7 +226,7 @@
             "summary": "High-risk gate downgrades weak passing evidence and accepts only strong evidence kinds or confidence.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.651Z"
+            "created_at": "2026-06-10T07:12:49.879Z"
           }
         ]
       },
@@ -233,7 +241,7 @@
             "summary": "adaw report renders layered AC status, evidence summary, current gap, user intervention, and conclusion.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.687Z"
+            "created_at": "2026-06-10T07:12:49.915Z"
           }
         ]
       },
@@ -245,11 +253,11 @@
         "evidence": [
           {
             "kind": "artifact",
-            "summary": "Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'; operator smoke produced a draft acceptance contract with approval/revision next action.",
+            "summary": "Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'.",
             "result": "passing",
             "path": ".agents/skills/adaw/SKILL.md",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:15.889Z"
+            "created_at": "2026-06-10T07:12:49.952Z"
           }
         ]
       },
@@ -264,7 +272,7 @@
             "summary": "adaw draft keeps acceptance_basis=draft and cannot become complete until adaw approve records user approval; tests cover draft gate and approval.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:15.927Z"
+            "created_at": "2026-06-10T07:12:49.988Z"
           }
         ]
       },
@@ -276,10 +284,10 @@
         "evidence": [
           {
             "kind": "review-result",
-            "summary": "resume --root . restores adaw-self from repo files and reports current gap AC-O-3 without relying on prior chat context.",
+            "summary": "resume --root . restores adaw-self from repo files and reports current gap without relying on prior chat context.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:51.554Z"
+            "created_at": "2026-06-10T07:12:50.024Z"
           }
         ]
       },
@@ -294,7 +302,7 @@
             "summary": "status/completion answers are computed only from required AC statuses and evidence; incomplete goals report the current unmet AC instead of complete.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:51.589Z"
+            "created_at": "2026-06-10T07:12:50.061Z"
           }
         ]
       },
@@ -309,7 +317,7 @@
             "summary": "blocked evidence produces status.intervention with a concrete human action, verified by blocked criteria tests.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:51.632Z"
+            "created_at": "2026-06-10T07:12:50.096Z"
           }
         ]
       },
@@ -324,7 +332,22 @@
             "summary": "adaw criterion update records the user revision as approved acceptance basis and clears stale evidence for the changed AC.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:38:15.964Z"
+            "created_at": "2026-06-10T07:12:50.134Z"
+          }
+        ]
+      },
+      "AC-O-7": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "summary": "adaw brainstorm creates selectable acceptance directions, not a process plan; Skill tells Codex to invoke it from natural language and not treat output as contract or completion evidence.",
+            "result": "passing",
+            "gate": "accepted",
+            "created_at": "2026-06-10T07:12:50.175Z"
           }
         ]
       },
@@ -336,10 +359,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw skill export emits a Codex Skill draft covering resume, next, evidence add, evaluate, status, and report.",
+            "summary": "adaw skill export emits a Codex Skill draft covering brainstorm, draft, approve, criterion update, resume, next, evidence add, evaluate, status, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.722Z"
+            "created_at": "2026-06-10T07:12:50.214Z"
           }
         ]
       },
@@ -354,7 +377,7 @@
             "summary": "adaw install creates process assets and optional repo-local Skill while skipping existing content by default.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.758Z"
+            "created_at": "2026-06-10T07:12:50.257Z"
           }
         ]
       },
@@ -369,7 +392,7 @@
             "summary": "adaw changes groups acceptance artifacts separately from implementation files for review.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.792Z"
+            "created_at": "2026-06-10T07:12:50.293Z"
           }
         ]
       },
@@ -384,7 +407,7 @@
             "summary": "adaw list shows multiple active goals and resume/status/report require --goal instead of random selection.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.826Z"
+            "created_at": "2026-06-10T07:12:50.330Z"
           }
         ]
       },
@@ -396,17 +419,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw archive moves complete goals out of active and preserves contract, evidence ledger, and report.",
-            "result": "passing",
-            "gate": "accepted",
-            "created_at": "2026-06-10T06:21:22.862Z"
-          },
-          {
-            "kind": "test-summary",
             "summary": "adaw archive moves complete and blocked goals out of active while preserving contract, evidence ledger, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T06:22:47.899Z"
+            "created_at": "2026-06-10T07:12:50.364Z"
           }
         ]
       }

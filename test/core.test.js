@@ -121,6 +121,39 @@ test("draft requires user approval before completion evidence can finish the wor
   assert.equal(approved.data.workflow_status, "complete");
 });
 
+test("brainstorm creates selectable acceptance directions, not a process plan", () => {
+  const root = tempRoot();
+  const brainstorm = run([
+    "brainstorm",
+    "--idea", "我想让 ADAW 支持头脑风暴",
+    "--root", root,
+    "--json"
+  ]);
+
+  assert.equal(brainstorm.data.status, "draft-source");
+  assert.equal(brainstorm.data.is_acceptance_contract, false);
+  assert.equal(brainstorm.data.candidates.length, 3);
+  assert.equal(fs.existsSync(brainstorm.data.brainstorm_path), true);
+  assert.equal(fs.existsSync(brainstorm.data.markdown_path), true);
+
+  const text = fs.readFileSync(brainstorm.data.markdown_path, "utf8");
+  assert.match(text, /Acceptance directions/);
+  assert.match(text, /not an acceptance contract/);
+  assert.doesNotMatch(text, /Implementation plan/);
+  assert.doesNotMatch(text, /Step 1/);
+
+  const draft = run([
+    "draft",
+    "--from-brainstorm", brainstorm.data.brainstorm_id,
+    "--candidate", "A",
+    "--root", root,
+    "--json"
+  ]);
+  assert.equal(draft.data.acceptance_basis.status, "draft");
+  assert.equal(draft.data.current_gap.id, "ACCEPTANCE-BASIS");
+  assert.equal(draft.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
+});
+
 test("evidence can drive the workflow to complete and render a human report", () => {
   const root = tempRoot();
   const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
@@ -219,10 +252,10 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 16);
+  assert.equal(brief.criteria.length, 17);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 6);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 7);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 5);
 
   const expectedTools = [
@@ -243,6 +276,8 @@ test("protocol v1 example contains concrete user tool operations", () => {
 
 test("skill export gives agents the full ADAW command loop", () => {
   const payload = run(["skill", "export", "--json"]);
+  assert.match(payload.data.skill_md, /adaw brainstorm/);
+  assert.match(payload.data.skill_md, /candidate acceptance directions/);
   assert.match(payload.data.skill_md, /adaw draft/);
   assert.match(payload.data.skill_md, /adaw approve/);
   assert.match(payload.data.skill_md, /adaw criterion update/);
@@ -252,6 +287,7 @@ test("skill export gives agents the full ADAW command loop", () => {
   assert.match(payload.data.skill_md, /adaw evaluate/);
   assert.match(payload.data.skill_md, /adaw status/);
   assert.match(payload.data.skill_md, /adaw report/);
+  assert.match(payload.data.skill_md, /Do not treat brainstorm output as an acceptance contract/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 });
 

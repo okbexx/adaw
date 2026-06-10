@@ -16,10 +16,50 @@ import {
   recomputeWorkflowStatus,
   renderAcceptanceMarkdown,
   renderReport,
+  slugify,
   syncAcceptanceMarkdown,
   validateContract,
   writeJson
 } from "./core.js";
+
+const BRAINSTORM_CANDIDATES = [
+  {
+    id: "A",
+    title: "目标澄清型",
+    user_value: "用户能把模糊想法收敛成一个明确目标和少量可观察验收方向。",
+    suggested_goal_template: "让用户从模糊想法中选择一个明确、可验收的目标。",
+    acceptance_directions: [
+      "作为用户，我能在候选方向中看出每个方向解决的用户价值。",
+      "作为用户，我能选择一个方向进入 ADAW draft，或要求改写方向。",
+      "作为用户，我能判断候选方向没有要求我阅读技术说明。"
+    ],
+    risks: ["目标仍然太泛，无法生成可验收 AC。"]
+  },
+  {
+    id: "B",
+    title: "方案取舍型",
+    user_value: "用户能比较几种产品形态，并选择哪一种进入正式验收。",
+    suggested_goal_template: "让用户比较多个可验收产品形态，并选择一个进入执行。",
+    acceptance_directions: [
+      "作为用户，我能看到每个方向对应的使用入口和判断方式。",
+      "作为用户，我能比较方向之间的取舍，而不是阅读实现计划。",
+      "作为用户，我能选择一个方向作为正式 ADAW draft 的来源。"
+    ],
+    risks: ["候选项可能变成技术方案比较，需要退回用户价值和验收方式。"]
+  },
+  {
+    id: "C",
+    title: "风险识别型",
+    user_value: "用户能先看见哪些验收点需要强证据、人工确认或外部条件。",
+    suggested_goal_template: "让用户识别完成判断中的高风险验收点。",
+    acceptance_directions: [
+      "作为用户，我能看到哪些方向需要更强证据才能说完成。",
+      "作为用户，我能知道哪些风险需要人工确认或外部条件。",
+      "作为用户，我能决定先验证风险还是直接进入 draft。"
+    ],
+    risks: ["风险讨论可能扩散成过程计划，需要保持在完成判断和证据强度上。"]
+  }
+];
 
 const DEFAULT_CRITERIA = [
   {
@@ -78,8 +118,12 @@ function exportedSkillMarkdown() {
     "Use when a task needs the agent to keep working until human-centered acceptance criteria have passing or waived evidence.",
     "",
     "## Start",
+    "If the user says they want to discuss, brainstorm, explore, or are not ready to define acceptance criteria, run `adaw brainstorm --idea \"<idea>\" --root <repo> --json` and show only the candidate acceptance directions. Ask the user to choose or revise a direction.",
+    "",
     "When the user says `用 ADAW 跑这个任务：目标是 X`, run `adaw draft --goal \"X\" --root <repo> --json` and show the draft acceptance criteria for approval or revision before implementation.",
     "If `adaw` is not on PATH in this workspace, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.",
+    "",
+    "If the user chooses a brainstorm candidate, run `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
     "",
     "After the user approves the criteria, run `adaw approve --root <repo> --summary \"user approved acceptance criteria\" --json`. If the user revises a criterion, run `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
     "",
@@ -92,6 +136,7 @@ function exportedSkillMarkdown() {
     "## Rule",
     "Progress is determined by acceptance evidence, not by implementation steps.",
     "Do not answer complete while the acceptance basis is draft.",
+    "Do not treat brainstorm output as an acceptance contract or completion evidence.",
     ""
   ].join("\n");
 }
@@ -125,6 +170,49 @@ function protocolTemplate() {
     "Use `adaw init`, `adaw resume`, `adaw next`, `adaw evidence add`, `adaw evaluate`, `adaw status`, and `adaw report`.",
     ""
   ].join("\n");
+}
+
+function brainstormPaths(root, brainstormId) {
+  const dir = path.join(root, "process", "brainstorms");
+  return {
+    jsonPath: path.join(dir, `${brainstormId}.json`),
+    markdownPath: path.join(dir, `${brainstormId}.md`)
+  };
+}
+
+function renderBrainstormMarkdown(brainstorm) {
+  const lines = [
+    `# ${brainstorm.id} Brainstorm`,
+    "",
+    "## Idea",
+    "",
+    brainstorm.idea,
+    "",
+    "## Rule",
+    "",
+    "This is a draft source, not an acceptance contract or completion evidence.",
+    "",
+    "## Candidates",
+    ""
+  ];
+
+  for (const candidate of brainstorm.candidates) {
+    lines.push(
+      `### ${candidate.id}. ${candidate.title}`,
+      "",
+      `User value: ${candidate.user_value}`,
+      "",
+      "Acceptance directions:",
+      ...candidate.acceptance_directions.map((direction) => `- ${direction}`),
+      "",
+      "Risks:",
+      ...candidate.risks.map((risk) => `- ${risk}`),
+      ""
+    );
+  }
+
+  lines.push("## Next", "", "User chooses a candidate or revises one before ADAW draft.");
+  return `${lines.join("\n")}\n`;
 }
 
 function classifyChangedFile(filePath) {
@@ -164,6 +252,38 @@ function briefFromGoal(goal, goalId = undefined) {
     goal,
     acceptance_basis: { status: "draft", summary: "Draft generated for user approval or revision." },
     criteria: DEFAULT_CRITERIA
+  };
+}
+
+function buildBrainstorm(idea, explicitId = undefined) {
+  const id = explicitId || slugify(idea.slice(0, 40));
+  return {
+    protocol_version: "adaw/brainstorm-v1",
+    id,
+    idea,
+    status: "draft-source",
+    candidates: BRAINSTORM_CANDIDATES,
+    rule: "Brainstorm output is for choosing an acceptance direction. It is not a plan, an acceptance contract, or completion evidence."
+  };
+}
+
+function briefFromBrainstorm(brainstorm, candidateId) {
+  const candidate = brainstorm.candidates.find((item) => item.id === candidateId);
+  if (!candidate) throw new Error(`Brainstorm candidate not found: ${candidateId}`);
+  return {
+    goal_id: slugify(`${brainstorm.id}-${candidate.id}`),
+    goal: `${candidate.suggested_goal_template} 原始想法：${brainstorm.idea}`,
+    acceptance_basis: {
+      status: "draft",
+      summary: `Draft generated from brainstorm ${brainstorm.id} candidate ${candidate.id}.`
+    },
+    criteria: candidate.acceptance_directions.map((direction, index) => ({
+      id: `AC-${index + 1}`,
+      user_story: direction,
+      measurement: "用户查看 ADAW draft、报告或目标结果后作出判断。",
+      threshold: "用户能直接判断是否满足，不需要阅读实现步骤。",
+      risk: index === 0 ? "medium" : "low"
+    }))
   };
 }
 
@@ -212,7 +332,7 @@ function loadPair(args) {
 export async function main(args) {
   const command = args[0];
   if (!command || command === "--help" || command === "-h") {
-    printJson(ok({ usage: "adaw <doctor|install|draft|init|list|check|approve|criterion|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
+    printJson(ok({ usage: "adaw <doctor|install|brainstorm|draft|init|list|check|approve|criterion|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
     return;
   }
 
@@ -271,11 +391,48 @@ export async function main(args) {
     return;
   }
 
+  if (command === "brainstorm") {
+    const root = resolveRoot(args);
+    const idea = String(argValue(args, "--idea", "")).trim();
+    if (!idea) throw new Error("--idea is required");
+    const brainstorm = buildBrainstorm(idea, argValue(args, "--id"));
+    const paths = brainstormPaths(root, brainstorm.id);
+    writeJson(paths.jsonPath, brainstorm);
+    fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
+    fs.writeFileSync(paths.markdownPath, renderBrainstormMarkdown(brainstorm));
+    printJson(ok(
+      {
+        brainstorm_id: brainstorm.id,
+        status: brainstorm.status,
+        idea: brainstorm.idea,
+        candidates: brainstorm.candidates,
+        brainstorm_path: paths.jsonPath,
+        markdown_path: paths.markdownPath,
+        is_acceptance_contract: false
+      },
+      [
+        { kind: "brainstorm_source", path: paths.jsonPath },
+        { kind: "brainstorm_markdown", path: paths.markdownPath }
+      ],
+      [],
+      ["Ask the user to choose or revise a candidate before running adaw draft."]
+    ));
+    return;
+  }
+
   if (command === "draft") {
     const root = resolveRoot(args);
-    const goal = String(argValue(args, "--goal", "")).trim();
-    if (!goal) throw new Error("--goal is required");
-    const brief = briefFromGoal(goal, argValue(args, "--goal-id"));
+    const brainstormId = argValue(args, "--from-brainstorm");
+    let brief;
+    if (brainstormId) {
+      const candidateId = argValue(args, "--candidate");
+      if (!candidateId) throw new Error("--candidate is required with --from-brainstorm");
+      brief = briefFromBrainstorm(readJson(brainstormPaths(root, brainstormId).jsonPath), candidateId);
+    } else {
+      const goal = String(argValue(args, "--goal", "")).trim();
+      if (!goal) throw new Error("--goal is required");
+      brief = briefFromGoal(goal, argValue(args, "--goal-id"));
+    }
     const contract = buildContractFromBrief(brief);
     const ledger = buildEvidenceLedger(contract);
     const issues = validateContract(contract, ledger);
