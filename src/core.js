@@ -862,8 +862,16 @@ function formatEvidenceSources(evidence) {
 export function renderReport(contract, ledger) {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
+  const completion = completionAnswer(contract, ledger);
   const lines = [
     `# ${contract.goal_id} Acceptance Report`,
+    "",
+    "## Decision Summary",
+    "",
+    `Completion: ${completion.answer}`,
+    `Current gap: ${gap ? `${gap.id} - ${gap.reason}` : "None. All required acceptance criteria have passing or waived evidence."}`,
+    `User intervention: ${needed.required ? `${needed.criterion} - ${needed.action}` : needed.action}`,
+    `Workflow status: ${ledger.status}`,
     "",
     "## Goal",
     "",

@@ -118,6 +118,15 @@
         "required": true
       },
       {
+        "id": "AC-P-13",
+        "layer": "protocol",
+        "user_story": "作为用户，我打开 adaw report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
+        "measurement": "运行 adaw report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
+        "threshold": "报告在详细表格前显示 Decision Summary，包含 completion、current gap、user intervention 和 workflow status；blocked 报告也先显示需要用户采取的动作。",
+        "risk": "medium",
+        "required": true
+      },
+      {
         "id": "AC-O-1",
         "layer": "operator",
         "user_story": "作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。",
@@ -303,7 +312,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-11T03:27:35.119Z",
+    "updated_at": "2026-06-11T03:37:18.238Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -684,6 +693,44 @@
             "limitations": "The quality check is heuristic text validation; it catches common implementation-only ACs but is not a full natural-language judge.",
             "gate": "accepted",
             "created_at": "2026-06-11T03:27:08.783Z"
+          }
+        ]
+      },
+      "AC-P-13": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "adaw report now renders a Decision Summary before the detailed Acceptance Status table, including completion, current gap, user intervention, and workflow status.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed",
+                "detail": "23 tests passed"
+              },
+              {
+                "type": "artifact",
+                "label": "Decision Summary render logic",
+                "path": "src/core.js"
+              },
+              {
+                "type": "artifact",
+                "label": "report decision summary tests",
+                "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Run npm test, then generate adaw report and confirm Decision Summary appears before Acceptance Status.",
+            "limitations": "This improves Markdown report ordering; it does not add a separate UI or summarized JSON endpoint.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T03:37:18.193Z"
           }
         ]
       },

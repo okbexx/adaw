@@ -250,6 +250,11 @@ test("evidence can drive the workflow to complete and render a human report", ()
     "--json"
   ]);
   const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.match(text, /## Decision Summary/);
+  assert.ok(text.indexOf("## Decision Summary") < text.indexOf("## Acceptance Status"));
+  assert.match(text, /Completion: Complete: all required acceptance criteria have passing or waived evidence\./);
+  assert.match(text, /Current gap: None\. All required acceptance criteria/);
+  assert.match(text, /User intervention: No user intervention is currently required\./);
   assert.match(text, /Current status: complete/);
   assert.match(text, /AC-Z-5/);
   assert.match(text, /None\. All required acceptance criteria/);
@@ -357,9 +362,9 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 32);
+  assert.equal(brief.criteria.length, 33);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 12);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 12);
 
@@ -686,6 +691,9 @@ test("archive can preserve blocked goals outside active work", () => {
   assert.equal(fs.existsSync(path.join(root, ".adaw", "blocked", "adaw-self.acceptance.md")), true);
 
   const report = fs.readFileSync(archived.data.report_path, "utf8");
+  assert.ok(report.indexOf("## Decision Summary") < report.indexOf("## Acceptance Status"));
+  assert.match(report, /Completion: Not complete: AC-O-5 is blocked/);
+  assert.match(report, /User intervention: AC-O-5 - User must choose whether to pause or continue/);
   assert.match(report, /Current status: blocked/);
   assert.match(report, /User must choose whether to pause or continue/);
 });

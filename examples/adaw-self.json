@@ -103,6 +103,14 @@
       "risk": "high"
     },
     {
+      "id": "AC-P-13",
+      "layer": "protocol",
+      "user_story": "作为用户，我打开 adaw report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
+      "measurement": "运行 adaw report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
+      "threshold": "报告在详细表格前显示 Decision Summary，包含 completion、current gap、user intervention 和 workflow status；blocked 报告也先显示需要用户采取的动作。",
+      "risk": "medium"
+    },
+    {
       "id": "AC-O-1",
       "layer": "operator",
       "user_story": "作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。",
