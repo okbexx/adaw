@@ -25,16 +25,14 @@ judgment.
 ## Try It
 
 ```bash
-npx opennori install --root . --dry-run
+npx opennori
 ```
 
 For a project install:
 
 ```bash
 npm install -D opennori
-npx nori install --root . --dry-run
-npx nori install --root . --confirm
-npx nori doctor --root .
+npx opennori
 ```
 
 Then talk to your agent:
@@ -66,15 +64,14 @@ It does not create a `process/` directory as the main workflow surface.
 ## Core Commands
 
 ```bash
-nori install --root . --dry-run
-nori install --root . --confirm
-nori doctor --root .
-nori brainstorm --idea "Explore this goal" --root .
-nori draft --goal "Ship a user-visible result" --root .
-nori approve --root . --summary "User approved the acceptance checks."
-nori status --root .
-nori evidence add --root . --criterion AC-1 --kind review-result --summary "..." --result passing
-nori report --root .
+opennori bootstrap
+opennori doctor --root .
+opennori brainstorm --idea "Explore this goal" --root .
+opennori draft --goal "Ship a user-visible result" --root .
+opennori approve --root . --summary "User approved the acceptance checks."
+opennori status --root .
+opennori evidence add --root . --criterion AC-1 --kind review-result --summary "..." --result passing
+opennori report --root .
 ```
 
 Users should not need to memorize these commands. The OpenNori Skill Pack lets an agent map natural
@@ -82,8 +79,9 @@ language requests to the deterministic CLI state layer.
 
 ## Productized Boundaries
 
-- `install`, `upgrade`, and `uninstall` support preview-first workflows; destructive writes require
-  explicit confirmation.
+- `bootstrap` gives agents one short entry for readiness checks and first-time preview. Lower-level
+  `install`, `upgrade`, and `uninstall` still support preview-first workflows; destructive writes
+  require explicit confirmation.
 - `doctor` reports whether project state is `ready`, `needs-action`, or `broken`, with recovery
   actions.
 - Nori Profile records required Skills, preferred stacks, avoided tools, and install policy without

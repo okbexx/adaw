@@ -3,7 +3,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "goal": "让 OpenNori 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
-    "created_at": "2026-06-11T03:05:33.626Z",
+    "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
       "summary": "User agreed to the layered OpenNori self acceptance criteria."
@@ -21,8 +21,8 @@
       {
         "id": "AC-P-2",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 nori check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。",
-        "measurement": "对当前 active goal 或故意写坏的验收草案运行 nori check。",
+        "user_story": "作为用户，我运行 opennori check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。",
+        "measurement": "对当前 active goal 或故意写坏的验收草案运行 opennori check。",
         "threshold": "“存在文件、字段、命令、测试通过、实现某模块”这类内容不能作为用户验收标准通过校验。",
         "required": true,
         "risk": "medium"
@@ -30,8 +30,8 @@
       {
         "id": "AC-P-3",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 nori next 或 nori status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。",
-        "measurement": "运行 nori next/status 并查看返回的 current_gap、completion 和 intervention。",
+        "user_story": "作为用户，我运行 opennori next 或 opennori status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。",
+        "measurement": "运行 opennori next/status 并查看返回的 current_gap、completion 和 intervention。",
         "threshold": "输出默认回答“当前差哪条 AC、是否完成、是否需要人类动作”，不把过程任务当作主线。",
         "required": true,
         "risk": "medium"
@@ -48,8 +48,8 @@
       {
         "id": "AC-P-5",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 nori report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。",
-        "measurement": "运行 nori report 或让 Codex 生成 OpenNori 报告。",
+        "user_story": "作为用户，我运行 opennori report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。",
+        "measurement": "运行 opennori report 或让 Codex 生成 OpenNori 报告。",
         "threshold": "报告默认围绕验收状态和证据组织，不把过程任务当作主线。",
         "required": true,
         "risk": "medium"
@@ -58,7 +58,7 @@
         "id": "AC-P-6",
         "layer": "protocol",
         "user_story": "作为用户，我查看 OpenNori 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。",
-        "measurement": "给 AC 添加不同来源的证据后运行 nori report 或 nori status。",
+        "measurement": "给 AC 添加不同来源的证据后运行 opennori report 或 opennori status。",
         "threshold": "报告或状态输出展示证据摘要、判断基础、证据强度和剩余限制；不会只显示 agent 自我结论。",
         "required": true,
         "risk": "high"
@@ -111,20 +111,20 @@
       {
         "id": "AC-P-12",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 nori check 后，能发现 AC 是否缺少真实用户操作或可观察结果，而不是只检查是否以“作为用户”开头。",
-        "measurement": "对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 nori check，再对包含真实用户操作和报告结果的草案运行 nori check。",
+        "user_story": "作为用户，我运行 opennori check 后，能发现 AC 是否缺少真实用户操作或可观察结果，而不是只检查是否以“作为用户”开头。",
+        "measurement": "对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 opennori check，再对包含真实用户操作和报告结果的草案运行 opennori check。",
         "threshold": "内部完成条件会被拒绝；包含用户运行、打开、查看、确认等操作，并说明用户能看到或判断什么结果的 AC 可以通过。",
-        "risk": "high",
-        "required": true
+        "required": true,
+        "risk": "high"
       },
       {
         "id": "AC-P-13",
         "layer": "protocol",
-        "user_story": "作为用户，我打开 nori report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
-        "measurement": "运行 nori report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
+        "user_story": "作为用户，我打开 opennori report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
+        "measurement": "运行 opennori report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
         "threshold": "报告在详细表格前显示 Decision Summary，包含 completion、current gap、user intervention 和 workflow status；blocked 报告也先显示需要用户采取的动作。",
-        "risk": "medium",
-        "required": true
+        "required": true,
+        "risk": "medium"
       },
       {
         "id": "AC-O-1",
@@ -201,8 +201,8 @@
       {
         "id": "AC-Z-1",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori skill export 后，能得到可放入 Codex Skills 的 OpenNori 使用说明。",
-        "measurement": "运行 nori skill export --json 并查看输出内容。",
+        "user_story": "作为用户，我运行 opennori skill export 后，能得到可放入 Codex Skills 的 OpenNori 使用说明。",
+        "measurement": "运行 opennori skill export --json 并查看输出内容。",
         "threshold": "输出说明能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。",
         "required": true,
         "risk": "medium"
@@ -210,7 +210,7 @@
       {
         "id": "AC-Z-2",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori install 后，能把 OpenNori 放入当前项目的可用入口，并且不会意外覆盖已有内容。",
+        "user_story": "作为用户，我运行 opennori install 后，能把 OpenNori 放入当前项目的可用入口，并且不会意外覆盖已有内容。",
         "measurement": "在一个已有项目中运行安装入口并查看安装结果。",
         "threshold": "安装前能看到将创建或跳过的入口；已有内容默认不被覆盖；失败时说明用户需要做什么。",
         "required": true,
@@ -228,8 +228,8 @@
       {
         "id": "AC-Z-4",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori list 后，能看到多个 active goals，并能明确选择要继续的目标。",
-        "measurement": "创建多个 active goals 后运行 nori list，并用 --goal 指定 resume/status/report 的目标。",
+        "user_story": "作为用户，我运行 opennori list 后，能看到多个 active goals，并能明确选择要继续的目标。",
+        "measurement": "创建多个 active goals 后运行 opennori list，并用 --goal 指定 resume/status/report 的目标。",
         "threshold": "多个目标不会被 agent 随机选择；用户能看见目标列表、状态、当前缺口和对应路径。",
         "required": true,
         "risk": "high"
@@ -238,7 +238,7 @@
         "id": "AC-Z-5",
         "layer": "productization",
         "user_story": "作为用户，我运行归档入口后，completed 或 blocked 中保留报告，active 中不再出现这个目标。",
-        "measurement": "对 complete 或 blocked goal 执行归档，再运行 nori list 并打开归档产物。",
+        "measurement": "对 complete 或 blocked goal 执行归档，再运行 opennori list 并打开归档产物。",
         "threshold": "归档不会丢失 Nori Contract、evidence record 或 report；active 列表只显示仍需推进的目标。",
         "required": true,
         "risk": "high"
@@ -247,7 +247,7 @@
         "id": "AC-Z-6",
         "layer": "productization",
         "user_story": "作为用户，我在项目目录运行 OpenNori 后，能看到 OpenNori 状态集中在 .opennori 目录里，而不是散落到通用 process 目录。",
-        "measurement": "运行 nori install、draft、brainstorm、report 或 archive 后查看项目目录。",
+        "measurement": "运行 opennori install、draft、brainstorm、report 或 archive 后查看项目目录。",
         "threshold": "OpenNori 默认只把协议、active goal、报告、归档和 brainstorm 写入 .opennori；不创建 process/acceptance 或 process/development-protocols。",
         "required": true,
         "risk": "medium"
@@ -255,8 +255,8 @@
       {
         "id": "AC-Z-7",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori install 后，能看到当前项目的 OpenNori 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。",
-        "measurement": "运行 nori install --dry-run 或 nori install 后查看输出和项目中的接入登记。",
+        "user_story": "作为用户，我运行 opennori install 后，能看到当前项目的 OpenNori 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。",
+        "measurement": "运行 opennori install --dry-run 或 opennori install 后查看输出和项目中的接入登记。",
         "threshold": "输出包含 create、skip、overwrite 或 update 语义；接入登记说明 OpenNori 版本、managed files、active goals、Skill 状态和协议能力；已有用户内容默认不被覆盖。",
         "required": true,
         "risk": "high"
@@ -264,8 +264,8 @@
       {
         "id": "AC-Z-8",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。",
-        "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 nori doctor。",
+        "user_story": "作为用户，我运行 opennori doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。",
+        "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 opennori doctor。",
         "threshold": "输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。",
         "required": true,
         "risk": "high"
@@ -274,7 +274,7 @@
         "id": "AC-Z-9",
         "layer": "productization",
         "user_story": "作为用户，我预览 OpenNori 安装时，能判断每个项目入口会被创建、跳过、更新还是覆盖，并确认 dry-run 不会写入项目。",
-        "measurement": "运行 nori install --dry-run，查看 install plan，再检查项目文件是否未被写入。",
+        "measurement": "运行 opennori install --dry-run，查看 install plan，再检查项目文件是否未被写入。",
         "threshold": "install plan 对每个入口显示 action、kind、managed、would_write、will_write、destructive 和 reason；dry-run 下 will_write 为 0；覆盖类动作必须被标记为 destructive。",
         "required": true,
         "risk": "high"
@@ -283,7 +283,7 @@
         "id": "AC-Z-10",
         "layer": "productization",
         "user_story": "作为用户，我执行可能覆盖已有 OpenNori 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。",
-        "measurement": "在已有 OpenNori 入口的项目中运行 nori install --force、nori install --force --dry-run 和确认后的安装。",
+        "measurement": "在已有 OpenNori 入口的项目中运行 opennori install --force、opennori install --force --dry-run 和确认后的安装。",
         "threshold": "未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。",
         "required": true,
         "risk": "high"
@@ -292,7 +292,7 @@
         "id": "AC-Z-11",
         "layer": "productization",
         "user_story": "作为用户，我卸载 OpenNori 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。",
-        "measurement": "在已安装且有 active goal 的项目中运行 nori uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
+        "measurement": "在已安装且有 active goal 的项目中运行 opennori uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
         "threshold": "默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .opennori 状态目录。",
         "required": true,
         "risk": "high"
@@ -301,7 +301,7 @@
         "id": "AC-Z-12",
         "layer": "productization",
         "user_story": "作为用户，我安装 OpenNori 后，agent 能获得一组职责清晰的 OpenNori Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。",
-        "measurement": "运行 nori skill export --pack、nori install --skill 和 nori doctor，查看 Skill Pack、manifest 和 doctor 结果。",
+        "measurement": "运行 opennori skill export --pack、opennori install --skill 和 opennori doctor，查看 Skill Pack、manifest 和 doctor 结果。",
         "threshold": "Skill Pack 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 会写入这些 Skill；manifest 记录 skill_pack；doctor 能发现缺失或不同步的 Skill。",
         "required": true,
         "risk": "high"
@@ -309,44 +309,46 @@
       {
         "id": "AC-Z-13",
         "layer": "productization",
-        "user_story": "作为用户，我运行 nori doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
-        "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 nori doctor。",
+        "user_story": "作为用户，我运行 opennori doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
+        "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 opennori doctor。",
         "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 OpenNori 命令或要检查的 .opennori/active 文件位置。",
-        "risk": "high",
-        "required": true
+        "required": true,
+        "risk": "high"
       },
       {
         "id": "AC-Z-14",
         "layer": "productization",
         "user_story": "作为用户，我让 agent 继续 OpenNori 工作时，不需要每轮都追问下一步是什么。",
-        "measurement": "运行 nori resume、nori status、nori next 和 nori report，分别查看未完成、阻塞和已完成 goal 的输出。",
+        "measurement": "运行 opennori resume、opennori status、opennori next 和 opennori report，分别查看未完成、阻塞和已完成 goal 的输出。",
         "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 OpenNori loop。",
-        "risk": "high",
-        "required": true
+        "required": true,
+        "risk": "high"
       },
       {
         "id": "AC-Z-15",
         "layer": "productization",
         "user_story": "作为用户，我让 agent 记录验收证据时，不需要 agent 为常见来源手写复杂结构。",
-        "measurement": "运行 nori evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。",
+        "measurement": "运行 opennori evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。",
         "threshold": "证据来源能显示为 command、artifact、url 或自由 reference；report/status 中仍保留 basis、reviewability、limitations 和 confidence。",
-        "risk": "medium",
-        "required": true
+        "required": true,
+        "risk": "medium"
       },
       {
         "id": "AC-Z-16",
         "layer": "productization",
-        "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能使用 nori 入口初始化项目、查看帮助和运行健康检查，而不需要理解迁移历史。",
-        "measurement": "在全新临时项目中安装 opennori 包，运行 npx nori --help、npx nori install --root . --dry-run、npx nori install --root . --confirm 和 npx nori doctor --root .。",
-        "threshold": "npm registry 显示 opennori@0.1.2 且 bin.nori 指向 bin/nori.js；全新项目安装后 npx nori 可用；dry-run 只预览 .opennori 写入；真实 install 后 doctor 为 ready；项目状态只出现 OpenNori 目录。",
+        "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能用 npx opennori 这个短入口开始，而不需要理解 install、root、dry-run 或 Skill Pack 参数。",
+        "measurement": "在全新临时项目中运行 npx opennori 或本地等价 opennori bin，再确认 bootstrap 后运行 opennori doctor。",
+        "threshold": "npm 包只提供 opennori 这个 bin；短入口默认只返回首次接入 preview 且不写入项目；显式确认后才创建 .opennori 和项目 Skill Pack；doctor 为 ready。",
+        "required": true,
         "risk": "high"
       },
       {
         "id": "AC-Z-17",
         "layer": "productization",
-        "user_story": "作为用户，我第一次打开 README 时，能明确知道产品叫 OpenNori，它帮助 agent 交付人类可验收的结果，并看到最短试用入口。",
-        "measurement": "阅读 README 的开头、Try It、What Gets Added 和 Productized Boundaries 区域。",
-        "threshold": "README 开头说明 OpenNori 的核心价值；页面展示 npm/npx 试用方式、Nori Contract、.opennori 状态目录和验收证据闭环；用户不需要理解迁移历史就能开始试用。",
+        "user_story": "作为用户，我第一次打开 README 或官网 Quick Start 时，能看到短到可以直接复制的 npx opennori 入口，而不是一串内部安装参数。",
+        "measurement": "阅读 README Try It 和官网首屏 Quick Start / Start 区域。",
+        "threshold": "README 和官网第一眼 Quick Start 展示 npx opennori；更详细的 opennori bootstrap、install、dry-run、confirm 只作为 agent 或高级用户的底层安全路径出现。",
+        "required": true,
         "risk": "high"
       }
     ]
@@ -355,7 +357,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-11T08:13:05.511Z",
+    "updated_at": "2026-06-11T10:08:25.563Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -366,26 +368,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-P-1 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-1 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.368Z"
+            "created_at": "2026-06-11T09:51:29.156Z"
           }
         ]
       },
@@ -398,26 +429,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-P-2 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-2 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.410Z"
+            "created_at": "2026-06-11T09:51:29.206Z"
           }
         ]
       },
@@ -430,26 +490,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-P-3 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-3 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.450Z"
+            "created_at": "2026-06-11T09:51:29.256Z"
           }
         ]
       },
@@ -462,26 +551,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-P-4 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-4 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.491Z"
+            "created_at": "2026-06-11T09:51:29.306Z"
           }
         ]
       },
@@ -494,26 +612,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-P-5 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-5 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.531Z"
+            "created_at": "2026-06-11T09:51:29.356Z"
           }
         ]
       },
@@ -526,26 +673,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "Reports and status rows expose latest evidence summary, basis, confidence, reviewability, sources, and limitations.",
+            "summary": "AC-P-6 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
-                "type": "artifact",
-                "label": "src/core.js evidenceView and renderReport",
-                "path": "src/core.js"
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
               },
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Inspect report columns or status JSON criteria.latest_evidence.",
-            "limitations": "Only the latest evidence per AC is shown in the report table.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.573Z"
+            "created_at": "2026-06-11T09:51:29.406Z"
           }
         ]
       },
@@ -558,26 +734,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-P-7 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-7 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.615Z"
+            "created_at": "2026-06-11T09:51:29.454Z"
           }
         ]
       },
@@ -590,26 +795,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-P-8 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-8 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.657Z"
+            "created_at": "2026-06-11T09:51:29.503Z"
           }
         ]
       },
@@ -622,26 +856,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-P-9 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-P-9 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.698Z"
+            "created_at": "2026-06-11T09:51:29.552Z"
           }
         ]
       },
@@ -652,25 +915,57 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "Report source formatting preserves arbitrary source metadata, including object values, without constraining agent evidence choices.",
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "AC-P-10 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
                 "type": "artifact",
-                "label": "src/core.js formatEvidenceSource",
-                "path": "src/core.js",
-                "metadata": {
-                  "shape": "open"
-                }
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Inspect formatEvidenceSource and rerun npm test.",
-            "limitations": "Nested metadata is displayed compactly as JSON in report tables.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.741Z"
+            "created_at": "2026-06-11T09:51:29.602Z"
           }
         ]
       },
@@ -681,23 +976,57 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "artifact",
-            "basis": "artifact-review",
-            "summary": "OpenNori Skill Pack includes evidence-specific guidance so agents can record validation without users remembering CLI flags.",
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "AC-P-11 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "nori skill export --pack",
-                "command": "node ./bin/nori.js skill export --pack --json",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run nori skill export --pack --json and inspect nori-evidence.",
-            "limitations": "Skill guidance depends on the agent runtime loading the matching Skill.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.782Z"
+            "created_at": "2026-06-11T09:51:29.655Z"
           }
         ]
       },
@@ -708,34 +1037,57 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "basis": "tool-observation",
-            "summary": "nori check now rejects ACs that only say tests pass or fields exist, while accepting ACs with a user operation and observable report outcome.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-P-12 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed",
-                "detail": "23 tests passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
-                "label": "AC quality validation tests",
-                "path": "test/core.test.js"
+                "label": "src/cli.js",
+                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "AC quality validation rules",
-                "path": "src/core.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run npm test, then inspect the check requires measurable user operations and observable outcomes test plus validateContract in src/core.js.",
-            "limitations": "The quality check is heuristic text validation; it catches common implementation-only ACs but is not a full natural-language judge.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:27:08.783Z"
+            "created_at": "2026-06-11T09:51:29.705Z"
           }
         ]
       },
@@ -748,32 +1100,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "nori report now renders a Decision Summary before the detailed Acceptance Status table, including completion, current gap, user intervention, and workflow status.",
+            "summary": "AC-P-13 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed",
-                "detail": "23 tests passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
-                "label": "Decision Summary render logic",
-                "path": "src/core.js"
+                "label": "src/cli.js",
+                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "report decision summary tests",
-                "path": "test/core.test.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run npm test, then generate nori report and confirm Decision Summary appears before Acceptance Status.",
-            "limitations": "This improves Markdown report ordering; it does not add a separate UI or summarized JSON endpoint.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:37:18.193Z"
+            "created_at": "2026-06-11T09:51:29.755Z"
           }
         ]
       },
@@ -786,26 +1161,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-O-1 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-1 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.823Z"
+            "created_at": "2026-06-11T09:51:29.804Z"
           }
         ]
       },
@@ -818,26 +1222,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-O-2 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-2 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.864Z"
+            "created_at": "2026-06-11T09:51:29.854Z"
           }
         ]
       },
@@ -850,26 +1283,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-O-3 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-3 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.907Z"
+            "created_at": "2026-06-11T09:51:29.903Z"
           }
         ]
       },
@@ -882,26 +1344,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-O-4 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-4 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.949Z"
+            "created_at": "2026-06-11T09:51:29.952Z"
           }
         ]
       },
@@ -914,26 +1405,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-O-5 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-5 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:04.990Z"
+            "created_at": "2026-06-11T09:51:30.002Z"
           }
         ]
       },
@@ -946,26 +1466,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-O-6 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-6 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.031Z"
+            "created_at": "2026-06-11T09:51:30.054Z"
           }
         ]
       },
@@ -978,26 +1527,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-O-7 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-7 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.072Z"
+            "created_at": "2026-06-11T09:51:30.106Z"
           }
         ]
       },
@@ -1010,26 +1588,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-O-8 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-O-8 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.121Z"
+            "created_at": "2026-06-11T09:51:30.157Z"
           }
         ]
       },
@@ -1042,26 +1649,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-Z-1 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-1 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.161Z"
+            "created_at": "2026-06-11T09:51:30.205Z"
           }
         ]
       },
@@ -1074,26 +1710,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-2 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-2 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.200Z"
+            "created_at": "2026-06-11T09:51:30.257Z"
           }
         ]
       },
@@ -1106,26 +1771,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-Z-3 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-3 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.242Z"
+            "created_at": "2026-06-11T09:51:30.311Z"
           }
         ]
       },
@@ -1138,26 +1832,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-4 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-4 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.284Z"
+            "created_at": "2026-06-11T09:51:30.363Z"
           }
         ]
       },
@@ -1170,26 +1893,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-5 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-5 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.324Z"
+            "created_at": "2026-06-11T09:51:30.451Z"
           }
         ]
       },
@@ -1202,26 +1954,55 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "AC-Z-6 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-6 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.366Z"
+            "created_at": "2026-06-11T09:51:30.512Z"
           }
         ]
       },
@@ -1234,26 +2015,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-7 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-7 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.408Z"
+            "created_at": "2026-06-11T09:51:30.564Z"
           }
         ]
       },
@@ -1266,26 +2076,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-8 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-8 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.449Z"
+            "created_at": "2026-06-11T09:51:30.615Z"
           }
         ]
       },
@@ -1298,26 +2137,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-9 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-9 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.491Z"
+            "created_at": "2026-06-11T09:51:30.665Z"
           }
         ]
       },
@@ -1330,26 +2198,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-10 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-10 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.532Z"
+            "created_at": "2026-06-11T09:51:30.714Z"
           }
         ]
       },
@@ -1362,26 +2259,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-11 has reviewable evidence from OpenNori tests, protocol artifacts, and generated reports.",
+            "summary": "AC-Z-11 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               },
               {
                 "type": "artifact",
                 "label": "examples/opennori-self.json",
                 "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm test and inspect examples/opennori-self.json plus the active OpenNori report.",
-            "limitations": "This is self-acceptance evidence for the current CLI and Skill Pack implementation.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.574Z"
+            "created_at": "2026-06-11T09:51:30.764Z"
           }
         ]
       },
@@ -1394,37 +2320,55 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "OpenNori exports and installs a six-Skill Pack, records it in manifest.skill_pack, and doctor detects missing or stale pack Skills.",
+            "summary": "AC-Z-12 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "nori skill export --pack",
-                "command": "node ./bin/nori.js skill export --pack --json",
-                "outcome": "passed"
+                "label": "npm run check",
+                "command": "npm run check"
               },
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed"
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
-                "label": "manifest skill_pack",
-                "path": ".opennori/manifest.json"
+                "label": "src/cli.js",
+                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "Skill Pack tests",
-                "path": "test/core.test.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run nori skill export --pack --json, nori install --skill, nori doctor, and inspect manifest.skill_pack.",
-            "limitations": "This verifies project-local Codex Skill assets; cross-harness conversion is not implemented yet.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:06:05.616Z"
+            "created_at": "2026-06-11T09:51:30.812Z"
           }
         ]
       },
@@ -1435,34 +2379,57 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "basis": "tool-observation",
-            "summary": "nori doctor now returns recovery_actions that summarize failed checks and active goal issues with executable commands or .opennori/active file locations.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-13 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed",
-                "detail": "23 tests passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
-                "label": "doctor recovery action implementation",
+                "label": "src/cli.js",
                 "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "doctor recovery action tests",
-                "path": "test/core.test.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run npm test or create broken OpenNori states, then inspect nori doctor --json recovery_actions.",
-            "limitations": "doctor still diagnoses only; it does not automatically modify or repair project files.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:45:08.065Z"
+            "created_at": "2026-06-11T09:51:30.862Z"
           }
         ]
       },
@@ -1473,39 +2440,57 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "basis": "tool-observation",
-            "summary": "resume/status/next/report now return a next recommendation so the agent can continue the OpenNori loop without making the user ask for the next step.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-14 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test",
-                "outcome": "passed",
-                "detail": "23 tests passed"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
-                "label": "next recommendation implementation",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "CLI next recommendation outputs",
+                "label": "src/cli.js",
                 "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "next recommendation tests",
-                "path": "test/core.test.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run npm test, then inspect nori resume/status/next --json and the report Decision Summary.",
-            "limitations": "The recommendation guides the next OpenNori loop; it does not choose a product roadmap item from outside the current context.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T03:58:33.347Z"
+            "created_at": "2026-06-11T09:51:30.913Z"
           }
         ]
       },
@@ -1518,18 +2503,24 @@
           {
             "kind": "test-summary",
             "basis": "tool-observation",
-            "summary": "nori evidence add accepts typed source flags for commands, artifacts, and URLs while preserving raw source flexibility.",
+            "summary": "AC-Z-15 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
-                "type": "reference",
-                "label": "custom review note"
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
               },
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test"
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
                 "type": "artifact",
@@ -1538,19 +2529,29 @@
               },
               {
                 "type": "artifact",
-                "label": "test/core.test.js",
-                "path": "test/core.test.js"
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
               },
               {
                 "type": "url",
-                "label": "https://example.com/review",
-                "url": "https://example.com/review"
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Run npm test and inspect status/report evidence sources for command, artifact, url, and reference entries.",
-            "limitations": "Typed source flags are convenience wrappers; they do not execute commands or verify URLs automatically.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T05:35:13.072Z"
+            "created_at": "2026-06-11T09:51:30.963Z"
           }
         ]
       },
@@ -1561,46 +2562,36 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "basis": "registry-and-fresh-install",
-            "summary": "npm registry now serves opennori@0.1.2 with bin.nori = bin/nori.js; a fresh project can install opennori@0.1.2, run npx nori --help without side effects, preview .opennori install with dry-run, perform confirmed install, and get nori doctor status ready with only OpenNori project state present.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-16 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm view opennori version bin --json",
-                "command": "npm view opennori version bin --json"
+                "label": "npm run check",
+                "command": "npm run check"
               },
               {
                 "type": "command",
-                "label": "npm install --min-release-age=0 opennori@0.1.2",
-                "command": "npm install --min-release-age=0 opennori@0.1.2"
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
               },
               {
                 "type": "command",
-                "label": "npx nori --help",
-                "command": "npx nori --help"
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
               },
               {
-                "type": "command",
-                "label": "npx nori install --root . --dry-run --json",
-                "command": "npx nori install --root . --dry-run --json"
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
               },
               {
-                "type": "command",
-                "label": "npx nori install --root . --confirm --json",
-                "command": "npx nori install --root . --confirm --json"
-              },
-              {
-                "type": "command",
-                "label": "npx nori doctor --root . --json",
-                "command": "npx nori doctor --root . --json"
-              },
-              {
-                "type": "command",
-                "label": "find . -maxdepth 2 -type d \\( -name '.opennori' -o -name '.adaw' \\) -print | sort",
-                "command": "find . -maxdepth 2 -type d \\( -name '.opennori' -o -name '.adaw' \\) -print | sort"
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
               },
               {
                 "type": "artifact",
@@ -1609,39 +2600,61 @@
               },
               {
                 "type": "artifact",
-                "label": "bin/nori.js",
-                "path": "bin/nori.js"
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
               },
               {
                 "type": "url",
-                "label": "https://registry.npmjs.org/opennori/-/opennori-0.1.2.tgz",
-                "url": "https://registry.npmjs.org/opennori/-/opennori-0.1.2.tgz"
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
               }
             ],
-            "reviewability": "Rerun npm view opennori version bin --json, then install opennori@0.1.2 in a fresh temporary project and run the listed npx commands.",
-            "limitations": "This verifies current npm registry publication and fresh install behavior, not future registry availability or every package manager.",
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T08:04:39.885Z"
-          }
-        ]
-      },
-      "AC-Z-17": {
-        "status": "passing",
-        "confidence": "reviewed",
-        "required": true,
-        "risk": "high",
-        "evidence": [
+            "created_at": "2026-06-11T09:51:31.015Z"
+          },
           {
             "kind": "review-result",
-            "basis": "documentation-review",
-            "summary": "README now leads with OpenNori's product promise, explains Nori Contract and human-centered acceptance evidence, shows npm/npx try paths, documents .opennori as the project state directory, and summarizes preview/doctor/profile/evidence/context boundaries without requiring migration history.",
+            "basis": "protocol-check",
+            "summary": "OpenNori now exposes only the opennori bin and the short no-argument entry previews bootstrap without requiring users to learn nori, install, root, dry-run, or Skill Pack flags.",
             "result": "passing",
-            "confidence": "reviewed",
+            "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "sed -n '1,140p' README.md",
-                "command": "sed -n '1,140p' README.md"
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "command",
+                "label": "rg old nori command residuals",
+                "command": "rg old nori command residuals"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1649,44 +2662,111 @@
                 "path": "README.md"
               }
             ],
-            "reviewability": "Open README.md and read the opening, Try It, What Gets Added, and Productized Boundaries sections.",
-            "limitations": "This is documentation review, not external user research.",
+            "reviewability": "Run npm run check, inspect package.json bin mapping, run npm pack --dry-run --json, and scan for old nori command residuals.",
+            "limitations": "Local implementation and package tarball are verified; public npm still requires publishing this version.",
             "gate": "accepted",
-            "created_at": "2026-06-11T08:13:05.510Z"
+            "created_at": "2026-06-11T10:08:25.532Z"
+          }
+        ]
+      },
+      "AC-Z-17": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-17 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "npm pack --dry-run --json",
+                "command": "npm pack --dry-run --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js",
+                "command": "node ./bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "bin/opennori.js",
+                "path": "bin/opennori.js"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/opennori-self.json",
+                "path": "examples/opennori-self.json"
+              },
+              {
+                "type": "url",
+                "label": "https://opennori.okbexx.com",
+                "url": "https://opennori.okbexx.com"
+              }
+            ],
+            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
+            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T09:51:31.065Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "README and website Quick Start now lead with npx opennori, and project install also uses the same short opennori entry instead of long install/bootstrap parameters.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "pnpm build in adaw-site",
+                "command": "pnpm build in adaw-site"
+              },
+              {
+                "type": "command",
+                "label": "rg old nori command residuals in README/site/dist",
+                "command": "rg old nori command residuals in README/site/dist"
+              },
+              {
+                "type": "artifact",
+                "label": "README.md",
+                "path": "README.md"
+              },
+              {
+                "type": "artifact",
+                "label": "/Users/jarl/code/jarlone/adaw-site/src/pages/index.astro",
+                "path": "/Users/jarl/code/jarlone/adaw-site/src/pages/index.astro"
+              }
+            ],
+            "reviewability": "Open README and website source or built dist, confirm the first visible Quick Start is npx opennori and old nori command examples are absent.",
+            "limitations": "Website source and local build are verified; public site requires deployment before external users see this exact copy.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T10:08:25.562Z"
           }
         ]
       }
     },
     "capability_profile": {
-      "items": [
-        {
-          "id": "constraint-profile-stays-out-of-user-acs",
-          "type": "constraint",
-          "name": "profile-stays-out-of-user-acs",
-          "strength": "must",
-          "purpose": "Nori Profile records agent execution preferences without turning them into user acceptance criteria.",
-          "scope": "",
-          "install_policy": "existing_only",
-          "evidence": [
-            {
-              "item_id": "constraint-profile-stays-out-of-user-acs",
-              "result": "satisfied",
-              "summary": "Nori Profile remains separate from user ACs in the contract and report.",
-              "path": ".opennori/active/opennori-self.acceptance.md",
-              "created_at": "2026-06-11T03:06:04.298Z"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "item_id": "constraint-profile-stays-out-of-user-acs",
-          "result": "satisfied",
-          "summary": "Nori Profile remains separate from user ACs in the contract and report.",
-          "path": ".opennori/active/opennori-self.acceptance.md",
-          "created_at": "2026-06-11T03:06:04.298Z"
-        }
-      ]
+      "items": [],
+      "evidence": []
     }
   }
 }

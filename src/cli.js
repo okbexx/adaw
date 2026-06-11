@@ -41,6 +41,7 @@ const NORI_CAPABILITIES = [
   "capability-profile",
   "profile-check",
   "archive",
+  "bootstrap",
   "report",
   "doctor",
   "upgrade",
@@ -384,7 +385,8 @@ function hasFlag(args, name) {
   return args.includes(name);
 }
 
-const TOP_LEVEL_USAGE = "nori <doctor|install|upgrade|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|context|changes|archive|skill>";
+const CLI_NAME = "opennori";
+const TOP_LEVEL_USAGE = `${CLI_NAME} <bootstrap|doctor|install|upgrade|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|context|changes|archive|skill>`;
 
 function wantsHelp(args) {
   return args.includes("--help") || args.includes("-h");
@@ -393,25 +395,26 @@ function wantsHelp(args) {
 function usageFor(args) {
   const [command, subcommand] = args;
   if (!command || command === "--help" || command === "-h") return TOP_LEVEL_USAGE;
-  if (command === "install") return "nori install --root <project> [--skill] [--dry-run] [--force] [--confirm] [--json]";
-  if (command === "upgrade") return "nori upgrade --root <project> [--skill] [--dry-run] [--confirm] [--json]";
-  if (command === "uninstall") return "nori uninstall --root <project> [--include-state] [--dry-run] [--confirm] [--json]";
-  if (command === "doctor") return "nori doctor --root <project> [--json]";
-  if (command === "brainstorm") return "nori brainstorm --idea \"<idea>\" --root <project> [--id <id>] [--json]";
-  if (command === "draft") return "nori draft --goal \"<goal>\" --root <project> [--goal-id <id>] [--json]";
-  if (command === "init") return "nori init <brief.json> --root <project> [--json]";
-  if (command === "criterion" && subcommand === "update") return "nori criterion update --root <project> --criterion <id> --user-story ... --measurement ... --threshold ... [--json]";
-  if (command === "profile" && subcommand === "add") return "nori profile add --root <project> --type <skill|stack|constraint> --name <name> --strength <must|prefer|avoid> --purpose <purpose> [--json]";
-  if (command === "profile" && subcommand === "evidence") return "nori profile evidence --root <project> --item <item-id> --result <satisfied|violated|waived> --summary <summary> [--json]";
-  if (command === "profile") return "nori profile <add|evidence|show|check> --root <project> [--json]";
-  if (command === "evidence" && subcommand === "add") return "nori evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]";
-  if (command === "evidence") return "nori evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]";
-  if (command === "context" && subcommand === "export") return "nori context export --root <project> [--json]";
-  if (command === "context") return "nori context export --root <project> [--json]";
-  if (command === "skill" && subcommand === "export") return "nori skill export [--pack] [--json]";
-  if (command === "skill") return "nori skill export [--pack] [--json]";
+  if (command === "bootstrap") return `${CLI_NAME} bootstrap --root <project> [--confirm] [--json]`;
+  if (command === "install") return `${CLI_NAME} install --root <project> [--skill] [--dry-run] [--force] [--confirm] [--json]`;
+  if (command === "upgrade") return `${CLI_NAME} upgrade --root <project> [--skill] [--dry-run] [--confirm] [--json]`;
+  if (command === "uninstall") return `${CLI_NAME} uninstall --root <project> [--include-state] [--dry-run] [--confirm] [--json]`;
+  if (command === "doctor") return `${CLI_NAME} doctor --root <project> [--json]`;
+  if (command === "brainstorm") return `${CLI_NAME} brainstorm --idea "<idea>" --root <project> [--id <id>] [--json]`;
+  if (command === "draft") return `${CLI_NAME} draft --goal "<goal>" --root <project> [--goal-id <id>] [--json]`;
+  if (command === "init") return `${CLI_NAME} init <brief.json> --root <project> [--json]`;
+  if (command === "criterion" && subcommand === "update") return `${CLI_NAME} criterion update --root <project> --criterion <id> --user-story ... --measurement ... --threshold ... [--json]`;
+  if (command === "profile" && subcommand === "add") return `${CLI_NAME} profile add --root <project> --type <skill|stack|constraint> --name <name> --strength <must|prefer|avoid> --purpose <purpose> [--json]`;
+  if (command === "profile" && subcommand === "evidence") return `${CLI_NAME} profile evidence --root <project> --item <item-id> --result <satisfied|violated|waived> --summary <summary> [--json]`;
+  if (command === "profile") return `${CLI_NAME} profile <add|evidence|show|check> --root <project> [--json]`;
+  if (command === "evidence" && subcommand === "add") return `${CLI_NAME} evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]`;
+  if (command === "evidence") return `${CLI_NAME} evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]`;
+  if (command === "context" && subcommand === "export") return `${CLI_NAME} context export --root <project> [--json]`;
+  if (command === "context") return `${CLI_NAME} context export --root <project> [--json]`;
+  if (command === "skill" && subcommand === "export") return `${CLI_NAME} skill export [--pack] [--json]`;
+  if (command === "skill") return `${CLI_NAME} skill export [--pack] [--json]`;
   if (["list", "check", "approve", "resume", "next", "evaluate", "status", "report", "changes", "archive"].includes(command)) {
-    return `nori ${command} --root <project> [--goal <goal-id>] [--json]`;
+    return `${CLI_NAME} ${command} --root <project> [--goal <goal-id>] [--json]`;
   }
   return TOP_LEVEL_USAGE;
 }
@@ -477,9 +480,10 @@ const SKILL_PACK = [
       "- Status, report, current gap, completion answer, user intervention, or change summary -> use `nori-reporting`.",
       "",
       "## Baseline",
-      "At the start of each OpenNori turn, run `nori resume --root <repo> --json` or `nori status --root <repo> --json` unless the task is only install/doctor/uninstall.",
+      "At the start of each OpenNori turn, run `opennori bootstrap --root <repo> --json` if project readiness is unknown; otherwise run `opennori resume --root <repo> --json` or `opennori status --root <repo> --json`.",
+      "If bootstrap returns `needs_confirm`, show the preview briefly and ask the user before rerunning with `--confirm`.",
       "Use `next_recommendation` and top-level `next_actions` to continue the OpenNori loop; do not make the user repeatedly ask what the next step is.",
-      "If `nori` is not on PATH, use the installed package binary such as `node ./node_modules/opennori/bin/nori.js` or this repository's `node ./bin/nori.js` with the same arguments.",
+      "If `opennori` is not on PATH, use the installed package binary such as `node ./node_modules/opennori/bin/opennori.js` or this repository's `node ./bin/opennori.js` with the same arguments.",
       "",
       "## Rule",
       "Progress is determined by acceptance evidence, not implementation steps.",
@@ -495,11 +499,11 @@ const SKILL_PACK = [
       "Use when the user gives a goal, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.",
       "",
       "## Commands",
-      "- Fuzzy idea or discussion: `nori brainstorm --idea \"<idea>\" --root <repo> --json`.",
-      "- Start from a goal: `nori draft --goal \"<goal>\" --root <repo> --json`.",
-      "- Start from a chosen brainstorm candidate: `nori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
-      "- User approves criteria: `nori approve --root <repo> --summary \"<approval>\" --json`.",
-      "- User revises a criterion: `nori criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
+      "- Fuzzy idea or discussion: `opennori brainstorm --idea \"<idea>\" --root <repo> --json`.",
+      "- Start from a goal: `opennori draft --goal \"<goal>\" --root <repo> --json`.",
+      "- Start from a chosen brainstorm candidate: `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
+      "- User approves criteria: `opennori approve --root <repo> --summary \"<approval>\" --json`.",
+      "- User revises a criterion: `opennori criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
       "",
       "## Rules",
       "ACs must describe user actions or judgments, not implementation files, commands, modules, fields, tests, Skills, or technology choices.",
@@ -519,7 +523,7 @@ const SKILL_PACK = [
       "When submitting evidence, explain basis, sources, reviewability, confidence, and limitations.",
       "",
       "## Command",
-      "`nori evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability \"...\" --limitations \"...\" --json`",
+      "`opennori evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability \"...\" --limitations \"...\" --json`",
       "",
       "Use multiple source flags when one AC is supported by several signals; prefer typed `--source-command`, `--source-path`, or `--source-url` when they fit, and use raw `--source` for anything else.",
       "For high-risk passing evidence, use a strong evidence kind or explicit strong confidence only when justified.",
@@ -534,9 +538,9 @@ const SKILL_PACK = [
       "Use when the user says a task must use a Skill, prefers a technology stack, wants to avoid a tool/library, or requires asking before installs.",
       "",
       "## Commands",
-      "- Add preference: `nori profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
-      "- Add compliance evidence: `nori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json`.",
-      "- Show profile: `nori profile show --root <repo> --json`.",
+      "- Add preference: `opennori profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
+      "- Add compliance evidence: `opennori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json`.",
+      "- Show profile: `opennori profile show --root <repo> --json`.",
       "",
       "## Rules",
       "Do not turn Skills or stack preferences into user ACs.",
@@ -552,14 +556,16 @@ const SKILL_PACK = [
       "Use when the user asks to install OpenNori, uninstall OpenNori, check whether OpenNori is ready, diagnose broken OpenNori state, inspect manifest, or sync project Skills.",
       "",
       "## Commands",
-      "- Preview install: `nori install --root <repo> --dry-run --json`.",
-      "- Install Skill Pack: `nori install --root <repo> --skill --json`.",
-      "- Preview destructive install: `nori install --root <repo> --skill --force --dry-run --json`.",
-      "- Confirm destructive install: `nori install --root <repo> --skill --force --confirm --json`.",
-      "- Doctor: `nori doctor --root <repo> --json`.",
-      "- Preview uninstall: `nori uninstall --root <repo> --dry-run --json`.",
-      "- Remove entry assets while preserving state: `nori uninstall --root <repo> --confirm --json`.",
-      "- Remove all OpenNori state only after explicit user acceptance: `nori uninstall --root <repo> --include-state --confirm --json`.",
+      "- Short readiness / first-time preview: `opennori bootstrap --root <repo> --json`.",
+      "- Confirm first-time setup after user approval: `opennori bootstrap --root <repo> --confirm --json`.",
+      "- Preview install: `opennori install --root <repo> --dry-run --json`.",
+      "- Install Skill Pack: `opennori install --root <repo> --skill --json`.",
+      "- Preview destructive install: `opennori install --root <repo> --skill --force --dry-run --json`.",
+      "- Confirm destructive install: `opennori install --root <repo> --skill --force --confirm --json`.",
+      "- Doctor: `opennori doctor --root <repo> --json`.",
+      "- Preview uninstall: `opennori uninstall --root <repo> --dry-run --json`.",
+      "- Remove entry assets while preserving state: `opennori uninstall --root <repo> --confirm --json`.",
+      "- Remove all OpenNori state only after explicit user acceptance: `opennori uninstall --root <repo> --include-state --confirm --json`.",
       "",
       "## Rules",
       "Always show dry-run plans before destructive writes.",
@@ -574,12 +580,12 @@ const SKILL_PACK = [
       "Use when the user asks whether work is complete, what remains, what they need to do, what changed, or asks for an OpenNori report.",
       "",
       "## Commands",
-      "- Resume: `nori resume --root <repo> --json`.",
-      "- Next gap: `nori next --root <repo> --json`.",
-      "- Status: `nori status --root <repo> --json`.",
-      "- Report: `nori report --root <repo> --json`.",
-      "- Changes: `nori changes --root <repo> --json`.",
-      "- List goals: `nori list --root <repo> --json`.",
+      "- Resume: `opennori resume --root <repo> --json`.",
+      "- Next gap: `opennori next --root <repo> --json`.",
+      "- Status: `opennori status --root <repo> --json`.",
+      "- Report: `opennori report --root <repo> --json`.",
+      "- Changes: `opennori changes --root <repo> --json`.",
+      "- List goals: `opennori list --root <repo> --json`.",
       "",
       "## Rules",
       "Lead with completion state, current gap, evidence basis, and required human intervention.",
@@ -732,7 +738,7 @@ function protocolTemplate() {
     "",
     "Progress is determined by human-centered acceptance evidence, not by implementation steps.",
     "",
-    "Use `nori init`, `nori resume`, `nori next`, `nori evidence add`, `nori evaluate`, `nori status`, and `nori report`.",
+    "Use `opennori init`, `opennori resume`, `opennori next`, `opennori evidence add`, `opennori evaluate`, `opennori status`, and `opennori report`.",
     ""
   ].join("\n");
 }
@@ -1084,7 +1090,7 @@ function doctor(root) {
     "opennori_directory",
     fs.existsSync(noriDir),
     fs.existsSync(noriDir) ? ".opennori directory exists." : ".opennori directory is missing.",
-    "Run nori install --root <project> --json."
+    "Run opennori bootstrap --root <project> --json."
   ));
 
   for (const dir of REQUIRED_NORI_DIRS) {
@@ -1093,7 +1099,7 @@ function doctor(root) {
       `dir_${dir}`,
       fs.existsSync(dirPath),
       fs.existsSync(dirPath) ? `.opennori/${dir} exists.` : `.opennori/${dir} is missing.`,
-      "Run nori install --root <project> --json."
+      "Run opennori bootstrap --root <project> --json."
     ));
   }
 
@@ -1101,7 +1107,7 @@ function doctor(root) {
     "protocol_file",
     fs.existsSync(protocolPath),
     fs.existsSync(protocolPath) ? ".opennori/protocol.md exists." : ".opennori/protocol.md is missing.",
-    "Run nori install --root <project> --json."
+    "Run opennori bootstrap --root <project> --json."
   ));
 
   let manifest = null;
@@ -1114,7 +1120,7 @@ function doctor(root) {
       "manifest_file",
       false,
       fs.existsSync(manifestFile) ? `.opennori/manifest.json is unreadable: ${error.message}` : ".opennori/manifest.json is missing.",
-      "Run nori install --root <project> --json to create or refresh the OpenNori manifest.",
+      "Run opennori bootstrap --root <project> --json to preview setup or refresh the OpenNori manifest.",
       fs.existsSync(manifestFile) ? "broken" : "needs-action"
     ));
   }
@@ -1124,27 +1130,27 @@ function doctor(root) {
       "manifest_file",
       manifest.schema_version === MANIFEST_SCHEMA_VERSION,
       `.opennori/manifest.json uses schema ${manifest.schema_version || "<missing>"}.`,
-      "Refresh the manifest with nori install --root <project> --json.",
+      "Refresh the manifest with opennori bootstrap --root <project> --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_protocol",
       manifest.protocol_version === PROTOCOL_VERSION,
       `.opennori/manifest.json records protocol ${manifest.protocol_version || "<missing>"}.`,
-      "Refresh the manifest with nori install --root <project> --json.",
+      "Refresh the manifest with opennori bootstrap --root <project> --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_cli_version",
       manifest.opennori_version === PACKAGE_JSON.version,
       `.opennori/manifest.json records OpenNori version ${manifest.opennori_version || "<missing>"}.`,
-      "Refresh the manifest with nori install --root <project> --json."
+      "Refresh the manifest with opennori bootstrap --root <project> --json."
     ));
     checks.push(doctorCheck(
       "manifest_capabilities",
       sameStringSet(manifest.capabilities, NORI_CAPABILITIES),
       Array.isArray(manifest.capabilities) ? "Manifest protocol capabilities are readable." : "Manifest protocol capabilities are missing.",
-      "Refresh the manifest with nori install --root <project> --json."
+      "Refresh the manifest with opennori bootstrap --root <project> --json."
     ));
 
     const currentGoals = new Set(active.details.filter((goal) => goal.recoverable).map((goal) => goal.goal_id));
@@ -1157,7 +1163,7 @@ function doctor(root) {
       "manifest_active_goals",
       staleGoals.length === 0,
       staleGoals.length === 0 ? "Manifest active goals match recoverable active goals." : `Manifest active goals differ: ${staleGoals.join(", ")}.`,
-      "Run any OpenNori state-changing command, or run nori install --root <project> --json, to refresh the manifest."
+      "Run any OpenNori state-changing command, or run opennori bootstrap --root <project> --json, to refresh the manifest."
     ));
 
     const missingManaged = (manifest.managed_files || [])
@@ -1168,7 +1174,7 @@ function doctor(root) {
       "managed_files",
       missingManaged.length === 0,
       missingManaged.length === 0 ? "Required OpenNori managed files are present." : `Missing managed files: ${missingManaged.join(", ")}.`,
-      "Run nori install --root <project> --json."
+      "Run opennori bootstrap --root <project> --json."
     ));
   }
 
@@ -1176,7 +1182,7 @@ function doctor(root) {
     "active_goals_recoverable",
     active.issues.length === 0,
     active.issues.length === 0 ? `${active.details.length} active goal(s) are recoverable.` : `${active.issues.length} active goal issue(s) found.`,
-    "Inspect active_goal_issues, fix the reported .opennori/active/<goal>.acceptance.md and .opennori/active/<goal>.evidence.json pair, then rerun nori doctor --root <project> --json.",
+    "Inspect active_goal_issues, fix the reported .opennori/active/<goal>.acceptance.md and .opennori/active/<goal>.evidence.json pair, then rerun opennori doctor --root <project> --json.",
     "broken"
   ));
 
@@ -1189,7 +1195,7 @@ function doctor(root) {
       "manifest_skill_state",
       Boolean(manifest.skill) && manifest.skill.installed === skill.installed && manifest.skill.path === skill.path,
       "Manifest Skill state matches the project Skill location.",
-      "Refresh the manifest with nori install --root <project> --json."
+      "Refresh the manifest with opennori bootstrap --root <project> --json."
     ));
   }
   checks.push(doctorCheck(
@@ -1198,7 +1204,7 @@ function doctor(root) {
     skill.installed
       ? (skill.in_sync ? "Project OpenNori Skill is installed and in sync." : "Project OpenNori Skill is installed but stale.")
       : "Project OpenNori Skill is not installed; this is optional unless the manifest expects it.",
-    "Run nori install --root <project> --skill --force --json."
+    "Run opennori install --root <project> --skill --force --json."
   ));
   const manifestPackNames = new Set((manifest?.skill_pack?.skills || []).map((entry) => entry.name));
   const packNames = new Set(skillPack.skills.map((entry) => entry.name));
@@ -1210,7 +1216,7 @@ function doctor(root) {
     "skill_pack_manifest",
     manifestPackMatches,
     manifestPackMatches ? "Manifest Skill Pack state is readable." : "Manifest Skill Pack state is missing or stale.",
-    "Refresh the manifest with nori install --root <project> --skill --json."
+    "Refresh the manifest with opennori install --root <project> --skill --json."
   ));
   const packExpected = manifest?.skill_pack?.installed === true || skillPack.skills.some((entry) => entry.installed);
   const packOk = packExpected ? skillPack.installed && skillPack.in_sync : true;
@@ -1220,7 +1226,7 @@ function doctor(root) {
     skillPack.installed
       ? (skillPack.in_sync ? "OpenNori Skill Pack is installed and in sync." : "OpenNori Skill Pack is installed but stale.")
       : "OpenNori Skill Pack is not installed; this is optional unless the manifest expects it.",
-    "Run nori install --root <project> --skill --force --json."
+    "Run opennori install --root <project> --skill --force --json."
   ));
 
   const status = checks.every((check) => check.ok)
@@ -1372,6 +1378,71 @@ function refreshManifest(root) {
   }
 }
 
+function installActions(root, { dryRun = false, force = false, requestedSkill = false } = {}) {
+  const actions = [
+    ensureDir(path.join(root, ".opennori", "active"), { dryRun }),
+    ensureDir(path.join(root, ".opennori", "completed"), { dryRun }),
+    ensureDir(path.join(root, ".opennori", "blocked"), { dryRun }),
+    ensureDir(path.join(root, ".opennori", "reports"), { dryRun }),
+    ensureDir(path.join(root, ".opennori", "brainstorms"), { dryRun }),
+    writeIfSafe(path.join(root, ".opennori", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" })
+  ];
+
+  if (requestedSkill) {
+    actions.push(...skillPackInstallActions(root, { dryRun, force }));
+  }
+  actions.push(writeManifest(root, { dryRun }));
+  return actions;
+}
+
+function bootstrap(root, { confirmed = false } = {}) {
+  const health = doctor(root);
+  if (health.status === "ready") {
+    return ok({
+      root,
+      status: "ready",
+      confirmed,
+      side_effect: "none",
+      doctor: health,
+      next: "OpenNori is ready. Continue from opennori resume/status, brainstorm, or draft based on the user's goal."
+    });
+  }
+
+  const hasState = fs.existsSync(path.join(root, ".opennori"));
+  const needsConfirm = !confirmed;
+  const actions = installActions(root, {
+    dryRun: needsConfirm,
+    force: false,
+    requestedSkill: true
+  });
+  const installPlan = buildInstallPlan(root, actions, {
+    dryRun: needsConfirm,
+    force: false,
+    requestedSkill: true
+  });
+  const next = needsConfirm
+    ? "Show this preview to the user and ask for confirmation before writing OpenNori project assets."
+    : "OpenNori project assets are installed. Continue with the user's goal.";
+
+  return ok(
+    {
+      root,
+      status: needsConfirm ? "needs_confirm" : "installed",
+      confirmed,
+      existing_state: hasState,
+      install_plan: installPlan,
+      actions: installPlan.actions,
+      doctor: needsConfirm ? health : doctor(root),
+      next
+    },
+    [],
+    hasState && health.status === "broken"
+      ? ["Existing OpenNori state was not ready before bootstrap; review doctor output after install."]
+      : [],
+    [next]
+  );
+}
+
 function loadPair(args) {
   const explicitAcceptance = argValue(args, "--acceptance");
   const explicitEvidence = argValue(args, "--evidence");
@@ -1423,10 +1494,17 @@ export async function main(args) {
     return;
   }
 
+  if (command === "bootstrap") {
+    const root = resolveRoot(args);
+    const confirmed = hasFlag(args, "--confirm");
+    printJson(bootstrap(root, { confirmed }));
+    return;
+  }
+
   if (command === "doctor") {
     const root = resolveRoot(args);
     printJson(ok({
-      name: "nori",
+      name: "opennori",
       root,
       ...doctor(root),
       side_effect: "none"
@@ -1460,25 +1538,13 @@ export async function main(args) {
       printJson(fail(
         "confirm_required",
         "Install --force may overwrite existing OpenNori-managed files.",
-        "Run nori install --root <project> --dry-run --force --json first, then rerun with --confirm if the destructive actions are acceptable."
+        "Run opennori install --root <project> --dry-run --force --json first, then rerun with --confirm if the destructive actions are acceptable."
       ));
       process.exitCode = 1;
       return;
     }
-    const actions = [
-      ensureDir(path.join(root, ".opennori", "active"), { dryRun }),
-      ensureDir(path.join(root, ".opennori", "completed"), { dryRun }),
-      ensureDir(path.join(root, ".opennori", "blocked"), { dryRun }),
-      ensureDir(path.join(root, ".opennori", "reports"), { dryRun }),
-      ensureDir(path.join(root, ".opennori", "brainstorms"), { dryRun }),
-      writeIfSafe(path.join(root, ".opennori", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" })
-    ];
-
-    if (requestedSkill) {
-      actions.push(...skillPackInstallActions(root, { dryRun, force }));
-    }
-    const manifestAction = writeManifest(root, { dryRun });
-    actions.push(manifestAction);
+    const actions = installActions(root, { dryRun, force, requestedSkill });
+    const manifestAction = actions.find((action) => action.kind === "manifest");
     const installPlan = buildInstallPlan(root, actions, { dryRun, force, requestedSkill });
 
     printJson(ok({
@@ -1505,7 +1571,7 @@ export async function main(args) {
       printJson(fail(
         "confirm_required",
         "Uninstall removes OpenNori-managed project assets.",
-        "Run nori uninstall --root <project> --dry-run --json first, then rerun with --confirm if the planned removals are acceptable."
+        "Run opennori uninstall --root <project> --dry-run --json first, then rerun with --confirm if the planned removals are acceptable."
       ));
       process.exitCode = 1;
       return;
@@ -1538,7 +1604,7 @@ export async function main(args) {
       printJson(fail(
         "confirm_required",
         "Upgrade refreshes OpenNori manifest, protocol, and optionally Skill Pack assets.",
-        "Run nori upgrade --root <project> --dry-run --json first, then rerun with --confirm if the planned updates are acceptable."
+        "Run opennori upgrade --root <project> --dry-run --json first, then rerun with --confirm if the planned updates are acceptable."
       ));
       process.exitCode = 1;
       return;
@@ -1548,7 +1614,7 @@ export async function main(args) {
       printJson(fail(
         "install_required",
         "Upgrade found missing OpenNori entry assets.",
-        "Run nori install --root <project> --dry-run --json before upgrading missing assets."
+        "Run opennori install --root <project> --dry-run --json before upgrading missing assets."
       ));
       process.exitCode = 1;
       return;
@@ -1595,7 +1661,7 @@ export async function main(args) {
         { kind: "brainstorm_markdown", path: paths.markdownPath }
       ],
       [],
-      ["Ask the user to choose or revise a candidate before running nori draft."]
+      ["Ask the user to choose or revise a candidate before running opennori draft."]
     ));
     return;
   }
@@ -1677,7 +1743,7 @@ export async function main(args) {
         { kind: "evidence_ledger", path: paths.evidencePath }
       ],
       [],
-      ["Run nori next --acceptance <path> --evidence <path> --json before choosing implementation work."]
+      ["Run opennori next --acceptance <path> --evidence <path> --json before choosing implementation work."]
     ));
     return;
   }

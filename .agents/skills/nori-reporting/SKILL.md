@@ -7,12 +7,12 @@ description: Summarize OpenNori status, reports, current gaps, user intervention
 Use when the user asks whether work is complete, what remains, what they need to do, what changed, or asks for an OpenNori report.
 
 ## Commands
-- Resume: `nori resume --root <repo> --json`.
-- Next gap: `nori next --root <repo> --json`.
-- Status: `nori status --root <repo> --json`.
-- Report: `nori report --root <repo> --json`.
-- Changes: `nori changes --root <repo> --json`.
-- List goals: `nori list --root <repo> --json`.
+- Resume: `opennori resume --root <repo> --json`.
+- Next gap: `opennori next --root <repo> --json`.
+- Status: `opennori status --root <repo> --json`.
+- Report: `opennori report --root <repo> --json`.
+- Changes: `opennori changes --root <repo> --json`.
+- List goals: `opennori list --root <repo> --json`.
 
 ## Rules
 Lead with completion state, current gap, evidence basis, and required human intervention.

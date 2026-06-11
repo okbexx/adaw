@@ -7,9 +7,9 @@ description: Record and report OpenNori execution preferences such as required S
 Use when the user says a task must use a Skill, prefers a technology stack, wants to avoid a tool/library, or requires asking before installs.
 
 ## Commands
-- Add preference: `nori profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid> --purpose "<why>" --install-policy <existing_only|ask_before_install|allowed> --json`.
-- Add compliance evidence: `nori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary "<evidence>" --json`.
-- Show profile: `nori profile show --root <repo> --json`.
+- Add preference: `opennori profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid> --purpose "<why>" --install-policy <existing_only|ask_before_install|allowed> --json`.
+- Add compliance evidence: `opennori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary "<evidence>" --json`.
+- Show profile: `opennori profile show --root <repo> --json`.
 
 ## Rules
 Do not turn Skills or stack preferences into user ACs.

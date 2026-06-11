@@ -38,10 +38,10 @@ current gap, risk gate, and report.
 | ID | Tool / entrypoint | User operation | User acceptance criterion | Passing threshold |
 | --- | --- | --- | --- | --- |
 | AC-P-1 | Editor / file browser | Open the active Nori Contract | The user understands goal, layered ACs, each status, and the current gap. | No chat history or implementation explanation required; understandable within 60 seconds. |
-| AC-P-2 | CLI | Run `nori check` | The user can reject technical implementation details masquerading as ACs. | Files, fields, commands, tests, or modules cannot be accepted as user ACs by themselves. |
-| AC-P-3 | CLI | Run `nori next` or `nori status` | The user sees the current acceptance gap and completion answer, not a process-step list. | Output answers which AC is missing, whether complete, and whether human action is required. |
+| AC-P-2 | CLI | Run `opennori check` | The user can reject technical implementation details masquerading as ACs. | Files, fields, commands, tests, or modules cannot be accepted as user ACs by themselves. |
+| AC-P-3 | CLI | Run `opennori next` or `opennori status` | The user sees the current acceptance gap and completion answer, not a process-step list. | Output answers which AC is missing, whether complete, and whether human action is required. |
 | AC-P-4 | CLI / report | Inspect a high-risk AC | The user sees that weak evidence cannot make it passing. | High-risk passing cannot rely only on agent self-summary. |
-| AC-P-5 | CLI / Codex | Trigger `nori report` | The user sees goal, layered AC statuses, evidence summaries, current gap, intervention, and conclusion. | Report is organized by acceptance state and evidence, not process steps. |
+| AC-P-5 | CLI / Codex | Trigger `opennori report` | The user sees goal, layered AC statuses, evidence summaries, current gap, intervention, and conclusion. | Report is organized by acceptance state and evidence, not process steps. |
 | AC-P-6 | CLI / report | Inspect evidence basis | The user can tell what evidence supports passing, blocked, or waived ACs. | Report/status shows evidence summary, basis, confidence, and limitations, not only an agent conclusion. |
 | AC-P-7 | CLI / report | Review evidence sources | The user can review evidence sources without constraining how the agent gathered them. | Sources can be commands, artifacts, URLs, screenshots, diffs, human confirmations, or other reviewable references. |
 | AC-P-8 | CLI / report | Compare evidence basis types | The user can distinguish tool observations, human confirmations, artifact reviews, protocol checks, and agent observations. | Evidence basis is shown clearly and agent judgment is not disguised as tool or human verification. |
@@ -71,18 +71,18 @@ a durable workflow asset.
 
 | ID | Tool / entrypoint | User operation | User acceptance criterion | Passing threshold |
 | --- | --- | --- | --- | --- |
-| AC-Z-1 | CLI | Run `nori skill export` | The user gets a usable Codex Skill draft for OpenNori. | The Skill tells agents to drive work through resume, next, evidence, evaluate, status, and report. |
-| AC-Z-2 | CLI | Run `nori install` | The user can install OpenNori into a project without unexpected overwrites. | Install shows created/skipped assets; existing user content is not overwritten by default. |
+| AC-Z-1 | CLI | Run `opennori skill export` | The user gets a usable Codex Skill draft for OpenNori. | The Skill tells agents to drive work through resume, next, evidence, evaluate, status, and report. |
+| AC-Z-2 | CLI | Run `opennori install` | The user can install OpenNori into a project without unexpected overwrites. | Install shows created/skipped assets; existing user content is not overwritten by default. |
 | AC-Z-3 | Git / PR diff | Review the agent's changes | The user can separate acceptance evidence changes from implementation noise. | Summary defaults to AC status changes, evidence changes, and user impact. |
-| AC-Z-4 | CLI | Run `nori list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
+| AC-Z-4 | CLI | Run `opennori list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
 | AC-Z-5 | CLI | Archive a completed or blocked goal | The user removes it from active work while preserving evidence and report. | Active no longer lists the goal; contract, ledger, and report remain recoverable. |
 | AC-Z-6 | Project file browser | Inspect the project after running OpenNori | The user sees OpenNori-owned state under `.opennori/` instead of a generic project `process/` directory. | Install, draft, brainstorm, report, and archive write OpenNori state under `.opennori/` by default. |
-| AC-Z-7 | CLI / project file browser | Run `nori install` | The user can inspect project OpenNori registration and judge version, managed entries, active goals, Skill status, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.opennori/manifest.json` records version, managed files, active goals, Skill state, and capabilities. |
-| AC-Z-8 | CLI | Run `nori doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.opennori` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
-| AC-Z-9 | CLI | Preview install with `nori install --dry-run` | The user can judge what OpenNori would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
-| AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `nori install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
+| AC-Z-7 | CLI / project file browser | Run `opennori install` | The user can inspect project OpenNori registration and judge version, managed entries, active goals, Skill status, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.opennori/manifest.json` records version, managed files, active goals, Skill state, and capabilities. |
+| AC-Z-8 | CLI | Run `opennori doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.opennori` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
+| AC-Z-9 | CLI | Preview install with `opennori install --dry-run` | The user can judge what OpenNori would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
+| AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `opennori install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 | AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall OpenNori entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.opennori` state is deleted only with `--include-state --confirm`. |
-| AC-Z-12 | CLI / Codex Skills | Install OpenNori Skill Pack | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, project health, and reporting while the user keeps using natural language. | `nori skill export --pack` exposes the pack; `nori install --skill` writes it; manifest records `skill_pack`; doctor detects missing or stale pack Skills. |
+| AC-Z-12 | CLI / Codex Skills | Install OpenNori Skill Pack | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, project health, and reporting while the user keeps using natural language. | `opennori skill export --pack` exposes the pack; `opennori install --skill` writes it; manifest records `skill_pack`; doctor detects missing or stale pack Skills. |
 
 ## Required Artifact Pair
 
@@ -116,10 +116,10 @@ Each active goal has:
 - optional repo-local OpenNori Skill Pack state
 - protocol capabilities exposed by this CLI
 
-`nori install` creates or refreshes the manifest. State-changing OpenNori commands refresh it when
+`opennori install` creates or refreshes the manifest. State-changing OpenNori commands refresh it when
 `.opennori/` already exists.
 
-`nori install --dry-run` returns an install plan. The plan uses deterministic action semantics:
+`opennori install --dry-run` returns an install plan. The plan uses deterministic action semantics:
 
 - `create`: missing OpenNori asset would be created
 - `exists`: required OpenNori directory already exists
@@ -130,11 +130,11 @@ Each active goal has:
 Each planned action also reports `kind`, `managed`, `would_write`, `will_write`, `destructive`,
 and a short human-readable reason.
 
-Real `nori install --force` can overwrite OpenNori-managed files, so it requires explicit confirmation.
-Run `nori install --dry-run --force` first to inspect destructive actions, then rerun with
+Real `opennori install --force` can overwrite OpenNori-managed files, so it requires explicit confirmation.
+Run `opennori install --dry-run --force` first to inspect destructive actions, then rerun with
 `--confirm` only if those writes are acceptable.
 
-`nori uninstall --dry-run` returns an uninstall plan. By default it removes entry assets such as the
+`opennori uninstall --dry-run` returns an uninstall plan. By default it removes entry assets such as the
 repo-local OpenNori Skill and manifest, while preserving Nori Contracts, evidence records,
 reports, archives, and brainstorms. Real uninstall requires `--confirm`. Deleting the whole `.opennori`
 state directory requires both `--include-state` and `--confirm`.
@@ -151,8 +151,8 @@ the root `nori` Skill routes natural-language requests to focused Skills:
 - `nori-project-health`: install, uninstall, doctor, manifest, and Skill Pack sync
 - `nori-reporting`: status, report, current gap, user intervention, and changes
 
-`nori install --skill` installs the pack under `.agents/skills/`. The manifest records `skill_pack`
-state, and `nori doctor` checks whether the pack is installed and in sync.
+`opennori install --skill` installs the pack under `.agents/skills/`. The manifest records `skill_pack`
+state, and `opennori doctor` checks whether the pack is installed and in sync.
 
 ## Nori Profile
 
@@ -179,7 +179,7 @@ Completion rules:
 - `avoid` blocks completion if violated.
 
 Agents translate the user's natural-language preferences into profile records. Users should not
-need to remember `nori profile` commands.
+need to remember `opennori profile` commands.
 
 ## Status Model
 
@@ -239,34 +239,34 @@ all evidence through a narrow adapter taxonomy.
 
 On every turn:
 
-1. If the user wants to discuss, brainstorm, explore, or is not ready to define acceptance criteria, run `nori brainstorm --idea "<idea>" --root <repo> --json`.
+1. If the user wants to discuss, brainstorm, explore, or is not ready to define acceptance criteria, run `opennori brainstorm --idea "<idea>" --root <repo> --json`.
 2. Show only candidate acceptance directions and ask the user to choose or revise a direction. Brainstorm output is not a contract or completion evidence.
-3. If the user chooses a candidate, run `nori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
-4. If the user starts with "use OpenNori" / "用 OpenNori 跑这个任务", run `nori draft --goal "<goal>" --root <repo> --json`.
+3. If the user chooses a candidate, run `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
+4. If the user starts with "use OpenNori" / "用 OpenNori 跑这个任务", run `opennori draft --goal "<goal>" --root <repo> --json`.
 5. Show the draft acceptance criteria and ask the user to approve or revise them.
-6. After approval, run `nori approve --root <repo> --summary "<approval>" --json`.
-7. If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, run `nori profile add --root <repo> ... --json` and keep those items out of the user acceptance criteria.
-8. If the user revises a criterion later, run `nori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-9. Run `nori resume --root <repo>` or `nori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
+6. After approval, run `opennori approve --root <repo> --summary "<approval>" --json`.
+7. If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, run `opennori profile add --root <repo> ... --json` and keep those items out of the user acceptance criteria.
+8. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
+9. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
 10. Work only to produce evidence for that gap.
-11. Add acceptance evidence with `nori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `nori profile evidence` when profile items exist.
-12. Run `nori evaluate`.
+11. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
+12. Run `opennori evaluate`.
 13. Report acceptance state, profile compliance, and evidence, not implementation steps.
 
 Useful commands:
 
-- `nori brainstorm --idea "<idea>" --root <repo>`: create selectable acceptance directions before a contract exists.
-- `nori draft --goal "<goal>" --root <repo>`: create a draft Nori Contract that needs user approval.
-- `nori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
-- `nori approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
-- `nori criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
-- `nori evidence add --root <repo> --criterion <id> --kind <kind> --summary "<summary>" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "<how to review>" --limitations "<known limits>"`: attach user-understandable, reviewable evidence without forcing a fixed adapter.
-- `nori profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid>`: record user execution preferences separately from ACs.
-- `nori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
-- `nori profile show --root <repo>`: show profile compliance and blocking items.
-- `nori list --root <repo>`: list active OpenNori goals.
-- `nori install --root <repo>`: create or refresh project-local OpenNori assets and manifest.
-- `nori doctor --root <repo>`: inspect project OpenNori health and recovery actions.
-- `nori resume --root <repo>`: recover the active goal, current gap, completion answer, and intervention state.
-- `nori status --root <repo>`: answer whether the goal is complete and whether the user needs to act.
-- `nori report --root <repo>`: generate the human acceptance report.
+- `opennori brainstorm --idea "<idea>" --root <repo>`: create selectable acceptance directions before a contract exists.
+- `opennori draft --goal "<goal>" --root <repo>`: create a draft Nori Contract that needs user approval.
+- `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
+- `opennori approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
+- `opennori criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
+- `opennori evidence add --root <repo> --criterion <id> --kind <kind> --summary "<summary>" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "<how to review>" --limitations "<known limits>"`: attach user-understandable, reviewable evidence without forcing a fixed adapter.
+- `opennori profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid>`: record user execution preferences separately from ACs.
+- `opennori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
+- `opennori profile show --root <repo>`: show profile compliance and blocking items.
+- `opennori list --root <repo>`: list active OpenNori goals.
+- `opennori install --root <repo>`: create or refresh project-local OpenNori assets and manifest.
+- `opennori doctor --root <repo>`: inspect project OpenNori health and recovery actions.
+- `opennori resume --root <repo>`: recover the active goal, current gap, completion answer, and intervention state.
+- `opennori status --root <repo>`: answer whether the goal is complete and whether the user needs to act.
+- `opennori report --root <repo>`: generate the human acceptance report.

@@ -14,9 +14,10 @@ Use when the user mentions OpenNori, asks to use OpenNori for a task, continue O
 - Status, report, current gap, completion answer, user intervention, or change summary -> use `nori-reporting`.
 
 ## Baseline
-At the start of each OpenNori turn, run `nori resume --root <repo> --json` or `nori status --root <repo> --json` unless the task is only install/doctor/uninstall.
+At the start of each OpenNori turn, run `opennori bootstrap --root <repo> --json` if project readiness is unknown; otherwise run `opennori resume --root <repo> --json` or `opennori status --root <repo> --json`.
+If bootstrap returns `needs_confirm`, show the preview briefly and ask the user before rerunning with `--confirm`.
 Use `next_recommendation` and top-level `next_actions` to continue the OpenNori loop; do not make the user repeatedly ask what the next step is.
-If `nori` is not on PATH, use the installed package binary such as `node ./node_modules/opennori/bin/nori.js` or this repository's `node ./bin/nori.js` with the same arguments.
+If `opennori` is not on PATH, use the installed package binary such as `node ./node_modules/opennori/bin/opennori.js` or this repository's `node ./bin/opennori.js` with the same arguments.
 
 ## Rule
 Progress is determined by acceptance evidence, not implementation steps.

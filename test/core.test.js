@@ -6,12 +6,12 @@ import test from "node:test";
 import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const CLI = path.join(ROOT, "bin", "nori.js");
+const CLI = path.join(ROOT, "bin", "opennori.js");
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
 function run(args, options = {}) {
-  const result = spawnSync(process.execPath, [CLI, ...args], {
-    cwd: ROOT,
+  const result = spawnSync(process.execPath, [options.cli || CLI, ...args], {
+    cwd: options.cwd || ROOT,
     encoding: "utf8"
   });
   if (result.status !== (options.status ?? 0)) {
@@ -30,8 +30,35 @@ test("command help is side-effect free", () => {
 
   assert.equal(payload.ok, true);
   assert.equal(payload.data.side_effect, "none");
-  assert.match(payload.data.usage, /nori install/);
+  assert.match(payload.data.usage, /opennori install/);
   assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+});
+
+test("opennori quickstart previews bootstrap without requiring install flags", () => {
+  const root = tempRoot();
+  const preview = run([], { cwd: root });
+
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.status, "needs_confirm");
+  assert.equal(preview.data.install_plan.schema_version, "opennori/install-plan-v1");
+  assert.equal(preview.data.install_plan.dry_run, true);
+  assert.equal(preview.data.install_plan.requested_skill, true);
+  assert.equal(preview.data.install_plan.summary.would_write > 0, true);
+  assert.equal(preview.data.install_plan.summary.will_write, 0);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+
+  const confirmed = run(["bootstrap", "--root", root, "--confirm", "--json"]);
+  assert.equal(confirmed.ok, true);
+  assert.equal(confirmed.data.status, "installed");
+  assert.equal(confirmed.data.install_plan.dry_run, false);
+  assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), true);
+
+  const ready = run([], { cwd: root });
+  assert.equal(ready.data.status, "ready");
+  assert.equal(ready.data.side_effect, "none");
+  assert.equal(ready.data.doctor.status, "ready");
 });
 
 test("init creates markdown contract and evidence record", () => {
@@ -409,10 +436,10 @@ test("protocol v1 example contains concrete user tool operations", () => {
     ".opennori",
     "OpenNori 报告",
     "Git 或 PR diff",
-    "nori install",
-    "nori uninstall",
-    "nori doctor",
-    "nori list",
+    "opennori install",
+    "opennori uninstall",
+    "opennori doctor",
+    "opennori list",
     "Skill Pack",
     "证据来源",
     "复查"
@@ -430,8 +457,8 @@ test("skill export gives agents the full OpenNori command loop", () => {
   assert.match(payload.data.skill_md, /nori-acceptance/);
   assert.match(payload.data.skill_md, /nori-evidence/);
   assert.match(payload.data.skill_md, /nori-capability-profile/);
-  assert.match(payload.data.skill_md, /nori resume/);
-  assert.match(payload.data.skill_md, /nori status/);
+  assert.match(payload.data.skill_md, /opennori resume/);
+  assert.match(payload.data.skill_md, /opennori status/);
   assert.match(payload.data.skill_md, /Do not make the user remember CLI syntax/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 
@@ -445,14 +472,14 @@ test("skill export gives agents the full OpenNori command loop", () => {
     "nori-project-health",
     "nori-reporting"
   ]);
-  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /nori brainstorm/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /nori draft/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /opennori brainstorm/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /opennori draft/);
   assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /Do not treat brainstorm output as a Nori Contract/);
   assert.match(pack.data.skills.find((skill) => skill.name === "nori-evidence").skill_md, /Do not force evidence into a fixed adapter taxonomy/);
   assert.match(pack.data.skills.find((skill) => skill.name === "nori-evidence").skill_md, /basis, sources, reviewability, confidence, and limitations/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "nori-capability-profile").skill_md, /nori profile add/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "nori-reporting").skill_md, /nori report --root <repo> --json/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "nori-project-health").skill_md, /nori doctor --root <repo> --json/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-capability-profile").skill_md, /opennori profile add/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-reporting").skill_md, /opennori report --root <repo> --json/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-project-health").skill_md, /opennori doctor --root <repo> --json/);
 });
 
 test("install creates project assets and skips existing user content by default", () => {
@@ -544,8 +571,8 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   const needsAction = run(["doctor", "--root", missingManifestRoot, "--json"]);
   assert.equal(needsAction.data.status, "needs-action");
   assert.equal(needsAction.data.checks.find((check) => check.name === "manifest_file").ok, false);
-  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /nori install/);
-  assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /create or refresh/.test(action.action)), true);
+  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /opennori bootstrap/);
+  assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /opennori bootstrap/.test(action.action)), true);
 
   const staleManifestRoot = tempRoot();
   run(["install", "--root", staleManifestRoot, "--json"]);
@@ -788,7 +815,7 @@ test("list shows multiple active goals and resume requires explicit selection", 
       {
         id: "AC-P-1",
         user_story: `作为用户，我能查看 ${goalId} 的验收状态。`,
-        measurement: "运行 nori list 或 nori resume。",
+        measurement: "运行 opennori list 或 opennori resume。",
         threshold: "输出包含目标状态和当前缺口。"
       }
     ]
@@ -965,8 +992,8 @@ test("check requires measurable user operations and observable outcomes", () => 
     criteria: [
       {
         id: "AC-1",
-        user_story: "作为用户，我运行 nori report 后，能判断当前任务是否完成。",
-        measurement: "运行 nori report 并查看 completion、current_gap 和 evidence summary。",
+        user_story: "作为用户，我运行 opennori report 后，能判断当前任务是否完成。",
+        measurement: "运行 opennori report 并查看 completion、current_gap 和 evidence summary。",
         threshold: "报告显示完成状态、当前缺口和可复查证据；用户不需要阅读实现说明。"
       }
     ]

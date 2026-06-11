@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import { main } from "../src/cli.js";
 
-main(process.argv.slice(2)).catch((error) => {
+const args = process.argv.slice(2);
+const commandArgs = args.length > 0 ? args : ["bootstrap"];
+
+main(commandArgs).catch((error) => {
   console.error(JSON.stringify({
     ok: false,
     error: {

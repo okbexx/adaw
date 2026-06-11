@@ -1,9 +1,9 @@
 {
   "schema_version": "opennori/manifest-v1",
   "protocol_version": "opennori/v1",
-  "opennori_version": "0.1.2",
+  "opennori_version": "0.1.3",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-11T08:14:04.739Z",
+  "updated_at": "2026-06-11T10:08:38.494Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -13,6 +13,7 @@
     "capability-profile",
     "profile-check",
     "archive",
+    "bootstrap",
     "report",
     "doctor",
     "upgrade",
@@ -112,8 +113,8 @@
     "installed": true,
     "path": ".agents/skills/nori/SKILL.md",
     "in_sync": true,
-    "expected_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528",
-    "actual_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528"
+    "expected_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789",
+    "actual_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789"
   },
   "skill_pack": {
     "schema_version": "opennori/skill-pack-v1",
@@ -126,48 +127,48 @@
         "path": ".agents/skills/nori/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528",
-        "actual_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528"
+        "expected_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789",
+        "actual_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789"
       },
       {
         "name": "nori-acceptance",
         "path": ".agents/skills/nori-acceptance/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "d0e243597366eb6139447e82b77f3079954021b6a5dd266d476397ae104f604a",
-        "actual_sha256": "d0e243597366eb6139447e82b77f3079954021b6a5dd266d476397ae104f604a"
+        "expected_sha256": "0884334a250c09108075c25a2c29063b0d74b9b840594964588d4b31491bbf1a",
+        "actual_sha256": "0884334a250c09108075c25a2c29063b0d74b9b840594964588d4b31491bbf1a"
       },
       {
         "name": "nori-evidence",
         "path": ".agents/skills/nori-evidence/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "9a29ae5d92d2f007f5202ffb0a5031bd6fb4c1a5216532eb133dfcdbc6a227d2",
-        "actual_sha256": "9a29ae5d92d2f007f5202ffb0a5031bd6fb4c1a5216532eb133dfcdbc6a227d2"
+        "expected_sha256": "a461d005f895d9e6bdd52689aa52d613f8452d1838a0f21d5a0ffca565c15a3e",
+        "actual_sha256": "a461d005f895d9e6bdd52689aa52d613f8452d1838a0f21d5a0ffca565c15a3e"
       },
       {
         "name": "nori-capability-profile",
         "path": ".agents/skills/nori-capability-profile/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "619ec295c610a3546f27c646b7d010264f205e4d88dc38e0222ad9b22a450dc6",
-        "actual_sha256": "619ec295c610a3546f27c646b7d010264f205e4d88dc38e0222ad9b22a450dc6"
+        "expected_sha256": "c6b3fb8110b258c8990bc9f83829ca7c11de5facc6257931db31cb222a5102b2",
+        "actual_sha256": "c6b3fb8110b258c8990bc9f83829ca7c11de5facc6257931db31cb222a5102b2"
       },
       {
         "name": "nori-project-health",
         "path": ".agents/skills/nori-project-health/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "7e397c8d52f3f1e24015badd917b1900728f98c1f01cb37a3c00308b4b2fa5e3",
-        "actual_sha256": "7e397c8d52f3f1e24015badd917b1900728f98c1f01cb37a3c00308b4b2fa5e3"
+        "expected_sha256": "433ecf04e37c30e857398d86e3b6961b725ce32f86e38ee4ff6199486ddedc77",
+        "actual_sha256": "433ecf04e37c30e857398d86e3b6961b725ce32f86e38ee4ff6199486ddedc77"
       },
       {
         "name": "nori-reporting",
         "path": ".agents/skills/nori-reporting/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "a6e335eb6df1078c454aff633ec0ea60a468665aa4d969f9c5138e8656856356",
-        "actual_sha256": "a6e335eb6df1078c454aff633ec0ea60a468665aa4d969f9c5138e8656856356"
+        "expected_sha256": "951287bcf3673f45262895d957ae06ce4b7b2059e88370e03421347f851a8d14",
+        "actual_sha256": "951287bcf3673f45262895d957ae06ce4b7b2059e88370e03421347f851a8d14"
       }
     ]
   }
