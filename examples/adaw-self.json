@@ -277,6 +277,14 @@
       "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 adaw doctor。",
       "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。",
       "risk": "high"
+    },
+    {
+      "id": "AC-Z-14",
+      "layer": "productization",
+      "user_story": "作为用户，我让 agent 继续 ADAW 工作时，不需要每轮都追问下一步是什么。",
+      "measurement": "运行 adaw resume、adaw status、adaw next 和 adaw report，分别查看未完成、阻塞和已完成 goal 的输出。",
+      "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 ADAW loop。",
+      "risk": "high"
     }
   ]
 }

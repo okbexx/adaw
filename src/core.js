@@ -787,6 +787,67 @@ export function completionAnswer(contract, ledger) {
   };
 }
 
+export function nextRecommendation(contract, ledger) {
+  const gap = currentGap(contract, ledger);
+  const needed = intervention(contract, ledger);
+
+  if (needed.required) {
+    return {
+      status: "user-intervention-required",
+      focus: needed.criterion,
+      summary: `${needed.criterion} needs user input before the agent continues.`,
+      actions: [
+        needed.action,
+        "After the decision or external condition is available, record evidence and rerun ADAW status."
+      ]
+    };
+  }
+
+  if (gap) {
+    if (gap.id === "ACCEPTANCE-BASIS") {
+      return {
+        status: "acceptance-approval-required",
+        focus: gap.id,
+        summary: "Acceptance criteria need user approval or revision before implementation work counts as complete.",
+        actions: [
+          "Ask the user to approve or revise the acceptance criteria before implementation work continues."
+        ]
+      };
+    }
+
+    return {
+      status: "work-on-current-gap",
+      focus: gap.id,
+      summary: `Continue with ${gap.id}: ${gap.user_story}`,
+      actions: [
+        `Create or collect reviewable evidence for ${gap.id}.`,
+        `Record the result for ${gap.id}, then rerun ADAW status.`
+      ]
+    };
+  }
+
+  if (ledger.status === "complete") {
+    return {
+      status: "ready-for-next-loop",
+      focus: null,
+      summary: "This ADAW goal is complete. If the user has asked to continue, start the next acceptance loop without waiting for another next-step prompt.",
+      actions: [
+        "Report the completion evidence briefly.",
+        "Select the next human-facing project goal from the current context, draft acceptance criteria, and continue the ADAW loop."
+      ]
+    };
+  }
+
+  return {
+    status: "reconcile-workflow-state",
+    focus: null,
+    summary: `No current gap was found, but workflow status is ${ledger.status}.`,
+    actions: [
+      "Run ADAW evaluate and doctor, then inspect the report before continuing."
+    ]
+  };
+}
+
 export function gapReason(status) {
   if (status === "failing") return "Existing evidence shows this user acceptance criterion is not satisfied.";
   if (status === "blocked") return "This user acceptance criterion needs a user decision or external condition.";
@@ -871,6 +932,7 @@ export function renderReport(contract, ledger) {
     `Completion: ${completion.answer}`,
     `Current gap: ${gap ? `${gap.id} - ${gap.reason}` : "None. All required acceptance criteria have passing or waived evidence."}`,
     `User intervention: ${needed.required ? `${needed.criterion} - ${needed.action}` : needed.action}`,
+    `Recommended next action: ${nextRecommendation(contract, ledger).summary}`,
     `Workflow status: ${ledger.status}`,
     "",
     "## Goal",

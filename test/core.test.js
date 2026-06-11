@@ -64,6 +64,9 @@ test("resume and status recover active goal from repository files", () => {
   assert.equal(resume.data.goal_id, "adaw-self");
   assert.equal(resume.data.current_gap.id, "AC-P-1");
   assert.equal(resume.data.completion.complete, false);
+  assert.equal(resume.data.next_recommendation.status, "work-on-current-gap");
+  assert.equal(resume.data.next_recommendation.focus, "AC-P-1");
+  assert.equal(resume.next_actions.some((action) => /AC-P-1/.test(action)), true);
 
   run([
     "evidence", "add",
@@ -255,10 +258,20 @@ test("evidence can drive the workflow to complete and render a human report", ()
   assert.match(text, /Completion: Complete: all required acceptance criteria have passing or waived evidence\./);
   assert.match(text, /Current gap: None\. All required acceptance criteria/);
   assert.match(text, /User intervention: No user intervention is currently required\./);
+  assert.match(text, /Recommended next action: This ADAW goal is complete/);
   assert.match(text, /Current status: complete/);
   assert.match(text, /AC-Z-5/);
   assert.match(text, /None\. All required acceptance criteria/);
   assert.doesNotMatch(text, /Implementation plan/);
+
+  const resume = run([
+    "resume",
+    "--acceptance", init.data.acceptance_path,
+    "--evidence", init.data.evidence_path,
+    "--json"
+  ]);
+  assert.equal(resume.data.next_recommendation.status, "ready-for-next-loop");
+  assert.equal(resume.next_actions.some((action) => /next human-facing project goal/.test(action)), true);
 });
 
 test("blocked criteria produce a concrete intervention answer", () => {
@@ -362,11 +375,11 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 34);
+  assert.equal(brief.criteria.length, 35);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 13);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 14);
 
   const expectedTools = [
     "Codex 对话",

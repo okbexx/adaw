@@ -53,6 +53,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-Z-11 | productization | 作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。 | 在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。 | 默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。 | passing |
 | AC-Z-12 | productization | 作为用户，我安装 ADAW 后，agent 能获得一组职责清晰的 ADAW Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。 | 运行 adaw skill export --pack、adaw install --skill 和 adaw doctor，查看 Skill Pack、manifest 和 doctor 结果。 | Skill Pack 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 会写入这些 Skill；manifest 记录 skill_pack；doctor 能发现缺失或不同步的 Skill。 | passing |
 | AC-Z-13 | productization | 作为用户，我运行 adaw doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。 | 分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 adaw doctor。 | doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。 | passing |
+| AC-Z-14 | productization | 作为用户，我让 agent 继续 ADAW 工作时，不需要每轮都追问下一步是什么。 | 运行 adaw resume、adaw status、adaw next 和 adaw report，分别查看未完成、阻塞和已完成 goal 的输出。 | 输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 ADAW loop。 | passing |
 
 ## Rule
 

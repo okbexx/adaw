@@ -314,6 +314,15 @@
         "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。",
         "risk": "high",
         "required": true
+      },
+      {
+        "id": "AC-Z-14",
+        "layer": "productization",
+        "user_story": "作为用户，我让 agent 继续 ADAW 工作时，不需要每轮都追问下一步是什么。",
+        "measurement": "运行 adaw resume、adaw status、adaw next 和 adaw report，分别查看未完成、阻塞和已完成 goal 的输出。",
+        "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 ADAW loop。",
+        "risk": "high",
+        "required": true
       }
     ]
   },
@@ -321,7 +330,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-11T03:45:08.109Z",
+    "updated_at": "2026-06-11T03:58:33.348Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -1429,6 +1438,49 @@
             "limitations": "doctor still diagnoses only; it does not automatically modify or repair project files.",
             "gate": "accepted",
             "created_at": "2026-06-11T03:45:08.065Z"
+          }
+        ]
+      },
+      "AC-Z-14": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "resume/status/next/report now return a next recommendation so the agent can continue the ADAW loop without making the user ask for the next step.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed",
+                "detail": "23 tests passed"
+              },
+              {
+                "type": "artifact",
+                "label": "next recommendation implementation",
+                "path": "src/core.js"
+              },
+              {
+                "type": "artifact",
+                "label": "CLI next recommendation outputs",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "next recommendation tests",
+                "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Run npm test, then inspect adaw resume/status/next --json and the report Decision Summary.",
+            "limitations": "The recommendation guides the next ADAW loop; it does not choose a product roadmap item from outside the current context.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T03:58:33.347Z"
           }
         ]
       }

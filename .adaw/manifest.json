@@ -3,7 +3,7 @@
   "protocol_version": "adaw/v1",
   "adaw_version": "0.1.0",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-11T03:45:08.159Z",
+  "updated_at": "2026-06-11T04:00:19.803Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -109,8 +109,8 @@
     "installed": true,
     "path": ".agents/skills/adaw/SKILL.md",
     "in_sync": true,
-    "expected_sha256": "7af74ef3383c79c519e4ab47fca4f2ac51b68f4a3d3f5425d85ba52c283625b0",
-    "actual_sha256": "7af74ef3383c79c519e4ab47fca4f2ac51b68f4a3d3f5425d85ba52c283625b0"
+    "expected_sha256": "026a778e276b8b7d3993d04983e19d3b590fb92f2f7f29e7b28cea42ad0ad56b",
+    "actual_sha256": "026a778e276b8b7d3993d04983e19d3b590fb92f2f7f29e7b28cea42ad0ad56b"
   },
   "skill_pack": {
     "schema_version": "adaw/skill-pack-v1",
@@ -123,8 +123,8 @@
         "path": ".agents/skills/adaw/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "7af74ef3383c79c519e4ab47fca4f2ac51b68f4a3d3f5425d85ba52c283625b0",
-        "actual_sha256": "7af74ef3383c79c519e4ab47fca4f2ac51b68f4a3d3f5425d85ba52c283625b0"
+        "expected_sha256": "026a778e276b8b7d3993d04983e19d3b590fb92f2f7f29e7b28cea42ad0ad56b",
+        "actual_sha256": "026a778e276b8b7d3993d04983e19d3b590fb92f2f7f29e7b28cea42ad0ad56b"
       },
       {
         "name": "adaw-acceptance",
@@ -163,8 +163,8 @@
         "path": ".agents/skills/adaw-reporting/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "a5bf30e54a6f67349d816fe846ad831db26bd1ef8b0535c48a92a20c4a9204f4",
-        "actual_sha256": "a5bf30e54a6f67349d816fe846ad831db26bd1ef8b0535c48a92a20c4a9204f4"
+        "expected_sha256": "e721d0c86436528ccb3955428b71465430b2a28a0ff6b78bef8eb91383c68d17",
+        "actual_sha256": "e721d0c86436528ccb3955428b71465430b2a28a0ff6b78bef8eb91383c68d17"
       }
     ]
   }

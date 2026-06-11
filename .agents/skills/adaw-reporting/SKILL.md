@@ -16,5 +16,6 @@ Use when the user asks whether work is complete, what remains, what they need to
 
 ## Rules
 Lead with completion state, current gap, evidence basis, and required human intervention.
+After reporting, follow `next_recommendation` / `next_actions` when the user has asked to continue, instead of asking the user what the next step is.
 Summarize implementation details only as supporting evidence.
 Never report complete unless all required ACs and blocking Capability Profile items are passing or waived.

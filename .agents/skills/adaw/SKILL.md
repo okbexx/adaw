@@ -15,6 +15,7 @@ Use when the user mentions ADAW, asks to use ADAW for a task, continue ADAW, che
 
 ## Baseline
 At the start of each ADAW turn, run `adaw resume --root <repo> --json` or `adaw status --root <repo> --json` unless the task is only install/doctor/uninstall.
+Use `next_recommendation` and top-level `next_actions` to continue the ADAW loop; do not make the user repeatedly ask what the next step is.
 If `adaw` is not on PATH, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.
 
 ## Rule

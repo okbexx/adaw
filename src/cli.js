@@ -14,6 +14,7 @@ import {
   fail,
   findActivePairs,
   intervention,
+  nextRecommendation,
   ok,
   pathsForGoal,
   profileCompliance,
@@ -338,6 +339,7 @@ const SKILL_PACK = [
       "",
       "## Baseline",
       "At the start of each ADAW turn, run `adaw resume --root <repo> --json` or `adaw status --root <repo> --json` unless the task is only install/doctor/uninstall.",
+      "Use `next_recommendation` and top-level `next_actions` to continue the ADAW loop; do not make the user repeatedly ask what the next step is.",
       "If `adaw` is not on PATH, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.",
       "",
       "## Rule",
@@ -442,6 +444,7 @@ const SKILL_PACK = [
       "",
       "## Rules",
       "Lead with completion state, current gap, evidence basis, and required human intervention.",
+      "After reporting, follow `next_recommendation` / `next_actions` when the user has asked to continue, instead of asking the user what the next step is.",
       "Summarize implementation details only as supporting evidence.",
       "Never report complete unless all required ACs and blocking Capability Profile items are passing or waived."
     ]
@@ -1448,25 +1451,29 @@ export async function main(args) {
 
   if (command === "resume") {
     const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
+    const recommendation = nextRecommendation(contract, ledger);
     printJson(ok({
       goal_id: contract.goal_id,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger),
       completion: completionAnswer(contract, ledger),
       intervention: intervention(contract, ledger),
+      next_recommendation: recommendation,
       acceptance_path: acceptancePath,
       evidence_path: evidencePath
-    }));
+    }, [], [], recommendation.actions));
     return;
   }
 
   if (command === "next") {
     const { contract, ledger } = loadPair(args);
+    const recommendation = nextRecommendation(contract, ledger);
     printJson(ok({
       goal_id: contract.goal_id,
       current_gap: currentGap(contract, ledger),
-      complete: currentGap(contract, ledger) === null
-    }));
+      complete: currentGap(contract, ledger) === null,
+      next_recommendation: recommendation
+    }, [], [], recommendation.actions));
     return;
   }
 
@@ -1520,14 +1527,16 @@ export async function main(args) {
 
   if (command === "status") {
     const { contract, ledger } = loadPair(args);
+    const recommendation = nextRecommendation(contract, ledger);
     printJson(ok({
       goal_id: contract.goal_id,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger),
       completion: completionAnswer(contract, ledger),
       intervention: intervention(contract, ledger),
+      next_recommendation: recommendation,
       criteria: criterionStatusRows(contract, ledger)
-    }));
+    }, [], [], recommendation.actions));
     return;
   }
 
@@ -1537,9 +1546,12 @@ export async function main(args) {
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, renderReport(contract, ledger));
     refreshManifest(root);
+    const recommendation = nextRecommendation(contract, ledger);
     printJson(ok(
-      { goal_id: contract.goal_id, report_path: output, workflow_status: ledger.status },
-      [{ kind: "acceptance_report", path: output }]
+      { goal_id: contract.goal_id, report_path: output, workflow_status: ledger.status, next_recommendation: recommendation },
+      [{ kind: "acceptance_report", path: output }],
+      [],
+      recommendation.actions
     ));
     return;
   }
