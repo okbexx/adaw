@@ -362,11 +362,11 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 33);
+  assert.equal(brief.criteria.length, 34);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 12);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 13);
 
   const expectedTools = [
     "Codex 对话",
@@ -503,6 +503,7 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   const missingPackSkill = run(["doctor", "--root", readyRoot, "--json"]);
   assert.equal(missingPackSkill.data.status, "needs-action");
   assert.equal(missingPackSkill.data.checks.find((check) => check.name === "skill_pack_sync").ok, false);
+  assert.equal(missingPackSkill.data.recovery_actions.some((action) => action.check === "skill_pack_sync" && /install --root <project> --skill --force/.test(action.action)), true);
 
   const missingManifestRoot = tempRoot();
   run(["install", "--root", missingManifestRoot, "--json"]);
@@ -511,6 +512,7 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(needsAction.data.status, "needs-action");
   assert.equal(needsAction.data.checks.find((check) => check.name === "manifest_file").ok, false);
   assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /adaw install/);
+  assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /create or refresh/.test(action.action)), true);
 
   const staleManifestRoot = tempRoot();
   run(["install", "--root", staleManifestRoot, "--json"]);
@@ -523,6 +525,8 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(stale.data.status, "needs-action");
   assert.equal(stale.data.checks.find((check) => check.name === "manifest_cli_version").ok, false);
   assert.equal(stale.data.checks.find((check) => check.name === "manifest_capabilities").ok, false);
+  assert.equal(stale.data.recovery_actions.some((action) => action.check === "manifest_cli_version" && /Refresh the manifest/.test(action.action)), true);
+  assert.equal(stale.data.recovery_actions.some((action) => action.check === "manifest_capabilities" && /Refresh the manifest/.test(action.action)), true);
 
   const brokenRoot = tempRoot();
   run(["install", "--root", brokenRoot, "--json"]);
@@ -531,7 +535,9 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(broken.data.status, "broken");
   assert.equal(broken.data.checks.find((check) => check.name === "active_goals_recoverable").ok, false);
   assert.equal(broken.data.active_goal_issues.length, 1);
-  assert.match(broken.data.checks.find((check) => check.name === "active_goals_recoverable").recovery, /Fix the reported active goal pair/);
+  assert.match(broken.data.checks.find((check) => check.name === "active_goals_recoverable").recovery, /Inspect active_goal_issues/);
+  assert.equal(broken.data.recovery_actions.some((action) => action.check === "active_goals_recoverable" && /adaw\/active\/<goal>/.test(action.action)), true);
+  assert.equal(broken.data.recovery_actions.some((action) => action.check === "active_goal_issue" && action.goal_id === "broken" && /broken\.evidence\.json/.test(action.action)), true);
 });
 
 test("uninstall previews removals and preserves ADAW state by default", () => {

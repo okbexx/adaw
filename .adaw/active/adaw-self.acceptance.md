@@ -52,6 +52,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-Z-10 | productization | 作为用户，我执行可能覆盖已有 ADAW 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。 | 在已有 ADAW 入口的项目中运行 adaw install --force、adaw install --force --dry-run 和确认后的安装。 | 未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。 | passing |
 | AC-Z-11 | productization | 作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。 | 在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。 | 默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。 | passing |
 | AC-Z-12 | productization | 作为用户，我安装 ADAW 后，agent 能获得一组职责清晰的 ADAW Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。 | 运行 adaw skill export --pack、adaw install --skill 和 adaw doctor，查看 Skill Pack、manifest 和 doctor 结果。 | Skill Pack 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 会写入这些 Skill；manifest 记录 skill_pack；doctor 能发现缺失或不同步的 Skill。 | passing |
+| AC-Z-13 | productization | 作为用户，我运行 adaw doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。 | 分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 adaw doctor。 | doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。 | passing |
 
 ## Rule
 

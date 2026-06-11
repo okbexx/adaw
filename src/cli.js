@@ -701,6 +701,30 @@ function doctorCheck(name, condition, summary, recovery = undefined, severity = 
   return check;
 }
 
+function doctorRecoveryActions(checks, activeIssues = []) {
+  const actions = checks
+    .filter((check) => !check.ok && check.recovery)
+    .map((check) => ({
+      check: check.name,
+      severity: check.severity || "needs-action",
+      action: check.recovery
+    }));
+
+  for (const issue of activeIssues) {
+    actions.push({
+      check: "active_goal_issue",
+      severity: "broken",
+      goal_id: issue.goal_id,
+      path: issue.path,
+      action: issue.path
+        ? `Inspect .adaw/active/${issue.goal_id}.evidence.json and fix ${issue.path}: ${issue.message}`
+        : `Inspect .adaw/active/${issue.goal_id}.acceptance.md and .adaw/active/${issue.goal_id}.evidence.json: ${issue.message}`
+    });
+  }
+
+  return actions;
+}
+
 function doctor(root) {
   const checks = [];
   const adawDir = path.join(root, ".adaw");
@@ -811,7 +835,7 @@ function doctor(root) {
     "active_goals_recoverable",
     active.issues.length === 0,
     active.issues.length === 0 ? `${active.details.length} active goal(s) are recoverable.` : `${active.issues.length} active goal issue(s) found.`,
-    "Fix the reported active goal pair, or archive/remove the broken pair after preserving needed content.",
+    "Inspect active_goal_issues, fix the reported .adaw/active/<goal>.acceptance.md and .adaw/active/<goal>.evidence.json pair, then rerun adaw doctor --root <project> --json.",
     "broken"
   ));
 
@@ -866,6 +890,7 @@ function doctor(root) {
   return {
     status,
     checks,
+    recovery_actions: doctorRecoveryActions(checks, active.issues),
     active_goals: active.details,
     active_goal_issues: active.issues,
     manifest_path: manifestFile,

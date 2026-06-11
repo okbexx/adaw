@@ -269,6 +269,14 @@
       "measurement": "运行 adaw skill export --pack、adaw install --skill 和 adaw doctor，查看 Skill Pack、manifest 和 doctor 结果。",
       "threshold": "Skill Pack 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 会写入这些 Skill；manifest 记录 skill_pack；doctor 能发现缺失或不同步的 Skill。",
       "risk": "high"
+    },
+    {
+      "id": "AC-Z-13",
+      "layer": "productization",
+      "user_story": "作为用户，我运行 adaw doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
+      "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 adaw doctor。",
+      "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。",
+      "risk": "high"
     }
   ]
 }
