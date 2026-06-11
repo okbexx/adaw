@@ -6,7 +6,8 @@ import test from "node:test";
 import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const CLI = path.join(ROOT, "bin", "adaw.js");
+const CLI = path.join(ROOT, "bin", "nori.js");
+const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
 function run(args, options = {}) {
   const result = spawnSync(process.execPath, [CLI, ...args], {
@@ -20,15 +21,25 @@ function run(args, options = {}) {
 }
 
 function tempRoot() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "adaw-test-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "nori-test-"));
 }
 
-test("init creates markdown contract and evidence ledger", () => {
+test("command help is side-effect free", () => {
   const root = tempRoot();
-  const payload = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const payload = run(["install", "--help", "--root", root]);
 
   assert.equal(payload.ok, true);
-  assert.equal(payload.data.goal_id, "adaw-self");
+  assert.equal(payload.data.side_effect, "none");
+  assert.match(payload.data.usage, /nori install/);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+});
+
+test("init creates markdown contract and evidence record", () => {
+  const root = tempRoot();
+  const payload = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data.goal_id, "opennori-self");
   assert.equal(payload.data.current_gap.id, "AC-P-1");
   assert.equal(fs.existsSync(payload.data.acceptance_path), true);
   assert.equal(fs.existsSync(payload.data.evidence_path), true);
@@ -42,7 +53,7 @@ test("init creates markdown contract and evidence ledger", () => {
 
 test("next returns the current acceptance gap, not a process step", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
   const payload = run([
     "next",
     "--acceptance", init.data.acceptance_path,
@@ -57,11 +68,11 @@ test("next returns the current acceptance gap, not a process step", () => {
 
 test("resume and status recover active goal from repository files", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const resume = run(["resume", "--root", root, "--json"]);
   assert.equal(resume.ok, true);
-  assert.equal(resume.data.goal_id, "adaw-self");
+  assert.equal(resume.data.goal_id, "opennori-self");
   assert.equal(resume.data.current_gap.id, "AC-P-1");
   assert.equal(resume.data.completion.complete, false);
   assert.equal(resume.data.next_recommendation.status, "work-on-current-gap");
@@ -88,7 +99,7 @@ test("resume and status recover active goal from repository files", () => {
 
 test("draft requires user approval before completion evidence can finish the workflow", () => {
   const root = tempRoot();
-  const draft = run(["draft", "--goal", "Ship an ADAW-backed task", "--root", root, "--json"]);
+  const draft = run(["draft", "--goal", "Ship an OpenNori-backed task", "--root", root, "--json"]);
   assert.equal(draft.data.acceptance_basis.status, "draft");
   assert.equal(draft.data.current_gap.id, "ACCEPTANCE-BASIS");
 
@@ -128,7 +139,7 @@ test("brainstorm creates selectable acceptance directions, not a process plan", 
   const root = tempRoot();
   const brainstorm = run([
     "brainstorm",
-    "--idea", "我想让 ADAW 支持头脑风暴",
+    "--idea", "我想让 OpenNori 支持头脑风暴",
     "--root", root,
     "--json"
   ]);
@@ -141,7 +152,7 @@ test("brainstorm creates selectable acceptance directions, not a process plan", 
 
   const text = fs.readFileSync(brainstorm.data.markdown_path, "utf8");
   assert.match(text, /Acceptance directions/);
-  assert.match(text, /not an acceptance contract/);
+  assert.match(text, /not a Nori Contract/);
   assert.doesNotMatch(text, /Implementation plan/);
   assert.doesNotMatch(text, /Step 1/);
 
@@ -157,7 +168,7 @@ test("brainstorm creates selectable acceptance directions, not a process plan", 
   assert.equal(draft.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
 });
 
-test("capability profile records required skills and blocks completion until satisfied", () => {
+test("Nori Profile records required skills and blocks completion until satisfied", () => {
   const root = tempRoot();
   const init = run(["draft", "--goal", "Build a frontend page", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
@@ -214,14 +225,14 @@ test("capability profile records required skills and blocks completion until sat
 
   const report = run(["report", "--root", root, "--json"]);
   const text = fs.readFileSync(report.data.report_path, "utf8");
-  assert.match(text, /Capability Profile/);
+  assert.match(text, /Nori Profile/);
   assert.match(text, /design-taste-frontend/);
   assert.match(text, /radix-ui/);
 });
 
 test("evidence can drive the workflow to complete and render a human report", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
 
   for (const criterion of Object.keys(ledger.ledger.criteria)) {
@@ -258,7 +269,7 @@ test("evidence can drive the workflow to complete and render a human report", ()
   assert.match(text, /Completion: Complete: all required acceptance criteria have passing or waived evidence\./);
   assert.match(text, /Current gap: None\. All required acceptance criteria/);
   assert.match(text, /User intervention: No user intervention is currently required\./);
-  assert.match(text, /Recommended next action: This ADAW goal is complete/);
+  assert.match(text, /Recommended next action: This OpenNori goal is complete/);
   assert.match(text, /Current status: complete/);
   assert.match(text, /AC-Z-5/);
   assert.match(text, /None\. All required acceptance criteria/);
@@ -276,14 +287,14 @@ test("evidence can drive the workflow to complete and render a human report", ()
 
 test("blocked criteria produce a concrete intervention answer", () => {
   const root = tempRoot();
-  run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const blocked = run([
     "evidence", "add",
     "--root", root,
     "--criterion", "AC-O-5",
     "--kind", "human-confirmation",
-    "--summary", "Choose whether ADAW should pause or continue without external credentials.",
+    "--summary", "Choose whether OpenNori should pause or continue without external credentials.",
     "--result", "blocked",
     "--json"
   ]);
@@ -292,12 +303,12 @@ test("blocked criteria produce a concrete intervention answer", () => {
   const status = run(["status", "--root", root, "--json"]);
   assert.equal(status.data.intervention.required, true);
   assert.equal(status.data.intervention.criterion, "AC-O-5");
-  assert.match(status.data.intervention.action, /Choose whether ADAW should pause/);
+  assert.match(status.data.intervention.action, /Choose whether OpenNori should pause/);
 });
 
 test("high-risk criteria require strong evidence before passing", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const weak = run([
     "evidence", "add",
@@ -332,7 +343,7 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("evidence records flexible reviewable sources without fixed adapters", () => {
   const root = tempRoot();
-  run(["draft", "--goal", "Ship a reviewable ADAW task", "--root", root, "--json"]);
+  run(["draft", "--goal", "Ship a reviewable OpenNori task", "--root", root, "--json"]);
   run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
 
   const added = run([
@@ -383,25 +394,25 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 });
 
 test("protocol v1 example contains concrete user tool operations", () => {
-  const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 36);
+  const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "opennori-self.json"), "utf8"));
+  assert.equal(brief.criteria.length, 38);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 15);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 17);
 
   const expectedTools = [
     "Codex 对话",
     "编辑器或文件浏览器",
     "新的 Codex 会话",
-    "Capability Profile",
-    ".adaw",
-    "ADAW 报告",
+    "Nori Profile",
+    ".opennori",
+    "OpenNori 报告",
     "Git 或 PR diff",
-    "adaw install",
-    "adaw uninstall",
-    "adaw doctor",
-    "adaw list",
+    "nori install",
+    "nori uninstall",
+    "nori doctor",
+    "nori list",
     "Skill Pack",
     "证据来源",
     "复查"
@@ -413,85 +424,85 @@ test("protocol v1 example contains concrete user tool operations", () => {
   }
 });
 
-test("skill export gives agents the full ADAW command loop", () => {
+test("skill export gives agents the full OpenNori command loop", () => {
   const payload = run(["skill", "export", "--json"]);
-  assert.equal(payload.data.skill_name, "adaw");
-  assert.match(payload.data.skill_md, /adaw-acceptance/);
-  assert.match(payload.data.skill_md, /adaw-evidence/);
-  assert.match(payload.data.skill_md, /adaw-capability-profile/);
-  assert.match(payload.data.skill_md, /adaw resume/);
-  assert.match(payload.data.skill_md, /adaw status/);
+  assert.equal(payload.data.skill_name, "nori");
+  assert.match(payload.data.skill_md, /nori-acceptance/);
+  assert.match(payload.data.skill_md, /nori-evidence/);
+  assert.match(payload.data.skill_md, /nori-capability-profile/);
+  assert.match(payload.data.skill_md, /nori resume/);
+  assert.match(payload.data.skill_md, /nori status/);
   assert.match(payload.data.skill_md, /Do not make the user remember CLI syntax/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 
   const pack = run(["skill", "export", "--pack", "--json"]);
   const names = pack.data.skills.map((skill) => skill.name);
   assert.deepEqual(names, [
-    "adaw",
-    "adaw-acceptance",
-    "adaw-evidence",
-    "adaw-capability-profile",
-    "adaw-project-health",
-    "adaw-reporting"
+    "nori",
+    "nori-acceptance",
+    "nori-evidence",
+    "nori-capability-profile",
+    "nori-project-health",
+    "nori-reporting"
   ]);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /adaw brainstorm/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /adaw draft/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /Do not treat brainstorm output as an acceptance contract/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-evidence").skill_md, /Do not force evidence into a fixed adapter taxonomy/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-evidence").skill_md, /basis, sources, reviewability, confidence, and limitations/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-capability-profile").skill_md, /adaw profile add/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-reporting").skill_md, /adaw report --root <repo> --json/);
-  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-project-health").skill_md, /adaw doctor --root <repo> --json/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /nori brainstorm/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /nori draft/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-acceptance").skill_md, /Do not treat brainstorm output as a Nori Contract/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-evidence").skill_md, /Do not force evidence into a fixed adapter taxonomy/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-evidence").skill_md, /basis, sources, reviewability, confidence, and limitations/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-capability-profile").skill_md, /nori profile add/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-reporting").skill_md, /nori report --root <repo> --json/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "nori-project-health").skill_md, /nori doctor --root <repo> --json/);
 });
 
 test("install creates project assets and skips existing user content by default", () => {
   const root = tempRoot();
-  const protocolPath = path.join(root, ".adaw", "protocol.md");
+  const protocolPath = path.join(root, ".opennori", "protocol.md");
   fs.mkdirSync(path.dirname(protocolPath), { recursive: true });
   fs.writeFileSync(protocolPath, "custom protocol\n");
 
   const dryRun = run(["install", "--root", root, "--skill", "--dry-run", "--json"]);
   assert.equal(dryRun.data.dry_run, true);
-  assert.equal(dryRun.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
-  assert.equal(dryRun.data.install_plan.schema_version, "adaw/install-plan-v1");
+  assert.equal(dryRun.data.actions.find((action) => action.path === ".opennori/manifest.json").action, "create");
+  assert.equal(dryRun.data.install_plan.schema_version, "opennori/install-plan-v1");
   assert.equal(dryRun.data.install_plan.summary.would_write > 0, true);
   assert.equal(dryRun.data.install_plan.summary.will_write, 0);
-  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").kind, "protocol");
-  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").will_write, false);
-  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md").would_write, false);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".opennori/protocol.md").kind, "protocol");
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".opennori/protocol.md").will_write, false);
+  assert.equal(dryRun.data.install_plan.actions.find((action) => action.path === ".opennori/protocol.md").would_write, false);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), false);
 
   const payload = run(["install", "--root", root, "--skill", "--json"]);
-  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/protocol.md").action, "skip");
-  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").action, "create");
+  assert.equal(payload.data.actions.find((action) => action.path === ".opennori/protocol.md").action, "skip");
+  assert.equal(payload.data.actions.find((action) => action.path === ".opennori/manifest.json").action, "create");
   assert.equal(payload.data.install_plan.summary.will_write > 0, true);
-  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").kind, "manifest");
-  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").managed, true);
-  assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").will_write, true);
+  assert.equal(payload.data.actions.find((action) => action.path === ".opennori/manifest.json").kind, "manifest");
+  assert.equal(payload.data.actions.find((action) => action.path === ".opennori/manifest.json").managed, true);
+  assert.equal(payload.data.actions.find((action) => action.path === ".opennori/manifest.json").will_write, true);
   assert.equal(fs.readFileSync(protocolPath, "utf8"), "custom protocol\n");
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), true);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-evidence", "SKILL.md")), true);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-reporting", "SKILL.md")), true);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "active")), true);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "brainstorms")), true);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori-evidence", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori-reporting", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "active")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "brainstorms")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
   assert.equal(fs.existsSync(path.join(root, "process")), false);
 
-  const manifest = JSON.parse(fs.readFileSync(path.join(root, ".adaw", "manifest.json"), "utf8"));
-  assert.equal(manifest.schema_version, "adaw/manifest-v1");
-  assert.equal(manifest.adaw_version, "0.1.0");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, ".opennori", "manifest.json"), "utf8"));
+  assert.equal(manifest.schema_version, "opennori/manifest-v1");
+  assert.equal(manifest.opennori_version, PACKAGE_VERSION);
   assert.equal(manifest.skill.installed, true);
   assert.equal(manifest.skill.in_sync, true);
   assert.equal(manifest.skill_pack.installed, true);
   assert.equal(manifest.skill_pack.in_sync, true);
   assert.equal(manifest.skill_pack.skills.length, 6);
-  assert.equal(manifest.managed_files.some((entry) => entry.path === ".adaw/protocol.md" && entry.exists), true);
-  assert.equal(manifest.managed_files.some((entry) => entry.path === ".agents/skills/adaw-evidence/SKILL.md" && entry.exists), true);
+  assert.equal(manifest.managed_files.some((entry) => entry.path === ".opennori/protocol.md" && entry.exists), true);
+  assert.equal(manifest.managed_files.some((entry) => entry.path === ".agents/skills/nori-evidence/SKILL.md" && entry.exists), true);
   assert.equal(manifest.capabilities.includes("doctor"), true);
   assert.equal(manifest.capabilities.includes("skill-pack"), true);
 
   const forced = run(["install", "--root", root, "--skill", "--force", "--dry-run", "--json"]);
-  const protocolAction = forced.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md");
+  const protocolAction = forced.data.install_plan.actions.find((action) => action.path === ".opennori/protocol.md");
   assert.equal(protocolAction.action, "overwrite");
   assert.equal(protocolAction.destructive, true);
   assert.equal(forced.data.install_plan.summary.destructive > 0, true);
@@ -521,7 +532,7 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(ready.data.skill.in_sync, true);
   assert.equal(ready.data.skill_pack.in_sync, true);
 
-  fs.unlinkSync(path.join(readyRoot, ".agents", "skills", "adaw-evidence", "SKILL.md"));
+  fs.unlinkSync(path.join(readyRoot, ".agents", "skills", "nori-evidence", "SKILL.md"));
   const missingPackSkill = run(["doctor", "--root", readyRoot, "--json"]);
   assert.equal(missingPackSkill.data.status, "needs-action");
   assert.equal(missingPackSkill.data.checks.find((check) => check.name === "skill_pack_sync").ok, false);
@@ -529,18 +540,18 @@ test("doctor reports ready, needs-action, and broken project health", () => {
 
   const missingManifestRoot = tempRoot();
   run(["install", "--root", missingManifestRoot, "--json"]);
-  fs.unlinkSync(path.join(missingManifestRoot, ".adaw", "manifest.json"));
+  fs.unlinkSync(path.join(missingManifestRoot, ".opennori", "manifest.json"));
   const needsAction = run(["doctor", "--root", missingManifestRoot, "--json"]);
   assert.equal(needsAction.data.status, "needs-action");
   assert.equal(needsAction.data.checks.find((check) => check.name === "manifest_file").ok, false);
-  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /adaw install/);
+  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /nori install/);
   assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /create or refresh/.test(action.action)), true);
 
   const staleManifestRoot = tempRoot();
   run(["install", "--root", staleManifestRoot, "--json"]);
-  const manifestPath = path.join(staleManifestRoot, ".adaw", "manifest.json");
+  const manifestPath = path.join(staleManifestRoot, ".opennori", "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  manifest.adaw_version = "0.0.0";
+  manifest.opennori_version = "0.0.0";
   manifest.capabilities = ["acceptance-contract"];
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const stale = run(["doctor", "--root", staleManifestRoot, "--json"]);
@@ -552,29 +563,29 @@ test("doctor reports ready, needs-action, and broken project health", () => {
 
   const brokenRoot = tempRoot();
   run(["install", "--root", brokenRoot, "--json"]);
-  fs.writeFileSync(path.join(brokenRoot, ".adaw", "active", "broken.evidence.json"), "{ bad json");
+  fs.writeFileSync(path.join(brokenRoot, ".opennori", "active", "broken.evidence.json"), "{ bad json");
   const broken = run(["doctor", "--root", brokenRoot, "--json"]);
   assert.equal(broken.data.status, "broken");
   assert.equal(broken.data.checks.find((check) => check.name === "active_goals_recoverable").ok, false);
   assert.equal(broken.data.active_goal_issues.length, 1);
   assert.match(broken.data.checks.find((check) => check.name === "active_goals_recoverable").recovery, /Inspect active_goal_issues/);
-  assert.equal(broken.data.recovery_actions.some((action) => action.check === "active_goals_recoverable" && /adaw\/active\/<goal>/.test(action.action)), true);
+  assert.equal(broken.data.recovery_actions.some((action) => action.check === "active_goals_recoverable" && /nori\/active\/<goal>/.test(action.action)), true);
   assert.equal(broken.data.recovery_actions.some((action) => action.check === "active_goal_issue" && action.goal_id === "broken" && /broken\.evidence\.json/.test(action.action)), true);
 });
 
-test("uninstall previews removals and preserves ADAW state by default", () => {
+test("uninstall previews removals and preserves OpenNori state by default", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
   run(["install", "--root", root, "--skill", "--json"]);
   run(["report", "--root", root, "--json"]);
 
   const dryRun = run(["uninstall", "--root", root, "--dry-run", "--json"]);
-  assert.equal(dryRun.data.uninstall_plan.schema_version, "adaw/uninstall-plan-v1");
+  assert.equal(dryRun.data.uninstall_plan.schema_version, "opennori/uninstall-plan-v1");
   assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
   assert.equal(dryRun.data.uninstall_plan.actions.filter((action) => action.kind === "skill").length, 6);
-  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/active").action, "preserve");
-  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/manifest.json").action, "delete");
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
+  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".opennori/active").action, "preserve");
+  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".opennori/manifest.json").action, "delete");
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
 
   const unconfirmed = spawnSync(process.execPath, [CLI, "uninstall", "--root", root, "--json"], {
     cwd: ROOT,
@@ -585,51 +596,184 @@ test("uninstall previews removals and preserves ADAW state by default", () => {
 
   const removed = run(["uninstall", "--root", root, "--confirm", "--json"]);
   assert.equal(removed.data.confirmed, true);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), false);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-evidence", "SKILL.md")), false);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-reporting", "SKILL.md")), false);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori-evidence", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori-reporting", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), false);
   assert.equal(fs.existsSync(init.data.acceptance_path), true);
   assert.equal(fs.existsSync(init.data.evidence_path), true);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "reports", "adaw-self.report.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "reports", "opennori-self.report.md")), true);
 });
 
-test("uninstall include-state requires confirmation before removing ADAW state", () => {
+test("uninstall include-state requires confirmation before removing OpenNori state", () => {
   const root = tempRoot();
-  run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
   run(["install", "--root", root, "--skill", "--json"]);
 
   const dryRun = run(["uninstall", "--root", root, "--include-state", "--dry-run", "--json"]);
-  const stateAction = dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw");
+  const stateAction = dryRun.data.uninstall_plan.actions.find((action) => action.path === ".opennori");
   assert.equal(stateAction.action, "delete-tree");
   assert.equal(stateAction.recursive, true);
   assert.equal(stateAction.destructive, true);
   assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
-  assert.equal(fs.existsSync(path.join(root, ".adaw")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), true);
 
   const unconfirmed = spawnSync(process.execPath, [CLI, "uninstall", "--root", root, "--include-state", "--json"], {
     cwd: ROOT,
     encoding: "utf8"
   });
   assert.equal(unconfirmed.status, 1);
-  assert.equal(fs.existsSync(path.join(root, ".adaw")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), true);
 
   const removed = run(["uninstall", "--root", root, "--include-state", "--confirm", "--json"]);
   assert.equal(removed.data.include_state, true);
-  assert.equal(fs.existsSync(path.join(root, ".adaw")), false);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+});
+
+test("upgrade previews and confirms manifest protocol and Skill Pack refresh", () => {
+  const root = tempRoot();
+  run(["install", "--root", root, "--skill", "--json"]);
+  fs.writeFileSync(path.join(root, ".opennori", "protocol.md"), "old protocol\n");
+  fs.writeFileSync(path.join(root, ".agents", "skills", "nori", "SKILL.md"), "old skill\n");
+  const manifestPath = path.join(root, ".opennori", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.opennori_version = "0.0.0";
+  manifest.capabilities = ["acceptance-contract"];
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const dryRun = run(["upgrade", "--root", root, "--skill", "--dry-run", "--json"]);
+  assert.equal(dryRun.data.upgrade_plan.schema_version, "opennori/upgrade-plan-v1");
+  assert.equal(dryRun.data.upgrade_plan.summary.would_write > 0, true);
+  assert.equal(dryRun.data.upgrade_plan.summary.will_write, 0);
+  assert.equal(dryRun.data.upgrade_plan.actions.find((action) => action.path === ".opennori/manifest.json").action, "update");
+  assert.equal(dryRun.data.upgrade_plan.actions.find((action) => action.path === ".opennori/protocol.md").action, "overwrite");
+  assert.equal(dryRun.data.upgrade_plan.actions.find((action) => action.path === ".agents/skills/nori/SKILL.md").action, "overwrite");
+  assert.equal(fs.readFileSync(path.join(root, ".opennori", "protocol.md"), "utf8"), "old protocol\n");
+
+  const unconfirmed = spawnSync(process.execPath, [CLI, "upgrade", "--root", root, "--skill", "--json"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(unconfirmed.status, 1);
+  assert.equal(JSON.parse(unconfirmed.stdout).error.type, "confirm_required");
+
+  const upgraded = run(["upgrade", "--root", root, "--skill", "--confirm", "--json"]);
+  assert.equal(upgraded.data.confirmed, true);
+  assert.match(fs.readFileSync(path.join(root, ".opennori", "protocol.md"), "utf8"), /OpenNori Protocol/);
+  assert.match(fs.readFileSync(path.join(root, ".agents", "skills", "nori", "SKILL.md"), "utf8"), /OpenNori/);
+  const refreshedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.equal(refreshedManifest.opennori_version, PACKAGE_VERSION);
+  assert.equal(refreshedManifest.capabilities.includes("upgrade"), true);
+  assert.equal(refreshedManifest.capabilities.includes("context-export"), true);
+});
+
+test("profile check automatically checks local Skills and package stacks without forcing adapters", () => {
+  const root = tempRoot();
+  fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({
+    dependencies: {
+      "radix-ui": "1.0.0",
+      "forbidden-lib": "1.0.0"
+    }
+  }));
+  const init = run(["draft", "--goal", "Build a frontend page", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved frontend acceptance criteria.", "--json"]);
+
+  run([
+    "profile", "add",
+    "--root", root,
+    "--type", "skill",
+    "--name", "design-taste-frontend",
+    "--strength", "must",
+    "--purpose", "Use the design Skill.",
+    "--install-policy", "existing_only",
+    "--json"
+  ]);
+  run([
+    "profile", "add",
+    "--root", root,
+    "--type", "stack",
+    "--name", "radix-ui",
+    "--strength", "prefer",
+    "--purpose", "Use accessible primitives.",
+    "--json"
+  ]);
+  run([
+    "profile", "add",
+    "--root", root,
+    "--type", "stack",
+    "--name", "forbidden-lib",
+    "--strength", "avoid",
+    "--purpose", "Avoid this library.",
+    "--json"
+  ]);
+
+  const checked = run(["profile", "check", "--root", root, "--json"]);
+  assert.equal(checked.data.recorded, false);
+  assert.equal(checked.data.checks.some((item) => item.item_id === "skill-design-taste-frontend" && item.result === "satisfied"), true);
+  assert.equal(checked.data.checks.some((item) => item.item_id === "stack-radix-ui" && item.result === "satisfied"), true);
+  assert.equal(checked.data.checks.some((item) => item.item_id === "stack-forbidden-lib" && item.result === "violated"), true);
+  let payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
+  assert.equal(payload.ledger.capability_profile.evidence.length, 0);
+
+  const recorded = run(["profile", "check", "--root", root, "--record", "--json"]);
+  assert.equal(recorded.data.recorded, true);
+  assert.equal(recorded.data.compliance.statuses.some((item) => item.id === "stack-forbidden-lib" && item.status === "violated"), true);
+  assert.equal(recorded.data.workflow_status, "blocked");
+  payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
+  assert.equal(payload.ledger.capability_profile.evidence.length, 3);
+});
+
+test("context export exposes goal AC profile evidence and report paths for review tools", () => {
+  const root = tempRoot();
+  const init = run(["draft", "--goal", "Ship a reviewable workflow", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+  run([
+    "profile", "add",
+    "--root", root,
+    "--type", "constraint",
+    "--name", "profile-stays-out-of-acs",
+    "--strength", "prefer",
+    "--purpose", "Keep implementation preferences outside user ACs.",
+    "--json"
+  ]);
+  run([
+    "evidence", "add",
+    "--root", root,
+    "--criterion", "AC-1",
+    "--kind", "test-summary",
+    "--summary", "The user-visible operation is satisfied.",
+    "--result", "passing",
+    "--json"
+  ]);
+  run(["report", "--root", root, "--json"]);
+
+  const exported = run(["context", "export", "--root", root, "--json"]);
+  assert.equal(exported.data.schema_version, "opennori/context-export-v1");
+  assert.equal(exported.data.goal_id, "ship-a-reviewable-workflow");
+  assert.equal(exported.data.criteria.some((criterion) => criterion.id === "AC-1" && criterion.latest_evidence.summary === "The user-visible operation is satisfied."), true);
+  assert.equal(exported.data.capability_profile.items.some((item) => item.name === "profile-stays-out-of-acs"), true);
+  assert.equal(exported.data.paths.acceptance, ".opennori/active/ship-a-reviewable-workflow.acceptance.md");
+  assert.equal(exported.data.paths.report_exists, true);
+  assert.equal(exported.data.manifest.capabilities.includes("context-export"), true);
+
+  const output = path.join(root, ".opennori", "reports", "context.json");
+  const written = run(["context", "export", "--root", root, "--output", output, "--json"]);
+  assert.equal(written.data.output_path, output);
+  assert.equal(fs.existsSync(output), true);
+  assert.equal(JSON.parse(fs.readFileSync(output, "utf8")).schema_version, "opennori/context-export-v1");
 });
 
 test("changes groups acceptance artifacts separately from implementation files", () => {
   const root = tempRoot();
   spawnSync("git", ["init"], { cwd: root, encoding: "utf8" });
-  fs.mkdirSync(path.join(root, ".adaw", "active"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".opennori", "active"), { recursive: true });
   fs.mkdirSync(path.join(root, "src"), { recursive: true });
-  fs.writeFileSync(path.join(root, ".adaw", "active", "demo.acceptance.md"), "acceptance\n");
+  fs.writeFileSync(path.join(root, ".opennori", "active", "demo.acceptance.md"), "acceptance\n");
   fs.writeFileSync(path.join(root, "src", "index.js"), "console.log('demo')\n");
 
   const payload = run(["changes", "--root", root, "--json"]);
   assert.equal(payload.data.changed_files.available, true);
-  assert.equal(payload.data.changed_files.acceptance.some((item) => item.path === ".adaw/active/demo.acceptance.md"), true);
+  assert.equal(payload.data.changed_files.acceptance.some((item) => item.path === ".opennori/active/demo.acceptance.md"), true);
   assert.equal(payload.data.changed_files.implementation.some((item) => item.path === "src/index.js"), true);
 });
 
@@ -644,7 +788,7 @@ test("list shows multiple active goals and resume requires explicit selection", 
       {
         id: "AC-P-1",
         user_story: `作为用户，我能查看 ${goalId} 的验收状态。`,
-        measurement: "运行 adaw list 或 adaw resume。",
+        measurement: "运行 nori list 或 nori resume。",
         threshold: "输出包含目标状态和当前缺口。"
       }
     ]
@@ -663,7 +807,7 @@ test("list shows multiple active goals and resume requires explicit selection", 
     encoding: "utf8"
   });
   assert.equal(ambiguous.status, 1);
-  assert.match(ambiguous.stderr, /Multiple active ADAW goals found/);
+  assert.match(ambiguous.stderr, /Multiple active OpenNori goals found/);
 
   const selected = run(["resume", "--root", root, "--goal", "second-goal", "--json"]);
   assert.equal(selected.data.goal_id, "second-goal");
@@ -671,7 +815,7 @@ test("list shows multiple active goals and resume requires explicit selection", 
 
 test("archive moves complete goals out of active and preserves report", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
 
   for (const criterion of Object.keys(ledger.ledger.criteria)) {
@@ -687,7 +831,7 @@ test("archive moves complete goals out of active and preserves report", () => {
     ]);
   }
 
-  const archived = run(["archive", "--root", root, "--goal", "adaw-self", "--json"]);
+  const archived = run(["archive", "--root", root, "--goal", "opennori-self", "--json"]);
   assert.equal(archived.data.archived_as, "completed");
   assert.equal(fs.existsSync(init.data.acceptance_path), false);
   assert.equal(fs.existsSync(init.data.evidence_path), false);
@@ -701,7 +845,7 @@ test("archive moves complete goals out of active and preserves report", () => {
 
 test("archive can preserve blocked goals outside active work", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
 
   run([
     "evidence", "add",
@@ -713,10 +857,10 @@ test("archive can preserve blocked goals outside active work", () => {
     "--json"
   ]);
 
-  const archived = run(["archive", "--root", root, "--goal", "adaw-self", "--json"]);
+  const archived = run(["archive", "--root", root, "--goal", "opennori-self", "--json"]);
   assert.equal(archived.data.archived_as, "blocked");
   assert.equal(fs.existsSync(init.data.acceptance_path), false);
-  assert.equal(fs.existsSync(path.join(root, ".adaw", "blocked", "adaw-self.acceptance.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "blocked", "opennori-self.acceptance.md")), true);
 
   const report = fs.readFileSync(archived.data.report_path, "utf8");
   assert.ok(report.indexOf("## Decision Summary") < report.indexOf("## Acceptance Status"));
@@ -728,7 +872,7 @@ test("archive can preserve blocked goals outside active work", () => {
 
 test("criterion update preserves the revised acceptance basis and clears stale evidence", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
 
   run([
     "evidence", "add",
@@ -744,8 +888,8 @@ test("criterion update preserves the revised acceptance basis and clears stale e
     "criterion", "update",
     "--root", root,
     "--criterion", "AC-P-1",
-    "--user-story", "作为用户，我打开 active acceptance contract 后，能在 30 秒内判断当前缺口。",
-    "--measurement", "打开 active acceptance contract 并阅读当前状态。",
+    "--user-story", "作为用户，我打开 active Nori Contract 后，能在 30 秒内判断当前缺口。",
+    "--measurement", "打开 active Nori Contract 并阅读当前状态。",
     "--threshold", "30 秒内能判断当前缺口。",
     "--summary", "User tightened AC-P-1 threshold.",
     "--json"
@@ -753,7 +897,7 @@ test("criterion update preserves the revised acceptance basis and clears stale e
 
   assert.equal(updated.data.acceptance_basis.status, "approved");
   assert.equal(updated.data.current_gap.id, "AC-P-1");
-  assert.equal(updated.data.current_gap.user_story, "作为用户，我打开 active acceptance contract 后，能在 30 秒内判断当前缺口。");
+  assert.equal(updated.data.current_gap.user_story, "作为用户，我打开 active Nori Contract 后，能在 30 秒内判断当前缺口。");
 
   const payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
   assert.equal(payload.ledger.criteria["AC-P-1"].status, "unknown");
@@ -821,8 +965,8 @@ test("check requires measurable user operations and observable outcomes", () => 
     criteria: [
       {
         id: "AC-1",
-        user_story: "作为用户，我运行 adaw report 后，能判断当前任务是否完成。",
-        measurement: "运行 adaw report 并查看 completion、current_gap 和 evidence summary。",
+        user_story: "作为用户，我运行 nori report 后，能判断当前任务是否完成。",
+        measurement: "运行 nori report 并查看 completion、current_gap 和 evidence summary。",
         threshold: "报告显示完成状态、当前缺口和可复查证据；用户不需要阅读实现说明。"
       }
     ]

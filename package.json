@@ -1,13 +1,13 @@
 {
-  "name": "@okbexx/adaw",
-  "version": "0.1.0",
-  "description": "Acceptance-Driven Agent Workflow: human-centered acceptance contracts and evidence ledgers for coding agents.",
+  "name": "opennori",
+  "version": "0.1.2",
+  "description": "OpenNori: human-centered Nori Contracts and evidence records for coding agents.",
   "type": "module",
   "bin": {
-    "adaw": "./bin/adaw.js"
+    "nori": "bin/nori.js"
   },
   "files": [
-    ".adaw/protocol.md",
+    ".opennori/protocol.md",
     "bin/",
     "src/",
     "examples/",
@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "test": "node --test",
-    "check": "node --test && node ./bin/adaw.js doctor --json"
+    "check": "node --test && node ./bin/nori.js doctor --json"
   },
   "publishConfig": {
     "access": "public"

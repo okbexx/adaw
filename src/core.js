@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const PROTOCOL_VERSION = "adaw/v1";
+export const PROTOCOL_VERSION = "opennori/v1";
 
 export const VALID_STATUSES = new Set(["unknown", "failing", "passing", "blocked", "waived"]);
 export const VALID_EVIDENCE_RESULTS = new Set(["failing", "passing", "blocked", "waived"]);
@@ -213,16 +213,16 @@ export function slugify(input) {
 }
 
 export function pathsForGoal(rootDir, goalId) {
-  const activeDir = path.join(rootDir, ".adaw", "active");
+  const activeDir = path.join(rootDir, ".opennori", "active");
   return {
     acceptancePath: path.join(activeDir, `${goalId}.acceptance.md`),
     evidencePath: path.join(activeDir, `${goalId}.evidence.json`),
-    reportPath: path.join(rootDir, ".adaw", "reports", `${goalId}.report.md`)
+    reportPath: path.join(rootDir, ".opennori", "reports", `${goalId}.report.md`)
   };
 }
 
 export function findActivePairs(rootDir) {
-  const activeDir = path.join(rootDir, ".adaw", "active");
+  const activeDir = path.join(rootDir, ".opennori", "active");
   if (!fs.existsSync(activeDir)) return [];
   return fs.readdirSync(activeDir)
     .filter((fileName) => fileName.endsWith(".evidence.json"))
@@ -232,7 +232,7 @@ export function findActivePairs(rootDir) {
         goalId,
         acceptancePath: path.join(activeDir, `${goalId}.acceptance.md`),
         evidencePath: path.join(activeDir, fileName),
-        reportPath: path.join(rootDir, ".adaw", "reports", `${goalId}.report.md`)
+        reportPath: path.join(rootDir, ".opennori", "reports", `${goalId}.report.md`)
       };
     })
     .filter((pair) => fs.existsSync(pair.acceptancePath))
@@ -434,7 +434,7 @@ export function renderAcceptanceMarkdown(contract, ledger) {
     `Status: ${contract.acceptance_basis?.status || "draft"}`,
     contract.acceptance_basis?.summary ? `Summary: ${contract.acceptance_basis.summary}` : "Summary: <none>",
     "",
-    "## Capability Profile",
+    "## Nori Profile",
     "",
     ...renderProfileLines(ledger),
     "",
@@ -522,7 +522,7 @@ export function validateContract(contract, ledger = null) {
   }
   for (const field of Object.keys(contract)) {
     if (PLAN_FIELD_NAMES.has(field)) {
-      issues.push({ path: field, message: "ADAW contract must not expose process-plan fields" });
+      issues.push({ path: field, message: "OpenNori contract must not expose process-plan fields" });
     }
   }
   if (!Array.isArray(contract.criteria) || contract.criteria.length === 0) {
@@ -750,7 +750,7 @@ export function intervention(contract, ledger) {
       user_story: `作为用户，我需要确认 agent 是否必须遵守能力偏好：${item.name}。`,
       action: item.status === "violated"
         ? `Capability profile item ${item.name} was violated. Waive it or revise the work.`
-        : `Provide evidence that capability profile item ${item.name} was satisfied, or waive it.`
+        : `Provide evidence that Nori Profile item ${item.name} was satisfied, or waive it.`
     };
   }
 
@@ -798,7 +798,7 @@ export function nextRecommendation(contract, ledger) {
       summary: `${needed.criterion} needs user input before the agent continues.`,
       actions: [
         needed.action,
-        "After the decision or external condition is available, record evidence and rerun ADAW status."
+        "After the decision or external condition is available, record evidence and rerun OpenNori status."
       ]
     };
   }
@@ -821,7 +821,7 @@ export function nextRecommendation(contract, ledger) {
       summary: `Continue with ${gap.id}: ${gap.user_story}`,
       actions: [
         `Create or collect reviewable evidence for ${gap.id}.`,
-        `Record the result for ${gap.id}, then rerun ADAW status.`
+        `Record the result for ${gap.id}, then rerun OpenNori status.`
       ]
     };
   }
@@ -830,10 +830,10 @@ export function nextRecommendation(contract, ledger) {
     return {
       status: "ready-for-next-loop",
       focus: null,
-      summary: "This ADAW goal is complete. If the user has asked to continue, start the next acceptance loop without waiting for another next-step prompt.",
+      summary: "This OpenNori goal is complete. If the user has asked to continue, start the next acceptance loop without waiting for another next-step prompt.",
       actions: [
         "Report the completion evidence briefly.",
-        "Select the next human-facing project goal from the current context, draft acceptance criteria, and continue the ADAW loop."
+        "Select the next human-facing project goal from the current context, draft acceptance criteria, and continue the OpenNori loop."
       ]
     };
   }
@@ -843,7 +843,7 @@ export function nextRecommendation(contract, ledger) {
     focus: null,
     summary: `No current gap was found, but workflow status is ${ledger.status}.`,
     actions: [
-      "Run ADAW evaluate and doctor, then inspect the report before continuing."
+      "Run OpenNori evaluate and doctor, then inspect the report before continuing."
     ]
   };
 }
@@ -944,7 +944,7 @@ export function renderReport(contract, ledger) {
     `Status: ${contract.acceptance_basis?.status || "draft"}`,
     contract.acceptance_basis?.summary ? `Summary: ${contract.acceptance_basis.summary}` : "Summary: <none>",
     "",
-    "## Capability Profile",
+    "## Nori Profile",
     "",
     ...renderProfileLines(ledger),
     "",

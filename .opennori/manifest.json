@@ -1,0 +1,174 @@
+{
+  "schema_version": "opennori/manifest-v1",
+  "protocol_version": "opennori/v1",
+  "opennori_version": "0.1.2",
+  "created_at": "2026-06-10T09:12:16.646Z",
+  "updated_at": "2026-06-11T08:14:04.739Z",
+  "capabilities": [
+    "acceptance-contract",
+    "evidence-ledger",
+    "reviewable-evidence",
+    "skill-pack",
+    "brainstorm",
+    "capability-profile",
+    "profile-check",
+    "archive",
+    "report",
+    "doctor",
+    "upgrade",
+    "context-export"
+  ],
+  "managed_files": [
+    {
+      "path": ".opennori/manifest.json",
+      "kind": "manifest",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/protocol.md",
+      "kind": "protocol",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/active",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/completed",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/blocked",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/reports",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".opennori/brainstorms",
+      "kind": "directory",
+      "required": true,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori-acceptance/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori-evidence/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori-capability-profile/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori-project-health/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    },
+    {
+      "path": ".agents/skills/nori-reporting/SKILL.md",
+      "kind": "skill",
+      "required": false,
+      "exists": true
+    }
+  ],
+  "active_goals": [
+    {
+      "goal_id": "opennori-self",
+      "status": "complete",
+      "current_gap": null,
+      "acceptance_path": ".opennori/active/opennori-self.acceptance.md",
+      "evidence_path": ".opennori/active/opennori-self.evidence.json",
+      "recoverable": true
+    }
+  ],
+  "skill": {
+    "installed": true,
+    "path": ".agents/skills/nori/SKILL.md",
+    "in_sync": true,
+    "expected_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528",
+    "actual_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528"
+  },
+  "skill_pack": {
+    "schema_version": "opennori/skill-pack-v1",
+    "installed": true,
+    "in_sync": true,
+    "count": 6,
+    "skills": [
+      {
+        "name": "nori",
+        "path": ".agents/skills/nori/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528",
+        "actual_sha256": "76f798bd93ceb0fc1a5d651e26ca2e2cc3018c010241d08bacdefba15b115528"
+      },
+      {
+        "name": "nori-acceptance",
+        "path": ".agents/skills/nori-acceptance/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "d0e243597366eb6139447e82b77f3079954021b6a5dd266d476397ae104f604a",
+        "actual_sha256": "d0e243597366eb6139447e82b77f3079954021b6a5dd266d476397ae104f604a"
+      },
+      {
+        "name": "nori-evidence",
+        "path": ".agents/skills/nori-evidence/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "9a29ae5d92d2f007f5202ffb0a5031bd6fb4c1a5216532eb133dfcdbc6a227d2",
+        "actual_sha256": "9a29ae5d92d2f007f5202ffb0a5031bd6fb4c1a5216532eb133dfcdbc6a227d2"
+      },
+      {
+        "name": "nori-capability-profile",
+        "path": ".agents/skills/nori-capability-profile/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "619ec295c610a3546f27c646b7d010264f205e4d88dc38e0222ad9b22a450dc6",
+        "actual_sha256": "619ec295c610a3546f27c646b7d010264f205e4d88dc38e0222ad9b22a450dc6"
+      },
+      {
+        "name": "nori-project-health",
+        "path": ".agents/skills/nori-project-health/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "7e397c8d52f3f1e24015badd917b1900728f98c1f01cb37a3c00308b4b2fa5e3",
+        "actual_sha256": "7e397c8d52f3f1e24015badd917b1900728f98c1f01cb37a3c00308b4b2fa5e3"
+      },
+      {
+        "name": "nori-reporting",
+        "path": ".agents/skills/nori-reporting/SKILL.md",
+        "installed": true,
+        "in_sync": true,
+        "expected_sha256": "a6e335eb6df1078c454aff633ec0ea60a468665aa4d969f9c5138e8656856356",
+        "actual_sha256": "a6e335eb6df1078c454aff633ec0ea60a468665aa4d969f9c5138e8656856356"
+      }
+    ]
+  }
+}

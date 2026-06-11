@@ -1,32 +1,32 @@
 {
-  "goal_id": "adaw-self",
-  "goal": "让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
+  "goal_id": "opennori-self",
+  "goal": "让 OpenNori 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
   "acceptance_basis": {
     "status": "approved",
-    "summary": "User agreed to the layered ADAW self acceptance criteria."
+    "summary": "User agreed to the layered OpenNori self acceptance criteria."
   },
   "criteria": [
     {
       "id": "AC-P-1",
       "layer": "protocol",
-      "user_story": "作为用户，我在编辑器或文件浏览器里打开 active acceptance contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。",
-      "measurement": "打开 .adaw/active/<goal>.acceptance.md 并阅读。",
+      "user_story": "作为用户，我在编辑器或文件浏览器里打开 active Nori Contract 后，能在 60 秒内看懂目标、分层验收标准、每条状态和当前缺口。",
+      "measurement": "打开 .opennori/active/<goal>.acceptance.md 并阅读。",
       "threshold": "不读聊天历史、不读实现说明，60 秒内能判断任务在验收层面的状态和下一条缺口。",
       "risk": "medium"
     },
     {
       "id": "AC-P-2",
       "layer": "protocol",
-      "user_story": "作为用户，我运行 adaw check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。",
-      "measurement": "对当前 active goal 或故意写坏的验收草案运行 adaw check。",
+      "user_story": "作为用户，我运行 nori check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。",
+      "measurement": "对当前 active goal 或故意写坏的验收草案运行 nori check。",
       "threshold": "“存在文件、字段、命令、测试通过、实现某模块”这类内容不能作为用户验收标准通过校验。",
       "risk": "medium"
     },
     {
       "id": "AC-P-3",
       "layer": "protocol",
-      "user_story": "作为用户，我运行 adaw next 或 adaw status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。",
-      "measurement": "运行 adaw next/status 并查看返回的 current_gap、completion 和 intervention。",
+      "user_story": "作为用户，我运行 nori next 或 nori status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。",
+      "measurement": "运行 nori next/status 并查看返回的 current_gap、completion 和 intervention。",
       "threshold": "输出默认回答“当前差哪条 AC、是否完成、是否需要人类动作”，不把过程任务当作主线。",
       "risk": "medium"
     },
@@ -41,16 +41,16 @@
     {
       "id": "AC-P-5",
       "layer": "protocol",
-      "user_story": "作为用户，我运行 adaw report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。",
-      "measurement": "运行 adaw report 或让 Codex 生成 ADAW 报告。",
+      "user_story": "作为用户，我运行 nori report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。",
+      "measurement": "运行 nori report 或让 Codex 生成 OpenNori 报告。",
       "threshold": "报告默认围绕验收状态和证据组织，不把过程任务当作主线。",
       "risk": "medium"
     },
     {
       "id": "AC-P-6",
       "layer": "protocol",
-      "user_story": "作为用户，我查看 ADAW 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。",
-      "measurement": "给 AC 添加不同来源的证据后运行 adaw report 或 adaw status。",
+      "user_story": "作为用户，我查看 OpenNori 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。",
+      "measurement": "给 AC 添加不同来源的证据后运行 nori report 或 nori status。",
       "threshold": "报告或状态输出展示证据摘要、判断基础、证据强度和剩余限制；不会只显示 agent 自我结论。",
       "risk": "high"
     },
@@ -82,38 +82,38 @@
       "id": "AC-P-10",
       "layer": "protocol",
       "user_story": "作为用户，我能看到一条 AC 可以由多个证据来源共同支撑，而不要求 agent 把它们拆成固定适配器。",
-      "measurement": "为一条 AC 添加包含多个来源的证据后查看 evidence ledger 和 report。",
+      "measurement": "为一条 AC 添加包含多个来源的证据后查看 evidence record 和 report。",
       "threshold": "同一条证据可以包含多个 sources；报告能合并展示这些来源，并保留 agent 的自由取证空间。",
       "risk": "medium"
     },
     {
       "id": "AC-P-11",
       "layer": "protocol",
-      "user_story": "作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 ADAW 结构记录，而不要求我记住 CLI 参数。",
-      "measurement": "查看 ADAW Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。",
+      "user_story": "作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 OpenNori 结构记录，而不要求我记住 CLI 参数。",
+      "measurement": "查看 OpenNori Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。",
       "threshold": "Skill 明确要求 agent 自由选择验证方式，但记录证据时说明 basis、sources、reviewability、confidence 和 limitations。",
       "risk": "medium"
     },
     {
       "id": "AC-P-12",
       "layer": "protocol",
-      "user_story": "作为用户，我运行 adaw check 后，能发现 AC 是否缺少真实用户操作或可观察结果，而不是只检查是否以“作为用户”开头。",
-      "measurement": "对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 adaw check，再对包含真实用户操作和报告结果的草案运行 adaw check。",
+      "user_story": "作为用户，我运行 nori check 后，能发现 AC 是否缺少真实用户操作或可观察结果，而不是只检查是否以“作为用户”开头。",
+      "measurement": "对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 nori check，再对包含真实用户操作和报告结果的草案运行 nori check。",
       "threshold": "内部完成条件会被拒绝；包含用户运行、打开、查看、确认等操作，并说明用户能看到或判断什么结果的 AC 可以通过。",
       "risk": "high"
     },
     {
       "id": "AC-P-13",
       "layer": "protocol",
-      "user_story": "作为用户，我打开 adaw report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
-      "measurement": "运行 adaw report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
+      "user_story": "作为用户，我打开 nori report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。",
+      "measurement": "运行 nori report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。",
       "threshold": "报告在详细表格前显示 Decision Summary，包含 completion、current gap、user intervention 和 workflow status；blocked 报告也先显示需要用户采取的动作。",
       "risk": "medium"
     },
     {
       "id": "AC-O-1",
       "layer": "operator",
-      "user_story": "作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。",
+      "user_story": "作为用户，我在 Codex 对话里说“用 OpenNori 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。",
       "measurement": "在 Codex 对话中查看 agent 返回的验收草案。",
       "threshold": "草案只描述用户通过工具执行操作后能完成的判断或动作；用户能直接 approve 或 revise。",
       "risk": "medium"
@@ -122,15 +122,15 @@
       "id": "AC-O-2",
       "layer": "operator",
       "user_story": "作为用户，我在 Codex 对话里 approve 或 revise 验收标准后，能控制什么叫完成，而不是让 agent 自动决定完成定义。",
-      "measurement": "查看 active acceptance contract 中是否反映用户确认后的验收标准。",
+      "measurement": "查看 active Nori Contract 中是否反映用户确认后的验收标准。",
       "threshold": "agent 在用户确认前不能进入 complete 判断；用户修改过的 AC 会成为后续状态判断依据。",
       "risk": "high"
     },
     {
       "id": "AC-O-3",
       "layer": "operator",
-      "user_story": "作为用户，我在新的 Codex 会话里说“继续 ADAW”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。",
-      "measurement": "在新会话触发 ADAW 恢复流程，观察 agent 返回内容。",
+      "user_story": "作为用户，我在新的 Codex 会话里说“继续 OpenNori”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。",
+      "measurement": "在新会话触发 OpenNori 恢复流程，观察 agent 返回内容。",
       "threshold": "不依赖旧聊天上下文；能返回 goal id、当前状态、当前关键缺口和下一条需要证据的 AC。",
       "risk": "high"
     },
@@ -146,7 +146,7 @@
       "id": "AC-O-5",
       "layer": "operator",
       "user_story": "作为用户，我在 Codex 对话里问“我需要做什么？”后，如果任务 blocked，能看到一个明确的人类动作。",
-      "measurement": "制造或查看 blocked 状态下的 ADAW 报告或 agent 回复。",
+      "measurement": "制造或查看 blocked 状态下的 OpenNori 报告或 agent 回复。",
       "threshold": "blocked 说明必须是用户可执行动作，例如确认取舍、提供权限、批准成本或选择方案，而不是技术日志。",
       "risk": "medium"
     },
@@ -161,31 +161,31 @@
     {
       "id": "AC-O-7",
       "layer": "operator",
-      "user_story": "作为用户，我说“ADAW 先头脑风暴：想法 X”后，能看到几个可选择的验收方向，而不需要记住 CLI 用法。",
+      "user_story": "作为用户，我说“OpenNori 先头脑风暴：想法 X”后，能看到几个可选择的验收方向，而不需要记住 CLI 用法。",
       "measurement": "在 Codex 对话中触发 brainstorm，查看 agent 展示的候选方向。",
-      "threshold": "候选项围绕用户价值、可观察验收方式和风险组织；用户能选择或改写方向进入 draft；brainstorm 输出不能被当作 acceptance contract 或完成证据。",
+      "threshold": "候选项围绕用户价值、可观察验收方式和风险组织；用户能选择或改写方向进入 draft；brainstorm 输出不能被当作 Nori Contract 或完成证据。",
       "risk": "medium"
     },
     {
       "id": "AC-O-8",
       "layer": "operator",
       "user_story": "作为用户，我在 Codex 对话里声明必须使用某个 Skill、偏好某个技术栈或避免某个工具后，agent 能记录这些偏好并在完成前告诉我是否遵守。",
-      "measurement": "在 Codex 对话中提出能力偏好后，查看 active contract、status 或 report 中的 Capability Profile。",
+      "measurement": "在 Codex 对话中提出能力偏好后，查看 active contract、status 或 report 中的 Nori Profile。",
       "threshold": "用户不需要记住 CLI；must 或 avoid 的违反会阻止 complete，prefer 会被展示但不阻止 complete；这些偏好不会被写成用户 AC。",
       "risk": "high"
     },
     {
       "id": "AC-Z-1",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw skill export 后，能得到可放入 Codex Skills 的 ADAW 使用说明。",
-      "measurement": "运行 adaw skill export --json 并查看输出内容。",
+      "user_story": "作为用户，我运行 nori skill export 后，能得到可放入 Codex Skills 的 OpenNori 使用说明。",
+      "measurement": "运行 nori skill export --json 并查看输出内容。",
       "threshold": "输出说明能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。",
       "risk": "medium"
     },
     {
       "id": "AC-Z-2",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw install 后，能把 ADAW 放入当前项目的可用入口，并且不会意外覆盖已有内容。",
+      "user_story": "作为用户，我运行 nori install 后，能把 OpenNori 放入当前项目的可用入口，并且不会意外覆盖已有内容。",
       "measurement": "在一个已有项目中运行安装入口并查看安装结果。",
       "threshold": "安装前能看到将创建或跳过的入口；已有内容默认不被覆盖；失败时说明用户需要做什么。",
       "risk": "high"
@@ -201,8 +201,8 @@
     {
       "id": "AC-Z-4",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw list 后，能看到多个 active goals，并能明确选择要继续的目标。",
-      "measurement": "创建多个 active goals 后运行 adaw list，并用 --goal 指定 resume/status/report 的目标。",
+      "user_story": "作为用户，我运行 nori list 后，能看到多个 active goals，并能明确选择要继续的目标。",
+      "measurement": "创建多个 active goals 后运行 nori list，并用 --goal 指定 resume/status/report 的目标。",
       "threshold": "多个目标不会被 agent 随机选择；用户能看见目标列表、状态、当前缺口和对应路径。",
       "risk": "high"
     },
@@ -210,89 +210,105 @@
       "id": "AC-Z-5",
       "layer": "productization",
       "user_story": "作为用户，我运行归档入口后，completed 或 blocked 中保留报告，active 中不再出现这个目标。",
-      "measurement": "对 complete 或 blocked goal 执行归档，再运行 adaw list 并打开归档产物。",
-      "threshold": "归档不会丢失 acceptance contract、evidence ledger 或 report；active 列表只显示仍需推进的目标。",
+      "measurement": "对 complete 或 blocked goal 执行归档，再运行 nori list 并打开归档产物。",
+      "threshold": "归档不会丢失 Nori Contract、evidence record 或 report；active 列表只显示仍需推进的目标。",
       "risk": "high"
     },
     {
       "id": "AC-Z-6",
       "layer": "productization",
-      "user_story": "作为用户，我在项目目录运行 ADAW 后，能看到 ADAW 状态集中在 .adaw 目录里，而不是散落到通用 process 目录。",
-      "measurement": "运行 adaw install、draft、brainstorm、report 或 archive 后查看项目目录。",
-      "threshold": "ADAW 默认只把协议、active goal、报告、归档和 brainstorm 写入 .adaw；不创建 process/acceptance 或 process/development-protocols。",
+      "user_story": "作为用户，我在项目目录运行 OpenNori 后，能看到 OpenNori 状态集中在 .opennori 目录里，而不是散落到通用 process 目录。",
+      "measurement": "运行 nori install、draft、brainstorm、report 或 archive 后查看项目目录。",
+      "threshold": "OpenNori 默认只把协议、active goal、报告、归档和 brainstorm 写入 .opennori；不创建 process/acceptance 或 process/development-protocols。",
       "risk": "medium"
     },
     {
       "id": "AC-Z-7",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw install 后，能看到当前项目的 ADAW 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。",
-      "measurement": "运行 adaw install --dry-run 或 adaw install 后查看输出和项目中的接入登记。",
-      "threshold": "输出包含 create、skip、overwrite 或 update 语义；接入登记说明 ADAW 版本、managed files、active goals、Skill 状态和协议能力；已有用户内容默认不被覆盖。",
+      "user_story": "作为用户，我运行 nori install 后，能看到当前项目的 OpenNori 接入登记信息，并判断版本、托管入口、active goals 和 Skill 状态是否可信。",
+      "measurement": "运行 nori install --dry-run 或 nori install 后查看输出和项目中的接入登记。",
+      "threshold": "输出包含 create、skip、overwrite 或 update 语义；接入登记说明 OpenNori 版本、managed files、active goals、Skill 状态和协议能力；已有用户内容默认不被覆盖。",
       "risk": "high"
     },
     {
       "id": "AC-Z-8",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。",
-      "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 adaw doctor。",
+      "user_story": "作为用户，我运行 nori doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。",
+      "measurement": "在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 nori doctor。",
       "threshold": "输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。",
       "risk": "high"
     },
     {
       "id": "AC-Z-9",
       "layer": "productization",
-      "user_story": "作为用户，我预览 ADAW 安装时，能判断每个项目入口会被创建、跳过、更新还是覆盖，并确认 dry-run 不会写入项目。",
-      "measurement": "运行 adaw install --dry-run，查看 install plan，再检查项目文件是否未被写入。",
+      "user_story": "作为用户，我预览 OpenNori 安装时，能判断每个项目入口会被创建、跳过、更新还是覆盖，并确认 dry-run 不会写入项目。",
+      "measurement": "运行 nori install --dry-run，查看 install plan，再检查项目文件是否未被写入。",
       "threshold": "install plan 对每个入口显示 action、kind、managed、would_write、will_write、destructive 和 reason；dry-run 下 will_write 为 0；覆盖类动作必须被标记为 destructive。",
       "risk": "high"
     },
     {
       "id": "AC-Z-10",
       "layer": "productization",
-      "user_story": "作为用户，我执行可能覆盖已有 ADAW 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。",
-      "measurement": "在已有 ADAW 入口的项目中运行 adaw install --force、adaw install --force --dry-run 和确认后的安装。",
+      "user_story": "作为用户，我执行可能覆盖已有 OpenNori 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。",
+      "measurement": "在已有 OpenNori 入口的项目中运行 nori install --force、nori install --force --dry-run 和确认后的安装。",
       "threshold": "未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。",
       "risk": "high"
     },
     {
       "id": "AC-Z-11",
       "layer": "productization",
-      "user_story": "作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。",
-      "measurement": "在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
-      "threshold": "默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。",
+      "user_story": "作为用户，我卸载 OpenNori 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。",
+      "measurement": "在已安装且有 active goal 的项目中运行 nori uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
+      "threshold": "默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .opennori 状态目录。",
       "risk": "high"
     },
     {
       "id": "AC-Z-12",
       "layer": "productization",
-      "user_story": "作为用户，我安装 ADAW 后，agent 能获得一组职责清晰的 ADAW Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。",
-      "measurement": "运行 adaw skill export --pack、adaw install --skill 和 adaw doctor，查看 Skill Pack、manifest 和 doctor 结果。",
+      "user_story": "作为用户，我安装 OpenNori 后，agent 能获得一组职责清晰的 OpenNori Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。",
+      "measurement": "运行 nori skill export --pack、nori install --skill 和 nori doctor，查看 Skill Pack、manifest 和 doctor 结果。",
       "threshold": "Skill Pack 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 会写入这些 Skill；manifest 记录 skill_pack；doctor 能发现缺失或不同步的 Skill。",
       "risk": "high"
     },
     {
       "id": "AC-Z-13",
       "layer": "productization",
-      "user_story": "作为用户，我运行 adaw doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
-      "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 adaw doctor。",
-      "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 ADAW 命令或要检查的 .adaw/active 文件位置。",
+      "user_story": "作为用户，我运行 nori doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
+      "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 nori doctor。",
+      "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 OpenNori 命令或要检查的 .opennori/active 文件位置。",
       "risk": "high"
     },
     {
       "id": "AC-Z-14",
       "layer": "productization",
-      "user_story": "作为用户，我让 agent 继续 ADAW 工作时，不需要每轮都追问下一步是什么。",
-      "measurement": "运行 adaw resume、adaw status、adaw next 和 adaw report，分别查看未完成、阻塞和已完成 goal 的输出。",
-      "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 ADAW loop。",
+      "user_story": "作为用户，我让 agent 继续 OpenNori 工作时，不需要每轮都追问下一步是什么。",
+      "measurement": "运行 nori resume、nori status、nori next 和 nori report，分别查看未完成、阻塞和已完成 goal 的输出。",
+      "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 OpenNori loop。",
       "risk": "high"
     },
     {
       "id": "AC-Z-15",
       "layer": "productization",
       "user_story": "作为用户，我让 agent 记录验收证据时，不需要 agent 为常见来源手写复杂结构。",
-      "measurement": "运行 adaw evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。",
+      "measurement": "运行 nori evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。",
       "threshold": "证据来源能显示为 command、artifact、url 或自由 reference；report/status 中仍保留 basis、reviewability、limitations 和 confidence。",
       "risk": "medium"
+    },
+    {
+      "id": "AC-Z-16",
+      "layer": "productization",
+      "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能使用 nori 入口初始化项目、查看帮助和运行健康检查，而不需要理解迁移历史。",
+      "measurement": "在全新临时项目中安装 opennori 包，运行 npx nori --help、npx nori install --root . --dry-run、npx nori install --root . --confirm 和 npx nori doctor --root .。",
+      "threshold": "npm registry 显示 opennori@0.1.2 且 bin.nori 指向 bin/nori.js；全新项目安装后 npx nori 可用；dry-run 只预览 .opennori 写入；真实 install 后 doctor 为 ready；项目状态只出现 OpenNori 目录。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-Z-17",
+      "layer": "productization",
+      "user_story": "作为用户，我第一次打开 README 时，能明确知道产品叫 OpenNori，它帮助 agent 交付人类可验收的结果，并看到最短试用入口。",
+      "measurement": "阅读 README 的开头、Try It、What Gets Added 和 Productized Boundaries 区域。",
+      "threshold": "README 开头说明 OpenNori 的核心价值；页面展示 npm/npx 试用方式、Nori Contract、.opennori 状态目录和验收证据闭环；用户不需要理解迁移历史就能开始试用。",
+      "risk": "high"
     }
   ]
 }

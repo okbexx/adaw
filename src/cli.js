@@ -30,21 +30,25 @@ import {
 } from "./core.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "..", "package.json"), "utf8"));
-const MANIFEST_SCHEMA_VERSION = "adaw/manifest-v1";
-const REQUIRED_ADAW_DIRS = ["active", "completed", "blocked", "reports", "brainstorms"];
-const ADAW_CAPABILITIES = [
+const MANIFEST_SCHEMA_VERSION = "opennori/manifest-v1";
+const REQUIRED_NORI_DIRS = ["active", "completed", "blocked", "reports", "brainstorms"];
+const NORI_CAPABILITIES = [
   "acceptance-contract",
   "evidence-ledger",
   "reviewable-evidence",
   "skill-pack",
   "brainstorm",
   "capability-profile",
+  "profile-check",
   "archive",
   "report",
-  "doctor"
+  "doctor",
+  "upgrade",
+  "context-export"
 ];
 const WRITING_INSTALL_ACTIONS = new Set(["create", "overwrite", "update"]);
 const WRITING_UNINSTALL_ACTIONS = new Set(["delete", "delete-tree"]);
+const WRITING_UPGRADE_ACTIONS = new Set(["update", "overwrite"]);
 
 function sameStringSet(left, right) {
   if (!Array.isArray(left) || !Array.isArray(right)) return false;
@@ -55,12 +59,12 @@ function sameStringSet(left, right) {
 }
 
 function installActionReason(action, kind) {
-  if (action === "create") return `Missing ADAW ${kind} will be created.`;
-  if (action === "exists") return `Required ADAW ${kind} already exists.`;
-  if (action === "skip") return `Existing ADAW ${kind} is not overwritten without --force.`;
-  if (action === "overwrite") return `Existing ADAW ${kind} will be overwritten because --force was provided.`;
-  if (action === "update") return `ADAW ${kind} will be refreshed from current project state.`;
-  return `ADAW ${kind} action: ${action}.`;
+  if (action === "create") return `Missing OpenNori ${kind} will be created.`;
+  if (action === "exists") return `Required OpenNori ${kind} already exists.`;
+  if (action === "skip") return `Existing OpenNori ${kind} is not overwritten without --force.`;
+  if (action === "overwrite") return `Existing OpenNori ${kind} will be overwritten because --force was provided.`;
+  if (action === "update") return `OpenNori ${kind} will be refreshed from current project state.`;
+  return `OpenNori ${kind} action: ${action}.`;
 }
 
 function enrichInstallAction(root, action, { dryRun = false } = {}) {
@@ -95,7 +99,7 @@ function summarizeInstallPlan(actions) {
 function buildInstallPlan(root, actions, { dryRun = false, force = false, requestedSkill = false } = {}) {
   const enrichedActions = actions.map((action) => enrichInstallAction(root, action, { dryRun }));
   return {
-    schema_version: "adaw/install-plan-v1",
+    schema_version: "opennori/install-plan-v1",
     root,
     dry_run: dryRun,
     force,
@@ -106,11 +110,11 @@ function buildInstallPlan(root, actions, { dryRun = false, force = false, reques
 }
 
 function uninstallActionReason(action, kind) {
-  if (action === "delete") return `Existing ADAW ${kind} will be removed.`;
-  if (action === "delete-tree") return `Existing ADAW ${kind} and its contents will be removed.`;
-  if (action === "absent") return `ADAW ${kind} is already absent.`;
-  if (action === "preserve") return `ADAW ${kind} is preserved by default.`;
-  return `ADAW ${kind} action: ${action}.`;
+  if (action === "delete") return `Existing OpenNori ${kind} will be removed.`;
+  if (action === "delete-tree") return `Existing OpenNori ${kind} and its contents will be removed.`;
+  if (action === "absent") return `OpenNori ${kind} is already absent.`;
+  if (action === "preserve") return `OpenNori ${kind} is preserved by default.`;
+  return `OpenNori ${kind} action: ${action}.`;
 }
 
 function plannedDelete(root, relativePath, kind, { recursive = false, reason = undefined } = {}) {
@@ -168,25 +172,114 @@ function summarizeUninstallPlan(actions) {
   };
 }
 
+function upgradeActionReason(action, kind) {
+  if (action === "current") return `OpenNori ${kind} is already current.`;
+  if (action === "update") return `OpenNori ${kind} will be refreshed to the current CLI version.`;
+  if (action === "overwrite") return `OpenNori ${kind} will be overwritten to refresh generated OpenNori assets.`;
+  if (action === "missing") return `OpenNori ${kind} is missing; run install before upgrade.`;
+  return `OpenNori ${kind} action: ${action}.`;
+}
+
+function enrichUpgradeAction(root, action, { dryRun = false } = {}) {
+  const wouldWrite = WRITING_UPGRADE_ACTIONS.has(action.action);
+  return {
+    path: relativeTo(root, action.path),
+    kind: action.kind || "file",
+    action: action.action,
+    managed: action.managed !== false,
+    would_write: wouldWrite,
+    will_write: wouldWrite && !dryRun,
+    destructive: action.action === "overwrite",
+    from_version: action.from_version,
+    to_version: action.to_version,
+    reason: action.reason || upgradeActionReason(action.action, action.kind || "file")
+  };
+}
+
+function summarizeUpgradePlan(actions) {
+  const byAction = {};
+  for (const action of actions) {
+    byAction[action.action] = (byAction[action.action] || 0) + 1;
+  }
+  return {
+    total: actions.length,
+    by_action: byAction,
+    would_write: actions.filter((action) => action.would_write).length,
+    will_write: actions.filter((action) => action.will_write).length,
+    destructive: actions.filter((action) => action.destructive).length,
+    managed: actions.filter((action) => action.managed).length
+  };
+}
+
+function buildUpgradePlan(root, actions, { dryRun = false, requestedSkill = false } = {}) {
+  const enrichedActions = actions.map((action) => enrichUpgradeAction(root, action, { dryRun }));
+  return {
+    schema_version: "opennori/upgrade-plan-v1",
+    root,
+    dry_run: dryRun,
+    requested_skill: requestedSkill,
+    summary: summarizeUpgradePlan(enrichedActions),
+    actions: enrichedActions
+  };
+}
+
+function applyUpgradeActions(actions) {
+  for (const action of actions) {
+    if (WRITING_UPGRADE_ACTIONS.has(action.action) && action.write) action.write();
+  }
+}
+
+function buildContextExport(root, pair) {
+  const payload = readJson(pair.evidencePath);
+  const contract = payload.contract;
+  const ledger = payload.ledger;
+  const reportPath = pathsForGoal(root, contract.goal_id).reportPath;
+  const recommendation = nextRecommendation(contract, ledger);
+  return {
+    schema_version: "opennori/context-export-v1",
+    exported_at: new Date().toISOString(),
+    root,
+    goal_id: contract.goal_id,
+    goal: contract.goal,
+    acceptance_basis: contract.acceptance_basis || { status: "draft" },
+    workflow_status: ledger.status,
+    current_gap: currentGap(contract, ledger),
+    completion: completionAnswer(contract, ledger),
+    intervention: intervention(contract, ledger),
+    next_recommendation: recommendation,
+    criteria: criterionStatusRows(contract, ledger),
+    capability_profile: ledger.capability_profile || { items: [], evidence: [] },
+    capability_compliance: profileCompliance(ledger),
+    paths: {
+      acceptance: relativeTo(root, pair.acceptancePath),
+      evidence: relativeTo(root, pair.evidencePath),
+      report: relativeTo(root, reportPath),
+      report_exists: fs.existsSync(reportPath),
+      manifest: relativeTo(root, manifestPath(root))
+    },
+    manifest: safeReadManifest(root)
+  };
+}
+
 function buildUninstallActions(root, { includeState = false } = {}) {
   const actions = SKILL_PACK.map((skill) => plannedDelete(root, `.agents/skills/${skill.name}/SKILL.md`, "skill"));
 
   if (includeState) {
-    actions.push(plannedDelete(root, ".adaw", "state-directory", {
+    actions.push(plannedDelete(root, ".opennori", "state-directory", {
       recursive: true,
-      reason: "Full ADAW state removal was requested with --include-state."
+      reason: "Full OpenNori state removal was requested with --include-state."
     }));
     return actions;
   }
 
   actions.push(
-    plannedDelete(root, ".adaw/manifest.json", "manifest"),
-    plannedPreserve(root, ".adaw/protocol.md", "protocol", "Protocol is preserved unless --include-state is provided."),
-    plannedPreserve(root, ".adaw/active", "active-goals", "Active goals and evidence are preserved unless --include-state is provided."),
-    plannedPreserve(root, ".adaw/reports", "reports", "Acceptance reports are preserved unless --include-state is provided."),
-    plannedPreserve(root, ".adaw/completed", "completed-archive", "Completed archives are preserved unless --include-state is provided."),
-    plannedPreserve(root, ".adaw/blocked", "blocked-archive", "Blocked archives are preserved unless --include-state is provided."),
-    plannedPreserve(root, ".adaw/brainstorms", "brainstorms", "Brainstorms are preserved unless --include-state is provided.")
+    plannedDelete(root, ".opennori/manifest.json", "manifest"),
+    plannedPreserve(root, ".opennori/protocol.md", "protocol", "Protocol is preserved unless --include-state is provided."),
+    plannedPreserve(root, ".opennori/active", "active-goals", "Active goals and evidence are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".opennori/reports", "reports", "Acceptance reports are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".opennori/completed", "completed-archive", "Completed archives are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".opennori/blocked", "blocked-archive", "Blocked archives are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".opennori/brainstorms", "brainstorms", "Brainstorms are preserved unless --include-state is provided.")
   );
   return actions;
 }
@@ -194,7 +287,7 @@ function buildUninstallActions(root, { includeState = false } = {}) {
 function buildUninstallPlan(root, actions, { dryRun = false, includeState = false } = {}) {
   const enrichedActions = actions.map((action) => enrichUninstallAction(root, action, { dryRun }));
   return {
-    schema_version: "adaw/uninstall-plan-v1",
+    schema_version: "opennori/uninstall-plan-v1",
     root,
     dry_run: dryRun,
     include_state: includeState,
@@ -222,7 +315,7 @@ const BRAINSTORM_CANDIDATES = [
     suggested_goal_template: "让用户从模糊想法中选择一个明确、可验收的目标。",
     acceptance_directions: [
       "作为用户，我能在候选方向中看出每个方向解决的用户价值。",
-      "作为用户，我能选择一个方向进入 ADAW draft，或要求改写方向。",
+      "作为用户，我能选择一个方向进入 OpenNori draft，或要求改写方向。",
       "作为用户，我能判断候选方向没有要求我阅读技术说明。"
     ],
     risks: ["目标仍然太泛，无法生成可验收 AC。"]
@@ -235,7 +328,7 @@ const BRAINSTORM_CANDIDATES = [
     acceptance_directions: [
       "作为用户，我能看到每个方向对应的使用入口和判断方式。",
       "作为用户，我能比较方向之间的取舍，而不是阅读实现计划。",
-      "作为用户，我能选择一个方向作为正式 ADAW draft 的来源。"
+      "作为用户，我能选择一个方向作为正式 OpenNori draft 的来源。"
     ],
     risks: ["候选项可能变成技术方案比较，需要退回用户价值和验收方式。"]
   },
@@ -291,6 +384,38 @@ function hasFlag(args, name) {
   return args.includes(name);
 }
 
+const TOP_LEVEL_USAGE = "nori <doctor|install|upgrade|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|context|changes|archive|skill>";
+
+function wantsHelp(args) {
+  return args.includes("--help") || args.includes("-h");
+}
+
+function usageFor(args) {
+  const [command, subcommand] = args;
+  if (!command || command === "--help" || command === "-h") return TOP_LEVEL_USAGE;
+  if (command === "install") return "nori install --root <project> [--skill] [--dry-run] [--force] [--confirm] [--json]";
+  if (command === "upgrade") return "nori upgrade --root <project> [--skill] [--dry-run] [--confirm] [--json]";
+  if (command === "uninstall") return "nori uninstall --root <project> [--include-state] [--dry-run] [--confirm] [--json]";
+  if (command === "doctor") return "nori doctor --root <project> [--json]";
+  if (command === "brainstorm") return "nori brainstorm --idea \"<idea>\" --root <project> [--id <id>] [--json]";
+  if (command === "draft") return "nori draft --goal \"<goal>\" --root <project> [--goal-id <id>] [--json]";
+  if (command === "init") return "nori init <brief.json> --root <project> [--json]";
+  if (command === "criterion" && subcommand === "update") return "nori criterion update --root <project> --criterion <id> --user-story ... --measurement ... --threshold ... [--json]";
+  if (command === "profile" && subcommand === "add") return "nori profile add --root <project> --type <skill|stack|constraint> --name <name> --strength <must|prefer|avoid> --purpose <purpose> [--json]";
+  if (command === "profile" && subcommand === "evidence") return "nori profile evidence --root <project> --item <item-id> --result <satisfied|violated|waived> --summary <summary> [--json]";
+  if (command === "profile") return "nori profile <add|evidence|show|check> --root <project> [--json]";
+  if (command === "evidence" && subcommand === "add") return "nori evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]";
+  if (command === "evidence") return "nori evidence add --root <project> --criterion <id> --kind <kind> --summary <summary> --result <passing|failing|blocked|waived> [--json]";
+  if (command === "context" && subcommand === "export") return "nori context export --root <project> [--json]";
+  if (command === "context") return "nori context export --root <project> [--json]";
+  if (command === "skill" && subcommand === "export") return "nori skill export [--pack] [--json]";
+  if (command === "skill") return "nori skill export [--pack] [--json]";
+  if (["list", "check", "approve", "resume", "next", "evaluate", "status", "report", "changes", "archive"].includes(command)) {
+    return `nori ${command} --root <project> [--goal <goal-id>] [--json]`;
+  }
+  return TOP_LEVEL_USAGE;
+}
+
 function argValues(args, name) {
   const values = [];
   for (let index = 0; index < args.length; index += 1) {
@@ -338,23 +463,23 @@ function evidenceSourcesFromArgs(args) {
 
 const SKILL_PACK = [
   {
-    name: "adaw",
-    description: "Route ADAW work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
+    name: "nori",
+    description: "Route OpenNori work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
     body: [
       "## When to use",
-      "Use when the user mentions ADAW, asks to use ADAW for a task, continue ADAW, check completion, inspect project health, define acceptance criteria, record evidence, manage capability preferences, or produce an ADAW report.",
+      "Use when the user mentions OpenNori, asks to use OpenNori for a task, continue OpenNori, check completion, inspect project health, define acceptance criteria, record evidence, manage capability preferences, or produce an OpenNori report.",
       "",
       "## Route",
-      "- Goal, brainstorm, approval, or AC revision -> use `adaw-acceptance`.",
-      "- Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `adaw-evidence`.",
-      "- Required Skills, preferred stacks, avoided tools, or install policy -> use `adaw-capability-profile`.",
-      "- Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `adaw-project-health`.",
-      "- Status, report, current gap, completion answer, user intervention, or change summary -> use `adaw-reporting`.",
+      "- Goal, brainstorm, approval, or AC revision -> use `nori-acceptance`.",
+      "- Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `nori-evidence`.",
+      "- Required Skills, preferred stacks, avoided tools, or install policy -> use `nori-capability-profile`.",
+      "- Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `nori-project-health`.",
+      "- Status, report, current gap, completion answer, user intervention, or change summary -> use `nori-reporting`.",
       "",
       "## Baseline",
-      "At the start of each ADAW turn, run `adaw resume --root <repo> --json` or `adaw status --root <repo> --json` unless the task is only install/doctor/uninstall.",
-      "Use `next_recommendation` and top-level `next_actions` to continue the ADAW loop; do not make the user repeatedly ask what the next step is.",
-      "If `adaw` is not on PATH, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.",
+      "At the start of each OpenNori turn, run `nori resume --root <repo> --json` or `nori status --root <repo> --json` unless the task is only install/doctor/uninstall.",
+      "Use `next_recommendation` and top-level `next_actions` to continue the OpenNori loop; do not make the user repeatedly ask what the next step is.",
+      "If `nori` is not on PATH, use the installed package binary such as `node ./node_modules/opennori/bin/nori.js` or this repository's `node ./bin/nori.js` with the same arguments.",
       "",
       "## Rule",
       "Progress is determined by acceptance evidence, not implementation steps.",
@@ -363,38 +488,38 @@ const SKILL_PACK = [
     ]
   },
   {
-    name: "adaw-acceptance",
-    description: "Create, review, approve, and revise ADAW human-centered acceptance criteria from natural language goals.",
+    name: "nori-acceptance",
+    description: "Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.",
     body: [
       "## When to use",
       "Use when the user gives a goal, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.",
       "",
       "## Commands",
-      "- Fuzzy idea or discussion: `adaw brainstorm --idea \"<idea>\" --root <repo> --json`.",
-      "- Start from a goal: `adaw draft --goal \"<goal>\" --root <repo> --json`.",
-      "- Start from a chosen brainstorm candidate: `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
-      "- User approves criteria: `adaw approve --root <repo> --summary \"<approval>\" --json`.",
-      "- User revises a criterion: `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
+      "- Fuzzy idea or discussion: `nori brainstorm --idea \"<idea>\" --root <repo> --json`.",
+      "- Start from a goal: `nori draft --goal \"<goal>\" --root <repo> --json`.",
+      "- Start from a chosen brainstorm candidate: `nori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
+      "- User approves criteria: `nori approve --root <repo> --summary \"<approval>\" --json`.",
+      "- User revises a criterion: `nori criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
       "",
       "## Rules",
       "ACs must describe user actions or judgments, not implementation files, commands, modules, fields, tests, Skills, or technology choices.",
-      "Capability preferences belong in the Capability Profile, not user ACs.",
-      "Do not treat brainstorm output as an acceptance contract or completion evidence."
+      "Capability preferences belong in the Nori Profile, not user ACs.",
+      "Do not treat brainstorm output as a Nori Contract or completion evidence."
     ]
   },
   {
-    name: "adaw-evidence",
-    description: "Record and judge ADAW evidence while preserving agent freedom to choose verification methods.",
+    name: "nori-evidence",
+    description: "Record and judge OpenNori evidence while preserving agent freedom to choose verification methods.",
     body: [
       "## When to use",
-      "Use when the user asks to record validation as evidence, asks why an AC is passing, asks whether evidence is enough, confirms or waives an AC, or wants a verification attached to ADAW.",
+      "Use when the user asks to record validation as evidence, asks why an AC is passing, asks whether evidence is enough, confirms or waives an AC, or wants a verification attached to OpenNori.",
       "",
       "## Evidence Protocol",
       "The agent may choose any useful verification method: tests, diff, screenshots, browser checks, logs, artifacts, URLs, AW doctor, human confirmation, or another reviewable signal.",
       "When submitting evidence, explain basis, sources, reviewability, confidence, and limitations.",
       "",
       "## Command",
-      "`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability \"...\" --limitations \"...\" --json`",
+      "`nori evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability \"...\" --limitations \"...\" --json`",
       "",
       "Use multiple source flags when one AC is supported by several signals; prefer typed `--source-command`, `--source-path`, or `--source-url` when they fit, and use raw `--source` for anything else.",
       "For high-risk passing evidence, use a strong evidence kind or explicit strong confidence only when justified.",
@@ -402,16 +527,16 @@ const SKILL_PACK = [
     ]
   },
   {
-    name: "adaw-capability-profile",
-    description: "Record and report ADAW execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
+    name: "nori-capability-profile",
+    description: "Record and report OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
     body: [
       "## When to use",
       "Use when the user says a task must use a Skill, prefers a technology stack, wants to avoid a tool/library, or requires asking before installs.",
       "",
       "## Commands",
-      "- Add preference: `adaw profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
-      "- Add compliance evidence: `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json`.",
-      "- Show profile: `adaw profile show --root <repo> --json`.",
+      "- Add preference: `nori profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
+      "- Add compliance evidence: `nori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json`.",
+      "- Show profile: `nori profile show --root <repo> --json`.",
       "",
       "## Rules",
       "Do not turn Skills or stack preferences into user ACs.",
@@ -420,21 +545,21 @@ const SKILL_PACK = [
     ]
   },
   {
-    name: "adaw-project-health",
-    description: "Install, uninstall, diagnose, and recover project-local ADAW assets, manifest, and Skill Pack sync.",
+    name: "nori-project-health",
+    description: "Install, uninstall, diagnose, and recover project-local OpenNori assets, manifest, and Skill Pack sync.",
     body: [
       "## When to use",
-      "Use when the user asks to install ADAW, uninstall ADAW, check whether ADAW is ready, diagnose broken ADAW state, inspect manifest, or sync project Skills.",
+      "Use when the user asks to install OpenNori, uninstall OpenNori, check whether OpenNori is ready, diagnose broken OpenNori state, inspect manifest, or sync project Skills.",
       "",
       "## Commands",
-      "- Preview install: `adaw install --root <repo> --dry-run --json`.",
-      "- Install Skill Pack: `adaw install --root <repo> --skill --json`.",
-      "- Preview destructive install: `adaw install --root <repo> --skill --force --dry-run --json`.",
-      "- Confirm destructive install: `adaw install --root <repo> --skill --force --confirm --json`.",
-      "- Doctor: `adaw doctor --root <repo> --json`.",
-      "- Preview uninstall: `adaw uninstall --root <repo> --dry-run --json`.",
-      "- Remove entry assets while preserving state: `adaw uninstall --root <repo> --confirm --json`.",
-      "- Remove all ADAW state only after explicit user acceptance: `adaw uninstall --root <repo> --include-state --confirm --json`.",
+      "- Preview install: `nori install --root <repo> --dry-run --json`.",
+      "- Install Skill Pack: `nori install --root <repo> --skill --json`.",
+      "- Preview destructive install: `nori install --root <repo> --skill --force --dry-run --json`.",
+      "- Confirm destructive install: `nori install --root <repo> --skill --force --confirm --json`.",
+      "- Doctor: `nori doctor --root <repo> --json`.",
+      "- Preview uninstall: `nori uninstall --root <repo> --dry-run --json`.",
+      "- Remove entry assets while preserving state: `nori uninstall --root <repo> --confirm --json`.",
+      "- Remove all OpenNori state only after explicit user acceptance: `nori uninstall --root <repo> --include-state --confirm --json`.",
       "",
       "## Rules",
       "Always show dry-run plans before destructive writes.",
@@ -442,25 +567,25 @@ const SKILL_PACK = [
     ]
   },
   {
-    name: "adaw-reporting",
-    description: "Summarize ADAW status, reports, current gaps, user intervention, and acceptance evidence for humans.",
+    name: "nori-reporting",
+    description: "Summarize OpenNori status, reports, current gaps, user intervention, and acceptance evidence for humans.",
     body: [
       "## When to use",
-      "Use when the user asks whether work is complete, what remains, what they need to do, what changed, or asks for an ADAW report.",
+      "Use when the user asks whether work is complete, what remains, what they need to do, what changed, or asks for an OpenNori report.",
       "",
       "## Commands",
-      "- Resume: `adaw resume --root <repo> --json`.",
-      "- Next gap: `adaw next --root <repo> --json`.",
-      "- Status: `adaw status --root <repo> --json`.",
-      "- Report: `adaw report --root <repo> --json`.",
-      "- Changes: `adaw changes --root <repo> --json`.",
-      "- List goals: `adaw list --root <repo> --json`.",
+      "- Resume: `nori resume --root <repo> --json`.",
+      "- Next gap: `nori next --root <repo> --json`.",
+      "- Status: `nori status --root <repo> --json`.",
+      "- Report: `nori report --root <repo> --json`.",
+      "- Changes: `nori changes --root <repo> --json`.",
+      "- List goals: `nori list --root <repo> --json`.",
       "",
       "## Rules",
       "Lead with completion state, current gap, evidence basis, and required human intervention.",
       "After reporting, follow `next_recommendation` / `next_actions` when the user has asked to continue, instead of asking the user what the next step is.",
       "Summarize implementation details only as supporting evidence.",
-      "Never report complete unless all required ACs and blocking Capability Profile items are passing or waived."
+      "Never report complete unless all required ACs and blocking Nori Profile items are passing or waived."
     ]
   }
 ];
@@ -498,6 +623,89 @@ function skillPackInstallActions(root, { dryRun = false, force = false } = {}) {
   ));
 }
 
+function upgradeActions(root, { requestedSkill = false } = {}) {
+  const existingManifest = safeReadManifest(root);
+  const actions = [];
+  const protocolPath = path.join(root, ".opennori", "protocol.md");
+  const protocolContent = protocolTemplate();
+
+  if (existingManifest) {
+    actions.push({
+      path: manifestPath(root),
+      action: existingManifest.opennori_version === PACKAGE_JSON.version && sameStringSet(existingManifest.capabilities, NORI_CAPABILITIES)
+        ? "current"
+        : "update",
+      kind: "manifest",
+      managed: true,
+      from_version: existingManifest.opennori_version,
+      to_version: PACKAGE_JSON.version,
+      write: () => writeManifest(root)
+    });
+  } else {
+    actions.push({
+      path: manifestPath(root),
+      action: "missing",
+      kind: "manifest",
+      managed: true,
+      to_version: PACKAGE_JSON.version
+    });
+  }
+
+  if (fs.existsSync(protocolPath)) {
+    const currentHash = fileHash(protocolPath);
+    const expectedHash = createHash("sha256").update(protocolContent).digest("hex");
+    actions.push({
+      path: protocolPath,
+      action: currentHash === expectedHash ? "current" : "overwrite",
+      kind: "protocol",
+      managed: true,
+      write: () => {
+        fs.mkdirSync(path.dirname(protocolPath), { recursive: true });
+        fs.writeFileSync(protocolPath, protocolContent);
+      }
+    });
+  } else {
+    actions.push({
+      path: protocolPath,
+      action: "missing",
+      kind: "protocol",
+      managed: true
+    });
+  }
+
+  if (requestedSkill) {
+    const markdowns = skillPackMarkdowns();
+    for (const skill of SKILL_PACK) {
+      const target = skillPackPath(root, skill.name);
+      if (!fs.existsSync(target)) {
+        actions.push({ path: target, action: "missing", kind: "skill", managed: true });
+        continue;
+      }
+      const expectedHash = createHash("sha256").update(markdowns[skill.name]).digest("hex");
+      const currentHash = fileHash(target);
+      actions.push({
+        path: target,
+        action: currentHash === expectedHash ? "current" : "overwrite",
+        kind: "skill",
+        managed: true,
+        write: () => {
+          fs.mkdirSync(path.dirname(target), { recursive: true });
+          fs.writeFileSync(target, markdowns[skill.name]);
+        }
+      });
+    }
+  }
+
+  const manifestAction = actions.find((action) => action.kind === "manifest");
+  const refreshesManagedAssets = actions.some((action) => action.kind !== "manifest" && WRITING_UPGRADE_ACTIONS.has(action.action));
+  if (manifestAction && manifestAction.action === "current" && refreshesManagedAssets) {
+    manifestAction.action = "update";
+    manifestAction.reason = "OpenNori manifest will be refreshed after managed assets are upgraded.";
+  }
+
+  return actions;
+}
+
 function writeIfSafe(filePath, content, { dryRun = false, force = false, kind = "file", managed = true } = {}) {
   const exists = fs.existsSync(filePath);
   const action = exists ? (force ? "overwrite" : "skip") : "create";
@@ -517,20 +725,20 @@ function ensureDir(dirPath, { dryRun = false, kind = "directory", managed = true
 }
 
 function protocolTemplate() {
-  const source = path.resolve(import.meta.dirname, "..", ".adaw", "protocol.md");
+  const source = path.resolve(import.meta.dirname, "..", ".opennori", "protocol.md");
   if (fs.existsSync(source)) return fs.readFileSync(source, "utf8");
   return [
-    "# ADAW Protocol",
+    "# OpenNori Protocol",
     "",
     "Progress is determined by human-centered acceptance evidence, not by implementation steps.",
     "",
-    "Use `adaw init`, `adaw resume`, `adaw next`, `adaw evidence add`, `adaw evaluate`, `adaw status`, and `adaw report`.",
+    "Use `nori init`, `nori resume`, `nori next`, `nori evidence add`, `nori evaluate`, `nori status`, and `nori report`.",
     ""
   ].join("\n");
 }
 
 function manifestPath(root) {
-  return path.join(root, ".adaw", "manifest.json");
+  return path.join(root, ".opennori", "manifest.json");
 }
 
 function fileHash(filePath) {
@@ -539,7 +747,7 @@ function fileHash(filePath) {
 }
 
 function projectSkillState(root) {
-  const skillPath = skillPackPath(root, "adaw");
+  const skillPath = skillPackPath(root, "nori");
   const exists = fs.existsSync(skillPath);
   const expectedHash = createHash("sha256").update(exportedSkillMarkdown()).digest("hex");
   const actualHash = fileHash(skillPath);
@@ -569,12 +777,128 @@ function projectSkillPackState(root) {
     };
   });
   return {
-    schema_version: "adaw/skill-pack-v1",
+    schema_version: "opennori/skill-pack-v1",
     installed: skills.every((skill) => skill.installed),
     in_sync: skills.every((skill) => skill.installed && skill.in_sync),
     count: skills.length,
     skills
   };
+}
+
+function skillSearchPaths(name) {
+  const home = process.env.HOME || "";
+  return [
+    path.join(home, ".agents", "skills", name, "SKILL.md"),
+    path.join(home, ".codex", "skills", name, "SKILL.md")
+  ].filter(Boolean);
+}
+
+function stackIsPresent(root, name) {
+  const packageJsonPath = path.join(root, "package.json");
+  if (!fs.existsSync(packageJsonPath)) return null;
+  try {
+    const packageJson = readJson(packageJsonPath);
+    const dependencySets = [
+      packageJson.dependencies,
+      packageJson.devDependencies,
+      packageJson.peerDependencies,
+      packageJson.optionalDependencies
+    ].filter(Boolean);
+    return dependencySets.some((dependencies) => Object.prototype.hasOwnProperty.call(dependencies, name));
+  } catch {
+    return null;
+  }
+}
+
+function autoProfileChecks(root, ledger) {
+  const items = ledger.capability_profile?.items || [];
+  return items.map((item) => {
+    if (item.type === "skill") {
+      const paths = skillSearchPaths(item.name);
+      const foundPath = paths.find((candidate) => fs.existsSync(candidate));
+      const result = foundPath ? (item.strength === "avoid" ? "violated" : "satisfied") : (item.strength === "avoid" ? "satisfied" : "unknown");
+      return {
+        item_id: item.id,
+        type: item.type,
+        name: item.name,
+        strength: item.strength,
+        result,
+        basis: "local-skill-path",
+        summary: foundPath
+          ? `Skill ${item.name} is available at ${foundPath}.`
+          : `Skill ${item.name} was not found in the standard local Skill paths.`,
+        sources: paths.map((candidate) => ({ type: "artifact", label: candidate, path: candidate, exists: fs.existsSync(candidate) })),
+        can_auto_record: result !== "unknown"
+      };
+    }
+
+    if (item.type === "stack") {
+      const present = stackIsPresent(root, item.name);
+      if (present === true) {
+        return {
+          item_id: item.id,
+          type: item.type,
+          name: item.name,
+          strength: item.strength,
+          result: item.strength === "avoid" ? "violated" : "satisfied",
+          basis: "package-json",
+          summary: `Stack ${item.name} is present in package.json dependencies.`,
+          sources: [{ type: "artifact", label: "package.json", path: path.join(root, "package.json") }],
+          can_auto_record: true
+        };
+      }
+      if (present === false) {
+        return {
+          item_id: item.id,
+          type: item.type,
+          name: item.name,
+          strength: item.strength,
+          result: item.strength === "avoid" ? "satisfied" : "unknown",
+          basis: "package-json",
+          summary: `Stack ${item.name} is not present in package.json dependencies.`,
+          sources: [{ type: "artifact", label: "package.json", path: path.join(root, "package.json") }],
+          can_auto_record: item.strength === "avoid"
+        };
+      }
+      return {
+        item_id: item.id,
+        type: item.type,
+        name: item.name,
+        strength: item.strength,
+        result: "unknown",
+        basis: "package-json-unavailable",
+        summary: "No readable package.json was available for automatic stack checks.",
+        sources: [],
+        can_auto_record: false
+      };
+    }
+
+    return {
+      item_id: item.id,
+      type: item.type,
+      name: item.name,
+      strength: item.strength,
+      result: "unknown",
+      basis: "agent-or-human-review-required",
+      summary: "Constraint items require agent evidence, human confirmation, or waiver.",
+      sources: [],
+      can_auto_record: false
+    };
+  });
+}
+
+function recordAutoProfileChecks(ledger, checks) {
+  for (const check of checks.filter((entry) => entry.can_auto_record)) {
+    const item = ledger.capability_profile?.items?.find((entry) => entry.id === check.item_id);
+    const latest = item?.evidence?.at(-1);
+    if (latest?.result === check.result && latest?.summary === check.summary) continue;
+    addProfileEvidence(ledger, check.item_id, {
+      result: check.result,
+      summary: check.summary,
+      path: check.sources?.[0]?.path
+    });
+  }
+  return ledger;
 }
 
 function activeGoalSummaries(root) {
@@ -605,16 +929,16 @@ function activeGoalSummaries(root) {
 
 function managedFiles(root, skill = projectSkillState(root), { assumeManifestExists = false } = {}) {
   const entries = [
-    { path: ".adaw/manifest.json", kind: "manifest", required: true },
-    { path: ".adaw/protocol.md", kind: "protocol", required: true },
-    ...REQUIRED_ADAW_DIRS.map((dir) => ({ path: `.adaw/${dir}`, kind: "directory", required: true }))
+    { path: ".opennori/manifest.json", kind: "manifest", required: true },
+    { path: ".opennori/protocol.md", kind: "protocol", required: true },
+    ...REQUIRED_NORI_DIRS.map((dir) => ({ path: `.opennori/${dir}`, kind: "directory", required: true }))
   ];
   for (const packSkill of projectSkillPackState(root).skills.filter((entry) => entry.installed)) {
     entries.push({ path: packSkill.path, kind: "skill", required: false });
   }
   return entries.map((entry) => ({
     ...entry,
-    exists: entry.path === ".adaw/manifest.json" && assumeManifestExists
+    exists: entry.path === ".opennori/manifest.json" && assumeManifestExists
       ? true
       : fs.existsSync(path.join(root, entry.path))
   }));
@@ -636,10 +960,10 @@ function buildManifest(root, options = {}) {
   return {
     schema_version: MANIFEST_SCHEMA_VERSION,
     protocol_version: PROTOCOL_VERSION,
-    adaw_version: PACKAGE_JSON.version,
+    opennori_version: PACKAGE_JSON.version,
     created_at: existing?.created_at || now,
     updated_at: now,
-    capabilities: ADAW_CAPABILITIES,
+    capabilities: NORI_CAPABILITIES,
     managed_files: managedFiles(root, skill, options),
     active_goals: activeGoalSummaries(root),
     skill,
@@ -664,7 +988,7 @@ function writeManifest(root, { dryRun = false } = {}) {
 }
 
 function inspectActiveGoals(root) {
-  const activeDir = path.join(root, ".adaw", "active");
+  const activeDir = path.join(root, ".opennori", "active");
   const details = [];
   const issues = [];
   if (!fs.existsSync(activeDir)) return { details, issues };
@@ -677,7 +1001,7 @@ function inspectActiveGoals(root) {
   for (const fileName of acceptanceFiles) {
     const goalId = fileName.replace(/\.acceptance\.md$/, "");
     if (!evidenceGoalIds.has(goalId)) {
-      issues.push({ goal_id: goalId, message: "Acceptance contract has no matching evidence ledger." });
+      issues.push({ goal_id: goalId, message: "Acceptance contract has no matching evidence record." });
     }
   }
 
@@ -686,7 +1010,7 @@ function inspectActiveGoals(root) {
     const acceptancePath = path.join(activeDir, `${goalId}.acceptance.md`);
     const evidencePath = path.join(activeDir, fileName);
     if (!fs.existsSync(acceptancePath)) {
-      issues.push({ goal_id: goalId, message: "Evidence ledger has no matching acceptance contract." });
+      issues.push({ goal_id: goalId, message: "Evidence ledger has no matching Nori Contract." });
       continue;
     }
     try {
@@ -734,8 +1058,8 @@ function doctorRecoveryActions(checks, activeIssues = []) {
       goal_id: issue.goal_id,
       path: issue.path,
       action: issue.path
-        ? `Inspect .adaw/active/${issue.goal_id}.evidence.json and fix ${issue.path}: ${issue.message}`
-        : `Inspect .adaw/active/${issue.goal_id}.acceptance.md and .adaw/active/${issue.goal_id}.evidence.json: ${issue.message}`
+        ? `Inspect .opennori/active/${issue.goal_id}.evidence.json and fix ${issue.path}: ${issue.message}`
+        : `Inspect .opennori/active/${issue.goal_id}.acceptance.md and .opennori/active/${issue.goal_id}.evidence.json: ${issue.message}`
     });
   }
 
@@ -744,8 +1068,8 @@ function doctorRecoveryActions(checks, activeIssues = []) {
 
 function doctor(root) {
   const checks = [];
-  const adawDir = path.join(root, ".adaw");
-  const protocolPath = path.join(root, ".adaw", "protocol.md");
+  const noriDir = path.join(root, ".opennori");
+  const protocolPath = path.join(root, ".opennori", "protocol.md");
   const manifestFile = manifestPath(root);
   const active = inspectActiveGoals(root);
 
@@ -757,27 +1081,27 @@ function doctor(root) {
     "Use Node.js 20 or newer."
   ));
   checks.push(doctorCheck(
-    "adaw_directory",
-    fs.existsSync(adawDir),
-    fs.existsSync(adawDir) ? ".adaw directory exists." : ".adaw directory is missing.",
-    "Run adaw install --root <project> --json."
+    "opennori_directory",
+    fs.existsSync(noriDir),
+    fs.existsSync(noriDir) ? ".opennori directory exists." : ".opennori directory is missing.",
+    "Run nori install --root <project> --json."
   ));
 
-  for (const dir of REQUIRED_ADAW_DIRS) {
-    const dirPath = path.join(adawDir, dir);
+  for (const dir of REQUIRED_NORI_DIRS) {
+    const dirPath = path.join(noriDir, dir);
     checks.push(doctorCheck(
       `dir_${dir}`,
       fs.existsSync(dirPath),
-      fs.existsSync(dirPath) ? `.adaw/${dir} exists.` : `.adaw/${dir} is missing.`,
-      "Run adaw install --root <project> --json."
+      fs.existsSync(dirPath) ? `.opennori/${dir} exists.` : `.opennori/${dir} is missing.`,
+      "Run nori install --root <project> --json."
     ));
   }
 
   checks.push(doctorCheck(
     "protocol_file",
     fs.existsSync(protocolPath),
-    fs.existsSync(protocolPath) ? ".adaw/protocol.md exists." : ".adaw/protocol.md is missing.",
-    "Run adaw install --root <project> --json."
+    fs.existsSync(protocolPath) ? ".opennori/protocol.md exists." : ".opennori/protocol.md is missing.",
+    "Run nori install --root <project> --json."
   ));
 
   let manifest = null;
@@ -789,8 +1113,8 @@ function doctor(root) {
     checks.push(doctorCheck(
       "manifest_file",
       false,
-      fs.existsSync(manifestFile) ? `.adaw/manifest.json is unreadable: ${error.message}` : ".adaw/manifest.json is missing.",
-      "Run adaw install --root <project> --json to create or refresh the ADAW manifest.",
+      fs.existsSync(manifestFile) ? `.opennori/manifest.json is unreadable: ${error.message}` : ".opennori/manifest.json is missing.",
+      "Run nori install --root <project> --json to create or refresh the OpenNori manifest.",
       fs.existsSync(manifestFile) ? "broken" : "needs-action"
     ));
   }
@@ -799,28 +1123,28 @@ function doctor(root) {
     checks.push(doctorCheck(
       "manifest_file",
       manifest.schema_version === MANIFEST_SCHEMA_VERSION,
-      `.adaw/manifest.json uses schema ${manifest.schema_version || "<missing>"}.`,
-      "Refresh the manifest with adaw install --root <project> --json.",
+      `.opennori/manifest.json uses schema ${manifest.schema_version || "<missing>"}.`,
+      "Refresh the manifest with nori install --root <project> --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_protocol",
       manifest.protocol_version === PROTOCOL_VERSION,
-      `.adaw/manifest.json records protocol ${manifest.protocol_version || "<missing>"}.`,
-      "Refresh the manifest with adaw install --root <project> --json.",
+      `.opennori/manifest.json records protocol ${manifest.protocol_version || "<missing>"}.`,
+      "Refresh the manifest with nori install --root <project> --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_cli_version",
-      manifest.adaw_version === PACKAGE_JSON.version,
-      `.adaw/manifest.json records ADAW version ${manifest.adaw_version || "<missing>"}.`,
-      "Refresh the manifest with adaw install --root <project> --json."
+      manifest.opennori_version === PACKAGE_JSON.version,
+      `.opennori/manifest.json records OpenNori version ${manifest.opennori_version || "<missing>"}.`,
+      "Refresh the manifest with nori install --root <project> --json."
     ));
     checks.push(doctorCheck(
       "manifest_capabilities",
-      sameStringSet(manifest.capabilities, ADAW_CAPABILITIES),
+      sameStringSet(manifest.capabilities, NORI_CAPABILITIES),
       Array.isArray(manifest.capabilities) ? "Manifest protocol capabilities are readable." : "Manifest protocol capabilities are missing.",
-      "Refresh the manifest with adaw install --root <project> --json."
+      "Refresh the manifest with nori install --root <project> --json."
     ));
 
     const currentGoals = new Set(active.details.filter((goal) => goal.recoverable).map((goal) => goal.goal_id));
@@ -833,7 +1157,7 @@ function doctor(root) {
       "manifest_active_goals",
       staleGoals.length === 0,
       staleGoals.length === 0 ? "Manifest active goals match recoverable active goals." : `Manifest active goals differ: ${staleGoals.join(", ")}.`,
-      "Run any ADAW state-changing command, or run adaw install --root <project> --json, to refresh the manifest."
+      "Run any OpenNori state-changing command, or run nori install --root <project> --json, to refresh the manifest."
     ));
 
     const missingManaged = (manifest.managed_files || [])
@@ -843,8 +1167,8 @@ function doctor(root) {
     checks.push(doctorCheck(
       "managed_files",
       missingManaged.length === 0,
-      missingManaged.length === 0 ? "Required ADAW managed files are present." : `Missing managed files: ${missingManaged.join(", ")}.`,
-      "Run adaw install --root <project> --json."
+      missingManaged.length === 0 ? "Required OpenNori managed files are present." : `Missing managed files: ${missingManaged.join(", ")}.`,
+      "Run nori install --root <project> --json."
     ));
   }
 
@@ -852,7 +1176,7 @@ function doctor(root) {
     "active_goals_recoverable",
     active.issues.length === 0,
     active.issues.length === 0 ? `${active.details.length} active goal(s) are recoverable.` : `${active.issues.length} active goal issue(s) found.`,
-    "Inspect active_goal_issues, fix the reported .adaw/active/<goal>.acceptance.md and .adaw/active/<goal>.evidence.json pair, then rerun adaw doctor --root <project> --json.",
+    "Inspect active_goal_issues, fix the reported .opennori/active/<goal>.acceptance.md and .opennori/active/<goal>.evidence.json pair, then rerun nori doctor --root <project> --json.",
     "broken"
   ));
 
@@ -865,28 +1189,28 @@ function doctor(root) {
       "manifest_skill_state",
       Boolean(manifest.skill) && manifest.skill.installed === skill.installed && manifest.skill.path === skill.path,
       "Manifest Skill state matches the project Skill location.",
-      "Refresh the manifest with adaw install --root <project> --json."
+      "Refresh the manifest with nori install --root <project> --json."
     ));
   }
   checks.push(doctorCheck(
     "skill_sync",
     skillOk,
     skill.installed
-      ? (skill.in_sync ? "Project ADAW Skill is installed and in sync." : "Project ADAW Skill is installed but stale.")
-      : "Project ADAW Skill is not installed; this is optional unless the manifest expects it.",
-    "Run adaw install --root <project> --skill --force --json."
+      ? (skill.in_sync ? "Project OpenNori Skill is installed and in sync." : "Project OpenNori Skill is installed but stale.")
+      : "Project OpenNori Skill is not installed; this is optional unless the manifest expects it.",
+    "Run nori install --root <project> --skill --force --json."
   ));
   const manifestPackNames = new Set((manifest?.skill_pack?.skills || []).map((entry) => entry.name));
   const packNames = new Set(skillPack.skills.map((entry) => entry.name));
   const manifestPackMatches = !manifestReadable || (
-    manifest?.skill_pack?.schema_version === "adaw/skill-pack-v1"
+    manifest?.skill_pack?.schema_version === "opennori/skill-pack-v1"
     && sameStringSet([...manifestPackNames], [...packNames])
   );
   checks.push(doctorCheck(
     "skill_pack_manifest",
     manifestPackMatches,
     manifestPackMatches ? "Manifest Skill Pack state is readable." : "Manifest Skill Pack state is missing or stale.",
-    "Refresh the manifest with adaw install --root <project> --skill --json."
+    "Refresh the manifest with nori install --root <project> --skill --json."
   ));
   const packExpected = manifest?.skill_pack?.installed === true || skillPack.skills.some((entry) => entry.installed);
   const packOk = packExpected ? skillPack.installed && skillPack.in_sync : true;
@@ -894,9 +1218,9 @@ function doctor(root) {
     "skill_pack_sync",
     packOk,
     skillPack.installed
-      ? (skillPack.in_sync ? "ADAW Skill Pack is installed and in sync." : "ADAW Skill Pack is installed but stale.")
-      : "ADAW Skill Pack is not installed; this is optional unless the manifest expects it.",
-    "Run adaw install --root <project> --skill --force --json."
+      ? (skillPack.in_sync ? "OpenNori Skill Pack is installed and in sync." : "OpenNori Skill Pack is installed but stale.")
+      : "OpenNori Skill Pack is not installed; this is optional unless the manifest expects it.",
+    "Run nori install --root <project> --skill --force --json."
   ));
 
   const status = checks.every((check) => check.ok)
@@ -917,7 +1241,7 @@ function doctor(root) {
 }
 
 function brainstormPaths(root, brainstormId) {
-  const dir = path.join(root, ".adaw", "brainstorms");
+  const dir = path.join(root, ".opennori", "brainstorms");
   return {
     jsonPath: path.join(dir, `${brainstormId}.json`),
     markdownPath: path.join(dir, `${brainstormId}.md`)
@@ -934,7 +1258,7 @@ function renderBrainstormMarkdown(brainstorm) {
     "",
     "## Rule",
     "",
-    "This is a draft source, not an acceptance contract or completion evidence.",
+    "This is a draft source, not a Nori Contract or completion evidence.",
     "",
     "## Candidates",
     ""
@@ -955,13 +1279,13 @@ function renderBrainstormMarkdown(brainstorm) {
     );
   }
 
-  lines.push("## Next", "", "User chooses a candidate or revises one before ADAW draft.");
+  lines.push("## Next", "", "User chooses a candidate or revises one before OpenNori draft.");
   return `${lines.join("\n")}\n`;
 }
 
 function classifyChangedFile(filePath) {
   if (
-    filePath.startsWith(".adaw/") ||
+    filePath.startsWith(".opennori/") ||
     filePath.startsWith("examples/")
   ) {
     return "acceptance";
@@ -1001,12 +1325,12 @@ function briefFromGoal(goal, goalId = undefined) {
 function buildBrainstorm(idea, explicitId = undefined) {
   const id = explicitId || slugify(idea.slice(0, 40));
   return {
-    protocol_version: "adaw/brainstorm-v1",
+    protocol_version: "opennori/brainstorm-v1",
     id,
     idea,
     status: "draft-source",
     candidates: BRAINSTORM_CANDIDATES,
-    rule: "Brainstorm output is for choosing an acceptance direction. It is not a plan, an acceptance contract, or completion evidence."
+    rule: "Brainstorm output is for choosing an acceptance direction. It is not a plan, a Nori Contract, or completion evidence."
   };
 }
 
@@ -1023,7 +1347,7 @@ function briefFromBrainstorm(brainstorm, candidateId) {
     criteria: candidate.acceptance_directions.map((direction, index) => ({
       id: `AC-${index + 1}`,
       user_story: direction,
-      measurement: "用户查看 ADAW draft、报告或目标结果后作出判断。",
+      measurement: "用户查看 OpenNori draft、报告或目标结果后作出判断。",
       threshold: "用户能直接判断是否满足，不需要阅读实现步骤。",
       risk: index === 0 ? "medium" : "low"
     }))
@@ -1037,13 +1361,13 @@ function savePair(acceptancePath, evidencePath, contract, ledger) {
 
 function inferRootFromAcceptancePath(acceptancePath) {
   const parts = path.resolve(acceptancePath).split(path.sep);
-  const adawIndex = parts.lastIndexOf(".adaw");
-  if (adawIndex <= 0) return process.cwd();
-  return parts.slice(0, adawIndex).join(path.sep) || path.sep;
+  const noriIndex = parts.lastIndexOf(".opennori");
+  if (noriIndex <= 0) return process.cwd();
+  return parts.slice(0, noriIndex).join(path.sep) || path.sep;
 }
 
 function refreshManifest(root) {
-  if (fs.existsSync(path.join(root, ".adaw"))) {
+  if (fs.existsSync(path.join(root, ".opennori"))) {
     writeManifest(root);
   }
 }
@@ -1072,10 +1396,10 @@ function loadPair(args) {
   const pairs = findActivePairs(root);
   const pair = goal ? pairs.find((item) => item.goalId === goal) : pairs[0];
   if (!pair) {
-    throw new Error(`No active ADAW goal found under ${root}`);
+    throw new Error(`No active OpenNori goal found under ${root}`);
   }
   if (!goal && pairs.length > 1) {
-    throw new Error("Multiple active ADAW goals found. Pass --goal <goal-id> or explicit --acceptance/--evidence paths.");
+    throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id> or explicit --acceptance/--evidence paths.");
   }
   const payload = readJson(pair.evidencePath);
   return {
@@ -1090,14 +1414,19 @@ function loadPair(args) {
 export async function main(args) {
   const command = args[0];
   if (!command || command === "--help" || command === "-h") {
-    printJson(ok({ usage: "adaw <doctor|install|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
+    printJson(ok({ usage: TOP_LEVEL_USAGE, side_effect: "none" }));
+    return;
+  }
+
+  if (wantsHelp(args)) {
+    printJson(ok({ command: [command, args[1]].filter(Boolean).join(" "), usage: usageFor(args), side_effect: "none" }));
     return;
   }
 
   if (command === "doctor") {
     const root = resolveRoot(args);
     printJson(ok({
-      name: "adaw",
+      name: "nori",
       root,
       ...doctor(root),
       side_effect: "none"
@@ -1130,19 +1459,19 @@ export async function main(args) {
     if (force && !dryRun && !confirmed) {
       printJson(fail(
         "confirm_required",
-        "Install --force may overwrite existing ADAW-managed files.",
-        "Run adaw install --root <project> --dry-run --force --json first, then rerun with --confirm if the destructive actions are acceptable."
+        "Install --force may overwrite existing OpenNori-managed files.",
+        "Run nori install --root <project> --dry-run --force --json first, then rerun with --confirm if the destructive actions are acceptable."
       ));
       process.exitCode = 1;
       return;
     }
     const actions = [
-      ensureDir(path.join(root, ".adaw", "active"), { dryRun }),
-      ensureDir(path.join(root, ".adaw", "completed"), { dryRun }),
-      ensureDir(path.join(root, ".adaw", "blocked"), { dryRun }),
-      ensureDir(path.join(root, ".adaw", "reports"), { dryRun }),
-      ensureDir(path.join(root, ".adaw", "brainstorms"), { dryRun }),
-      writeIfSafe(path.join(root, ".adaw", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" })
+      ensureDir(path.join(root, ".opennori", "active"), { dryRun }),
+      ensureDir(path.join(root, ".opennori", "completed"), { dryRun }),
+      ensureDir(path.join(root, ".opennori", "blocked"), { dryRun }),
+      ensureDir(path.join(root, ".opennori", "reports"), { dryRun }),
+      ensureDir(path.join(root, ".opennori", "brainstorms"), { dryRun }),
+      writeIfSafe(path.join(root, ".opennori", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" })
     ];
 
     if (requestedSkill) {
@@ -1175,8 +1504,8 @@ export async function main(args) {
     if (!dryRun && !confirmed) {
       printJson(fail(
         "confirm_required",
-        "Uninstall removes ADAW-managed project assets.",
-        "Run adaw uninstall --root <project> --dry-run --json first, then rerun with --confirm if the planned removals are acceptable."
+        "Uninstall removes OpenNori-managed project assets.",
+        "Run nori uninstall --root <project> --dry-run --json first, then rerun with --confirm if the planned removals are acceptable."
       ));
       process.exitCode = 1;
       return;
@@ -1193,6 +1522,50 @@ export async function main(args) {
       include_state: includeState,
       uninstall_plan: uninstallPlan,
       actions: uninstallPlan.actions
+    }));
+    return;
+  }
+
+  if (command === "upgrade") {
+    const root = resolveRoot(args);
+    const dryRun = hasFlag(args, "--dry-run");
+    const confirmed = hasFlag(args, "--confirm");
+    const requestedSkill = hasFlag(args, "--skill");
+    const actions = upgradeActions(root, { requestedSkill });
+    const upgradePlan = buildUpgradePlan(root, actions, { dryRun, requestedSkill });
+
+    if (!dryRun && !confirmed) {
+      printJson(fail(
+        "confirm_required",
+        "Upgrade refreshes OpenNori manifest, protocol, and optionally Skill Pack assets.",
+        "Run nori upgrade --root <project> --dry-run --json first, then rerun with --confirm if the planned updates are acceptable."
+      ));
+      process.exitCode = 1;
+      return;
+    }
+
+    if (!dryRun && actions.some((action) => action.action === "missing")) {
+      printJson(fail(
+        "install_required",
+        "Upgrade found missing OpenNori entry assets.",
+        "Run nori install --root <project> --dry-run --json before upgrading missing assets."
+      ));
+      process.exitCode = 1;
+      return;
+    }
+
+    if (!dryRun) {
+      applyUpgradeActions(actions);
+      writeManifest(root);
+    }
+
+    printJson(ok({
+      root,
+      dry_run: dryRun,
+      confirmed,
+      upgrade_plan: upgradePlan,
+      actions: upgradePlan.actions,
+      manifest: dryRun ? buildManifest(root) : safeReadManifest(root)
     }));
     return;
   }
@@ -1222,7 +1595,7 @@ export async function main(args) {
         { kind: "brainstorm_markdown", path: paths.markdownPath }
       ],
       [],
-      ["Ask the user to choose or revise a candidate before running adaw draft."]
+      ["Ask the user to choose or revise a candidate before running nori draft."]
     ));
     return;
   }
@@ -1244,7 +1617,7 @@ export async function main(args) {
     const ledger = buildEvidenceLedger(contract);
     const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
-      printJson({ ...fail("invalid_acceptance", "Draft does not produce a valid ADAW contract", "Rewrite ACs from the user's perspective"), issues });
+      printJson({ ...fail("invalid_acceptance", "Draft does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues });
       process.exitCode = 1;
       return;
     }
@@ -1280,7 +1653,7 @@ export async function main(args) {
     const ledger = buildEvidenceLedger(contract);
     const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
-      printJson({ ...fail("invalid_acceptance", "Brief does not produce a valid ADAW contract", "Rewrite ACs from the user's perspective"), issues });
+      printJson({ ...fail("invalid_acceptance", "Brief does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues });
       process.exitCode = 1;
       return;
     }
@@ -1304,7 +1677,7 @@ export async function main(args) {
         { kind: "evidence_ledger", path: paths.evidencePath }
       ],
       [],
-      ["Run adaw next --acceptance <path> --evidence <path> --json before choosing implementation work."]
+      ["Run nori next --acceptance <path> --evidence <path> --json before choosing implementation work."]
     ));
     return;
   }
@@ -1463,6 +1836,28 @@ export async function main(args) {
     return;
   }
 
+  if (command === "profile" && args[1] === "check") {
+    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
+    const record = hasFlag(args, "--record");
+    const checks = autoProfileChecks(root, ledger);
+    if (record) {
+      recordAutoProfileChecks(ledger, checks);
+      recomputeWorkflowStatus(contract, ledger);
+      savePair(acceptancePath, evidencePath, contract, ledger);
+      refreshManifest(root);
+    }
+    printJson(ok({
+      goal_id: contract.goal_id,
+      recorded: record,
+      checks,
+      profile: ledger.capability_profile || { items: [], evidence: [] },
+      compliance: profileCompliance(ledger),
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    }));
+    return;
+  }
+
   if (command === "resume") {
     const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
     const recommendation = nextRecommendation(contract, ledger);
@@ -1570,6 +1965,32 @@ export async function main(args) {
     return;
   }
 
+  if (command === "context" && args[1] === "export") {
+    const root = resolveRoot(args);
+    const goal = argValue(args, "--goal");
+    const pairs = findActivePairs(root);
+    const pair = goal ? pairs.find((item) => item.goalId === goal) : pairs[0];
+    if (!pair) throw new Error(`No active OpenNori goal found under ${root}`);
+    if (!goal && pairs.length > 1) {
+      throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id>.");
+    }
+    const context = buildContextExport(root, pair);
+    const output = argValue(args, "--output");
+    if (output) {
+      const outputPath = path.resolve(output);
+      writeJson(outputPath, context);
+      printJson(ok(
+        { ...context, output_path: outputPath },
+        [{ kind: "opennori_context_export", path: outputPath }],
+        [],
+        context.next_recommendation.actions
+      ));
+      return;
+    }
+    printJson(ok(context, [], [], context.next_recommendation.actions));
+    return;
+  }
+
   if (command === "changes") {
     const root = resolveRoot(args);
     const pairs = findActivePairs(root).map((pair) => {
@@ -1593,14 +2014,14 @@ export async function main(args) {
     const { contract, ledger, acceptancePath, evidencePath } = loadPair(args);
     recomputeWorkflowStatus(contract, ledger);
     if (ledger.status !== "complete" && ledger.status !== "blocked") {
-      printJson(fail("not_archivable", `Goal ${contract.goal_id} is ${ledger.status}`, "Only complete or blocked ADAW goals can be archived."));
+      printJson(fail("not_archivable", `Goal ${contract.goal_id} is ${ledger.status}`, "Only complete or blocked OpenNori goals can be archived."));
       process.exitCode = 1;
       return;
     }
 
     const archiveDir = ledger.status === "complete" ? "completed" : "blocked";
-    const targetAcceptance = path.join(root, ".adaw", archiveDir, path.basename(acceptancePath));
-    const targetEvidence = path.join(root, ".adaw", archiveDir, path.basename(evidencePath));
+    const targetAcceptance = path.join(root, ".opennori", archiveDir, path.basename(acceptancePath));
+    const targetEvidence = path.join(root, ".opennori", archiveDir, path.basename(evidencePath));
     const reportPath = pathsForGoal(root, contract.goal_id).reportPath;
     for (const target of [targetAcceptance, targetEvidence]) {
       if (fs.existsSync(target) && !hasFlag(args, "--force")) {
@@ -1638,7 +2059,7 @@ export async function main(args) {
   if (command === "skill" && args[1] === "export") {
     if (hasFlag(args, "--pack")) {
       printJson(ok({
-        schema_version: "adaw/skill-pack-v1",
+        schema_version: "opennori/skill-pack-v1",
         skills: SKILL_PACK.map((skill) => ({
           name: skill.name,
           skill_md: skillMarkdown(skill)
@@ -1646,10 +2067,10 @@ export async function main(args) {
       }));
       return;
     }
-    const skillName = argValue(args, "--name", "adaw");
+    const skillName = argValue(args, "--name", "nori");
     const skill = SKILL_PACK.find((entry) => entry.name === skillName);
     if (!skill) {
-      printJson(fail("unknown_skill", `Unknown ADAW Skill: ${skillName}`, `Use one of: ${SKILL_PACK.map((entry) => entry.name).join(", ")}`));
+      printJson(fail("unknown_skill", `Unknown OpenNori Skill: ${skillName}`, `Use one of: ${SKILL_PACK.map((entry) => entry.name).join(", ")}`));
       process.exitCode = 1;
       return;
     }
