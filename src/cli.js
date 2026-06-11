@@ -322,6 +322,20 @@ function parseEvidenceSource(value) {
   return { type: "reference", label: raw };
 }
 
+function evidenceSourcesFromArgs(args) {
+  const sources = argValues(args, "--source").map((source) => parseEvidenceSource(source)).filter(Boolean);
+  for (const command of argValues(args, "--source-command")) {
+    sources.push({ type: "command", label: command, command });
+  }
+  for (const sourcePath of argValues(args, "--source-path")) {
+    sources.push({ type: "artifact", label: sourcePath, path: sourcePath });
+  }
+  for (const url of argValues(args, "--source-url")) {
+    sources.push({ type: "url", label: url, url });
+  }
+  return sources;
+}
+
 const SKILL_PACK = [
   {
     name: "adaw",
@@ -380,9 +394,9 @@ const SKILL_PACK = [
       "When submitting evidence, explain basis, sources, reviewability, confidence, and limitations.",
       "",
       "## Command",
-      "`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability \"...\" --limitations \"...\" --json`",
+      "`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability \"...\" --limitations \"...\" --json`",
       "",
-      "Use multiple `--source` values when one AC is supported by several signals.",
+      "Use multiple source flags when one AC is supported by several signals; prefer typed `--source-command`, `--source-path`, or `--source-url` when they fit, and use raw `--source` for anything else.",
       "For high-risk passing evidence, use a strong evidence kind or explicit strong confidence only when justified.",
       "Do not force evidence into a fixed adapter taxonomy."
     ]
@@ -1481,7 +1495,7 @@ export async function main(args) {
     const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const criterionId = argValue(args, "--criterion");
     if (!criterionId) throw new Error("--criterion is required");
-    const sources = argValues(args, "--source").map((source) => parseEvidenceSource(source)).filter(Boolean);
+    const sources = evidenceSourcesFromArgs(args);
     const evidence = {
       kind: argValue(args, "--kind", "manual"),
       basis: argValue(args, "--basis"),

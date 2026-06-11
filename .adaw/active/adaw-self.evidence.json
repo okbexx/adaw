@@ -323,6 +323,15 @@
         "threshold": "输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 ADAW loop。",
         "risk": "high",
         "required": true
+      },
+      {
+        "id": "AC-Z-15",
+        "layer": "productization",
+        "user_story": "作为用户，我让 agent 记录验收证据时，不需要 agent 为常见来源手写复杂结构。",
+        "measurement": "运行 adaw evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。",
+        "threshold": "证据来源能显示为 command、artifact、url 或自由 reference；report/status 中仍保留 basis、reviewability、limitations 和 confidence。",
+        "risk": "medium",
+        "required": true
       }
     ]
   },
@@ -330,7 +339,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-11T03:58:33.348Z",
+    "updated_at": "2026-06-11T05:36:03.250Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -1481,6 +1490,51 @@
             "limitations": "The recommendation guides the next ADAW loop; it does not choose a product roadmap item from outside the current context.",
             "gate": "accepted",
             "created_at": "2026-06-11T03:58:33.347Z"
+          }
+        ]
+      },
+      "AC-Z-15": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "adaw evidence add accepts typed source flags for commands, artifacts, and URLs while preserving raw source flexibility.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "reference",
+                "label": "custom review note"
+              },
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli.js",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              },
+              {
+                "type": "url",
+                "label": "https://example.com/review",
+                "url": "https://example.com/review"
+              }
+            ],
+            "reviewability": "Run npm test and inspect status/report evidence sources for command, artifact, url, and reference entries.",
+            "limitations": "Typed source flags are convenience wrappers; they do not execute commands or verify URLs automatically.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T05:35:13.072Z"
           }
         ]
       }

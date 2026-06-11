@@ -11,8 +11,8 @@ The agent may choose any useful verification method: tests, diff, screenshots, b
 When submitting evidence, explain basis, sources, reviewability, confidence, and limitations.
 
 ## Command
-`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary "..." --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "..." --limitations "..." --json`
+`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary "..." --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --source-command '<command>' --source-path '<path>' --source-url '<url>' --reviewability "..." --limitations "..." --json`
 
-Use multiple `--source` values when one AC is supported by several signals.
+Use multiple source flags when one AC is supported by several signals; prefer typed `--source-command`, `--source-path`, or `--source-url` when they fit, and use raw `--source` for anything else.
 For high-risk passing evidence, use a strong evidence kind or explicit strong confidence only when justified.
 Do not force evidence into a fixed adapter taxonomy.

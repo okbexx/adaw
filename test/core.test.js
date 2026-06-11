@@ -344,6 +344,9 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
     "--summary", "The user-visible workflow can be reviewed from a command and an artifact.",
     "--source", "{\"type\":\"command\",\"label\":\"npm run check\",\"command\":\"npm run check\",\"outcome\":\"passed\"}",
     "--source", "screenshots/reviewable-flow.png",
+    "--source-command", "npm run check",
+    "--source-path", "src/cli.js",
+    "--source-url", "https://example.com/review",
     "--reviewability", "User can rerun the command or open the artifact.",
     "--limitations", "Browser-specific visual review was not performed.",
     "--confidence", "verified",
@@ -353,7 +356,7 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
   assert.equal(added.data.criterion_status, "passing");
   assert.equal(added.data.latest_evidence.basis, "tool-observation");
-  assert.equal(added.data.latest_evidence.sources.length, 2);
+  assert.equal(added.data.latest_evidence.sources.length, 5);
   assert.equal(added.data.latest_evidence.reviewability, "User can rerun the command or open the artifact.");
   assert.equal(added.data.latest_evidence.limitations, "Browser-specific visual review was not performed.");
 
@@ -361,6 +364,12 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
   const criterion = status.data.criteria.find((row) => row.id === "AC-1");
   assert.equal(criterion.latest_evidence.sources[0].command, "npm run check");
   assert.equal(criterion.latest_evidence.sources[1].label, "screenshots/reviewable-flow.png");
+  assert.equal(criterion.latest_evidence.sources[2].type, "command");
+  assert.equal(criterion.latest_evidence.sources[2].command, "npm run check");
+  assert.equal(criterion.latest_evidence.sources[3].type, "artifact");
+  assert.equal(criterion.latest_evidence.sources[3].path, "src/cli.js");
+  assert.equal(criterion.latest_evidence.sources[4].type, "url");
+  assert.equal(criterion.latest_evidence.sources[4].url, "https://example.com/review");
 
   const report = run(["report", "--root", root, "--json"]);
   const text = fs.readFileSync(report.data.report_path, "utf8");
@@ -375,11 +384,11 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 35);
+  assert.equal(brief.criteria.length, 36);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 14);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 15);
 
   const expectedTools = [
     "Codex 对话",

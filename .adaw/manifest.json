@@ -3,7 +3,7 @@
   "protocol_version": "adaw/v1",
   "adaw_version": "0.1.0",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-11T04:00:19.803Z",
+  "updated_at": "2026-06-11T05:36:03.303Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -139,8 +139,8 @@
         "path": ".agents/skills/adaw-evidence/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "40375f9bdc9721925f409c4cc72790a4ad0efb67aca1505f20001f68b7c56e41",
-        "actual_sha256": "40375f9bdc9721925f409c4cc72790a4ad0efb67aca1505f20001f68b7c56e41"
+        "expected_sha256": "0e42a40d7536759ad163c5b3ddbfb2073b67095f535d8d5d93b515200de8d09d",
+        "actual_sha256": "0e42a40d7536759ad163c5b3ddbfb2073b67095f535d8d5d93b515200de8d09d"
       },
       {
         "name": "adaw-capability-profile",
