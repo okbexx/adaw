@@ -47,6 +47,54 @@
       "risk": "medium"
     },
     {
+      "id": "AC-P-6",
+      "layer": "protocol",
+      "user_story": "作为用户，我查看 ADAW 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。",
+      "measurement": "给 AC 添加不同来源的证据后运行 adaw report 或 adaw status。",
+      "threshold": "报告或状态输出展示证据摘要、判断基础、证据强度和剩余限制；不会只显示 agent 自我结论。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-P-7",
+      "layer": "protocol",
+      "user_story": "作为用户，我不需要限制 agent 使用哪种取证工具，但我能复查 agent 引用的证据来源。",
+      "measurement": "让 agent 用任意验证方式完成一条 AC，并查看该 AC 的证据来源。",
+      "threshold": "证据来源可以是命令、产物、URL、截图、diff、人类确认或其他引用；每个来源都包含用户可理解的 label 或复查线索。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-P-8",
+      "layer": "protocol",
+      "user_story": "作为用户，我能区分证据是来自工具观察、人类确认、产物审查、协议校验，还是 agent 的判断。",
+      "measurement": "给不同 basis 的证据运行 status/report。",
+      "threshold": "输出明确展示证据 basis；agent 判断可以记录，但不会伪装成工具验证或人类确认。",
+      "risk": "high"
+    },
+    {
+      "id": "AC-P-9",
+      "layer": "protocol",
+      "user_story": "作为用户，我能看到证据的复查方式和限制，而不是只看到通过结论。",
+      "measurement": "添加带复查说明和限制说明的证据后运行 report。",
+      "threshold": "报告展示 reviewability 和 limitations；限制不会被隐藏在实现日志里。",
+      "risk": "medium"
+    },
+    {
+      "id": "AC-P-10",
+      "layer": "protocol",
+      "user_story": "作为用户，我能看到一条 AC 可以由多个证据来源共同支撑，而不要求 agent 把它们拆成固定适配器。",
+      "measurement": "为一条 AC 添加包含多个来源的证据后查看 evidence ledger 和 report。",
+      "threshold": "同一条证据可以包含多个 sources；报告能合并展示这些来源，并保留 agent 的自由取证空间。",
+      "risk": "medium"
+    },
+    {
+      "id": "AC-P-11",
+      "layer": "protocol",
+      "user_story": "作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 ADAW 结构记录，而不要求我记住 CLI 参数。",
+      "measurement": "查看 ADAW Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。",
+      "threshold": "Skill 明确要求 agent 自由选择验证方式，但记录证据时说明 basis、sources、reviewability、confidence 和 limitations。",
+      "risk": "medium"
+    },
+    {
       "id": "AC-O-1",
       "layer": "operator",
       "user_story": "作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。",

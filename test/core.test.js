@@ -312,11 +312,54 @@ test("high-risk criteria require strong evidence before passing", () => {
   assert.equal(strong.data.gate, "accepted");
 });
 
+test("evidence records flexible reviewable sources without fixed adapters", () => {
+  const root = tempRoot();
+  run(["draft", "--goal", "Ship a reviewable ADAW task", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+
+  const added = run([
+    "evidence", "add",
+    "--root", root,
+    "--criterion", "AC-1",
+    "--kind", "agent-observation",
+    "--basis", "tool-observation",
+    "--summary", "The user-visible workflow can be reviewed from a command and an artifact.",
+    "--source", "{\"type\":\"command\",\"label\":\"npm run check\",\"command\":\"npm run check\",\"outcome\":\"passed\"}",
+    "--source", "screenshots/reviewable-flow.png",
+    "--reviewability", "User can rerun the command or open the artifact.",
+    "--limitations", "Browser-specific visual review was not performed.",
+    "--confidence", "verified",
+    "--result", "passing",
+    "--json"
+  ]);
+
+  assert.equal(added.data.criterion_status, "passing");
+  assert.equal(added.data.latest_evidence.basis, "tool-observation");
+  assert.equal(added.data.latest_evidence.sources.length, 2);
+  assert.equal(added.data.latest_evidence.reviewability, "User can rerun the command or open the artifact.");
+  assert.equal(added.data.latest_evidence.limitations, "Browser-specific visual review was not performed.");
+
+  const status = run(["status", "--root", root, "--json"]);
+  const criterion = status.data.criteria.find((row) => row.id === "AC-1");
+  assert.equal(criterion.latest_evidence.sources[0].command, "npm run check");
+  assert.equal(criterion.latest_evidence.sources[1].label, "screenshots/reviewable-flow.png");
+
+  const report = run(["report", "--root", root, "--json"]);
+  const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.match(text, /Basis/);
+  assert.match(text, /Sources/);
+  assert.match(text, /Reviewability/);
+  assert.match(text, /Limitations/);
+  assert.match(text, /command=npm run check/);
+  assert.match(text, /screenshots\/reviewable-flow\.png/);
+  assert.match(text, /Browser-specific visual review was not performed/);
+});
+
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 24);
+  assert.equal(brief.criteria.length, 30);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 11);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 11);
 
@@ -331,7 +374,9 @@ test("protocol v1 example contains concrete user tool operations", () => {
     "adaw install",
     "adaw uninstall",
     "adaw doctor",
-    "adaw list"
+    "adaw list",
+    "证据来源",
+    "复查"
   ];
 
   const joined = JSON.stringify(brief, null, 2);
@@ -350,6 +395,8 @@ test("skill export gives agents the full ADAW command loop", () => {
   assert.match(payload.data.skill_md, /adaw resume/);
   assert.match(payload.data.skill_md, /adaw next/);
   assert.match(payload.data.skill_md, /adaw evidence add/);
+  assert.match(payload.data.skill_md, /basis, sources, reviewability, confidence, and limitations/);
+  assert.match(payload.data.skill_md, /Do not force evidence into a fixed adapter taxonomy/);
   assert.match(payload.data.skill_md, /adaw evaluate/);
   assert.match(payload.data.skill_md, /adaw status/);
   assert.match(payload.data.skill_md, /adaw report/);

@@ -220,6 +220,53 @@ export function addProfileEvidence(ledger, itemId, evidence) {
   return ledger;
 }
 
+function basisForEvidenceKind(kind) {
+  if (kind === "human-confirmation") return "human-confirmation";
+  if (kind === "test-summary" || kind === "review-result") return "tool-observation";
+  if (kind === "screenshot" || kind === "artifact") return "artifact-review";
+  if (kind === "protocol-v1") return "protocol-check";
+  return "agent-observation";
+}
+
+function normalizeEvidenceSource(source) {
+  if (source === null || source === undefined) return null;
+  if (typeof source === "string") {
+    const label = source.trim();
+    return label ? { type: "reference", label } : null;
+  }
+  if (typeof source !== "object" || Array.isArray(source)) return null;
+
+  const entry = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      entry[key] = value;
+    }
+  }
+  if (Object.keys(entry).length === 0) return null;
+  if (!entry.type) entry.type = "reference";
+  if (!entry.label) {
+    entry.label = entry.path || entry.url || entry.command || entry.summary || entry.type;
+  }
+  return entry;
+}
+
+function normalizeEvidence(evidence) {
+  const sources = (Array.isArray(evidence.sources) ? evidence.sources : [])
+    .map((source) => normalizeEvidenceSource(source))
+    .filter(Boolean);
+  if (evidence.path && !sources.some((source) => source.path === evidence.path)) {
+    sources.push({ type: "artifact", label: evidence.path, path: evidence.path });
+  }
+  return {
+    ...evidence,
+    kind: evidence.kind || "manual",
+    basis: evidence.basis || basisForEvidenceKind(evidence.kind || "manual"),
+    sources,
+    reviewability: evidence.reviewability || (sources.length > 0 ? "source-provided" : "summary-only"),
+    limitations: evidence.limitations || ""
+  };
+}
+
 export function profileCompliance(ledger) {
   const items = ledger.capability_profile?.items || [];
   const statuses = items.map((item) => {
@@ -431,12 +478,18 @@ export function addEvidence(contract, ledger, criterionId, evidence) {
   }
 
   const state = ledger.criteria[criterionId];
-  const gated = applyRiskGate(criterion, evidence);
+  const normalized = normalizeEvidence(evidence);
+  const gated = applyRiskGate(criterion, normalized);
   state.evidence.push({
-    kind: evidence.kind,
-    summary: evidence.summary,
+    kind: normalized.kind,
+    basis: normalized.basis,
+    summary: normalized.summary,
     result: gated.result,
-    path: evidence.path,
+    confidence: gated.confidence,
+    path: normalized.path,
+    sources: normalized.sources,
+    reviewability: normalized.reviewability,
+    limitations: normalized.limitations,
     gate: gated.gate,
     created_at: nowIso()
   });
@@ -589,6 +642,72 @@ export function gapReason(status) {
   return "This user acceptance criterion has no user-understandable evidence yet.";
 }
 
+export function evidenceView(evidence) {
+  if (!evidence) return null;
+  const sources = Array.isArray(evidence.sources) ? evidence.sources : [];
+  return {
+    kind: evidence.kind || "manual",
+    basis: evidence.basis || basisForEvidenceKind(evidence.kind || "manual"),
+    summary: evidence.summary || "<none>",
+    result: evidence.result || "unknown",
+    confidence: evidence.confidence,
+    sources,
+    reviewability: evidence.reviewability || (sources.length > 0 || evidence.path ? "source-provided" : "summary-only"),
+    limitations: evidence.limitations || "",
+    path: evidence.path,
+    gate: evidence.gate,
+    created_at: evidence.created_at
+  };
+}
+
+export function criterionStatusRows(contract, ledger) {
+  return contract.criteria.map((criterion) => {
+    const state = ledger.criteria[criterion.id] || {};
+    return {
+      id: criterion.id,
+      layer: criterion.layer || inferCriterionLayer(criterion.id),
+      user_story: criterion.user_story,
+      status: state.status || "unknown",
+      confidence: state.confidence || "none",
+      latest_evidence: evidenceView(state.evidence?.at(-1))
+    };
+  });
+}
+
+function escapeTableCell(value) {
+  return String(value || "")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n/g, " ");
+}
+
+function formatEvidenceValue(value) {
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function formatEvidenceSource(source) {
+  if (!source) return "<none>";
+  if (typeof source === "string") return source;
+  const preferredKeys = ["type", "label", "command", "path", "url", "outcome", "summary"];
+  const parts = [];
+  for (const key of preferredKeys) {
+    if (source[key]) parts.push(`${key}=${formatEvidenceValue(source[key])}`);
+  }
+  for (const [key, value] of Object.entries(source)) {
+    if (!preferredKeys.includes(key) && value !== undefined && value !== null && String(value).trim() !== "") {
+      parts.push(`${key}=${formatEvidenceValue(value)}`);
+    }
+  }
+  return parts.join(", ") || "<none>";
+}
+
+function formatEvidenceSources(evidence) {
+  const view = evidenceView(evidence);
+  if (!view) return "<none>";
+  if (view.sources.length === 0) return view.path || "<none>";
+  return view.sources.map((source) => formatEvidenceSource(source)).join("; ");
+}
+
 export function renderReport(contract, ledger) {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
@@ -610,15 +729,16 @@ export function renderReport(contract, ledger) {
     "",
     "## Acceptance Status",
     "",
-    "| ID | Layer | User acceptance criterion | Status | Confidence | Evidence summary |",
-    "| --- | --- | --- | --- | --- | --- |"
+    "| ID | Layer | User acceptance criterion | Status | Confidence | Evidence summary | Basis | Sources | Reviewability | Limitations |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
   ];
 
   for (const criterion of contract.criteria) {
     const state = ledger.criteria[criterion.id] || {};
     const latest = state.evidence?.at(-1);
-    const evidence = latest ? `${latest.kind}: ${latest.summary}` : "<none>";
-    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${criterion.user_story} | ${state.status || "unknown"} | ${state.confidence || "none"} | ${evidence} |`);
+    const view = evidenceView(latest);
+    const evidence = view ? `${view.kind}: ${view.summary}` : "<none>";
+    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${escapeTableCell(criterion.user_story)} | ${state.status || "unknown"} | ${state.confidence || "none"} | ${escapeTableCell(evidence)} | ${view?.basis || "<none>"} | ${escapeTableCell(formatEvidenceSources(latest))} | ${view?.reviewability || "<none>"} | ${escapeTableCell(view?.limitations || "<none>")} |`);
   }
 
   lines.push("", "## Current Acceptance Gap", "");

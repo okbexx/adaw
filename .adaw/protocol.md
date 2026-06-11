@@ -42,6 +42,12 @@ current gap, risk gate, and report.
 | AC-P-3 | CLI | Run `adaw next` or `adaw status` | The user sees the current acceptance gap and completion answer, not a process-step list. | Output answers which AC is missing, whether complete, and whether human action is required. |
 | AC-P-4 | CLI / report | Inspect a high-risk AC | The user sees that weak evidence cannot make it passing. | High-risk passing cannot rely only on agent self-summary. |
 | AC-P-5 | CLI / Codex | Trigger `adaw report` | The user sees goal, layered AC statuses, evidence summaries, current gap, intervention, and conclusion. | Report is organized by acceptance state and evidence, not process steps. |
+| AC-P-6 | CLI / report | Inspect evidence basis | The user can tell what evidence supports passing, blocked, or waived ACs. | Report/status shows evidence summary, basis, confidence, and limitations, not only an agent conclusion. |
+| AC-P-7 | CLI / report | Review evidence sources | The user can review evidence sources without constraining how the agent gathered them. | Sources can be commands, artifacts, URLs, screenshots, diffs, human confirmations, or other reviewable references. |
+| AC-P-8 | CLI / report | Compare evidence basis types | The user can distinguish tool observations, human confirmations, artifact reviews, protocol checks, and agent observations. | Evidence basis is shown clearly and agent judgment is not disguised as tool or human verification. |
+| AC-P-9 | CLI / report | Inspect reviewability and limitations | The user sees how to review evidence and what it does not cover. | Report shows reviewability and limitations for structured evidence. |
+| AC-P-10 | CLI / report | Inspect combined evidence sources | The user can see one AC supported by multiple sources. | Evidence can contain multiple sources without forcing them into fixed adapters. |
+| AC-P-11 | Codex conversation | Ask the agent to record a verification as evidence | The user does not need to remember evidence CLI flags. | The ADAW Skill tells the agent to choose a suitable verification method, then record basis, sources, reviewability, confidence, and limitations. |
 
 ### L2 Operator AC
 
@@ -193,6 +199,25 @@ Strong explicit confidence values:
 
 This keeps high-risk completion from relying on agent self-summary.
 
+## Free Evidence Structure
+
+ADAW does not require the agent to use a fixed set of evidence adapters. The agent may choose the
+verification approach that fits the task: tests, Git diff, screenshots, browser checks, logs,
+artifacts, URLs, AW doctor, human confirmation, or another reviewable signal.
+
+When the agent submits evidence, the user-facing record should explain:
+
+- `basis`: why this evidence can support the AC, such as `tool-observation`,
+  `human-confirmation`, `artifact-review`, `protocol-check`, or `agent-observation`
+- `sources`: one or more reviewable references, each with a label and optional command, path, URL,
+  outcome, or other useful metadata
+- `reviewability`: how the user can rerun, reopen, inspect, or otherwise review the evidence
+- `confidence`: the evidence strength used by completion and risk gates
+- `limitations`: what the evidence does not cover
+
+The shape is intentionally open. ADAW should preserve arbitrary source metadata instead of forcing
+all evidence through a narrow adapter taxonomy.
+
 ## Agent Rule
 
 On every turn:
@@ -207,7 +232,7 @@ On every turn:
 8. If the user revises a criterion later, run `adaw criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
 9. Run `adaw resume --root <repo>` or `adaw next --root <repo>` to recover the active goal and current acceptance gap from repository files.
 10. Work only to produce evidence for that gap.
-11. Add acceptance evidence with `adaw evidence add`, and add profile compliance evidence with `adaw profile evidence` when profile items exist.
+11. Add acceptance evidence with `adaw evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `adaw profile evidence` when profile items exist.
 12. Run `adaw evaluate`.
 13. Report acceptance state, profile compliance, and evidence, not implementation steps.
 
@@ -218,6 +243,7 @@ Useful commands:
 - `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
 - `adaw approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
 - `adaw criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
+- `adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary "<summary>" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "<how to review>" --limitations "<known limits>"`: attach user-understandable, reviewable evidence without forcing a fixed adapter.
 - `adaw profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid>`: record user execution preferences separately from ACs.
 - `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
 - `adaw profile show --root <repo>`: show profile compliance and blocking items.

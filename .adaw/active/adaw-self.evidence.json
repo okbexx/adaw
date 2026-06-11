@@ -3,7 +3,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "goal": "让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
-    "created_at": "2026-06-11T01:43:45.286Z",
+    "created_at": "2026-06-11T02:09:30.961Z",
     "acceptance_basis": {
       "status": "approved",
       "summary": "User agreed to the layered ADAW self acceptance criteria."
@@ -51,6 +51,60 @@
         "user_story": "作为用户，我运行 adaw report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。",
         "measurement": "运行 adaw report 或让 Codex 生成 ADAW 报告。",
         "threshold": "报告默认围绕验收状态和证据组织，不把过程任务当作主线。",
+        "required": true,
+        "risk": "medium"
+      },
+      {
+        "id": "AC-P-6",
+        "layer": "protocol",
+        "user_story": "作为用户，我查看 ADAW 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。",
+        "measurement": "给 AC 添加不同来源的证据后运行 adaw report 或 adaw status。",
+        "threshold": "报告或状态输出展示证据摘要、判断基础、证据强度和剩余限制；不会只显示 agent 自我结论。",
+        "required": true,
+        "risk": "high"
+      },
+      {
+        "id": "AC-P-7",
+        "layer": "protocol",
+        "user_story": "作为用户，我不需要限制 agent 使用哪种取证工具，但我能复查 agent 引用的证据来源。",
+        "measurement": "让 agent 用任意验证方式完成一条 AC，并查看该 AC 的证据来源。",
+        "threshold": "证据来源可以是命令、产物、URL、截图、diff、人类确认或其他引用；每个来源都包含用户可理解的 label 或复查线索。",
+        "required": true,
+        "risk": "high"
+      },
+      {
+        "id": "AC-P-8",
+        "layer": "protocol",
+        "user_story": "作为用户，我能区分证据是来自工具观察、人类确认、产物审查、协议校验，还是 agent 的判断。",
+        "measurement": "给不同 basis 的证据运行 status/report。",
+        "threshold": "输出明确展示证据 basis；agent 判断可以记录，但不会伪装成工具验证或人类确认。",
+        "required": true,
+        "risk": "high"
+      },
+      {
+        "id": "AC-P-9",
+        "layer": "protocol",
+        "user_story": "作为用户，我能看到证据的复查方式和限制，而不是只看到通过结论。",
+        "measurement": "添加带复查说明和限制说明的证据后运行 report。",
+        "threshold": "报告展示 reviewability 和 limitations；限制不会被隐藏在实现日志里。",
+        "required": true,
+        "risk": "medium"
+      },
+      {
+        "id": "AC-P-10",
+        "layer": "protocol",
+        "user_story": "作为用户，我能看到一条 AC 可以由多个证据来源共同支撑，而不要求 agent 把它们拆成固定适配器。",
+        "measurement": "为一条 AC 添加包含多个来源的证据后查看 evidence ledger 和 report。",
+        "threshold": "同一条证据可以包含多个 sources；报告能合并展示这些来源，并保留 agent 的自由取证空间。",
+        "required": true,
+        "risk": "medium"
+      },
+      {
+        "id": "AC-P-11",
+        "layer": "protocol",
+        "user_story": "作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 ADAW 结构记录，而不要求我记住 CLI 参数。",
+        "measurement": "查看 ADAW Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。",
+        "threshold": "Skill 明确要求 agent 自由选择验证方式，但记录证据时说明 basis、sources、reviewability、confidence 和 limitations。",
         "required": true,
         "risk": "medium"
       },
@@ -231,7 +285,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-11T01:43:46.674Z",
+    "updated_at": "2026-06-11T02:14:18.281Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -240,11 +294,22 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "Acceptance contract renders goal, Capability Profile, layered ACs, status, and current gap in .adaw/active/adaw-self.acceptance.md.",
+            "kind": "artifact",
+            "basis": "artifact-review",
+            "summary": "The active acceptance contract shows the goal, layers, AC statuses, Capability Profile, and current rule in one reviewable markdown file.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": ".adaw/active/adaw-self.acceptance.md",
+                "path": ".adaw/active/adaw-self.acceptance.md"
+              }
+            ],
+            "reviewability": "Open .adaw/active/adaw-self.acceptance.md in an editor or file browser.",
+            "limitations": "This checks readability of the contract artifact, not every downstream CLI command.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.488Z"
+            "created_at": "2026-06-11T02:10:38.043Z"
           }
         ]
       },
@@ -256,10 +321,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw check validates contracts and rejects implementation-detail ACs.",
+            "basis": "tool-observation",
+            "summary": "The test suite includes a negative check that rejects implementation details inside user acceptance criteria.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect the check rejects implementation details test.",
+            "limitations": "Heuristics reject common implementation details; they are not a natural-language proof system.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.543Z"
+            "created_at": "2026-06-11T02:10:38.082Z"
           }
         ]
       },
@@ -271,10 +353,22 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw next/status return current_gap, completion, and intervention instead of process steps.",
+            "basis": "tool-observation",
+            "summary": "resume/status/next tests verify ADAW returns current acceptance gaps and completion state instead of process steps.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              }
+            ],
+            "reviewability": "Rerun npm test or adaw status --root . --json.",
+            "limitations": "The CLI provides structured state; agent phrasing still depends on the Skill following it.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.653Z"
+            "created_at": "2026-06-11T02:10:38.122Z"
           }
         ]
       },
@@ -285,11 +379,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "High-risk gate downgrades weak passing evidence and accepts only strong evidence kinds or confidence.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "High-risk passing evidence is downgraded unless it uses a strong kind or explicit strong confidence.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "src/core.js risk gate",
+                "path": "src/core.js"
+              }
+            ],
+            "reviewability": "Inspect applyRiskGate and rerun the high-risk criteria test.",
+            "limitations": "Evidence strength is protocol-level; it cannot independently verify external systems.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.701Z"
+            "created_at": "2026-06-11T02:10:38.161Z"
           }
         ]
       },
@@ -300,11 +411,255 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw report renders layered AC status, Capability Profile, evidence summary, current gap, user intervention, and conclusion.",
+            "kind": "artifact",
+            "basis": "artifact-review",
+            "summary": "ADAW report renders goal, acceptance basis, profile, AC status table, evidence, current gap, intervention, and conclusion.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": ".adaw/reports/adaw-self.report.md",
+                "path": ".adaw/reports/adaw-self.report.md"
+              }
+            ],
+            "reviewability": "Run adaw report --root . --json and open the generated report.",
+            "limitations": "Report clarity depends on evidence summaries provided by the agent.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.756Z"
+            "created_at": "2026-06-11T02:10:38.200Z"
+          }
+        ]
+      },
+      "AC-P-6": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Reports and status rows expose latest evidence summary, basis, confidence, reviewability, sources, and limitations.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/core.js evidenceView and renderReport",
+                "path": "src/core.js"
+              },
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              }
+            ],
+            "reviewability": "Inspect report columns or status JSON criteria.latest_evidence.",
+            "limitations": "Only the latest evidence per AC is shown in the report table.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.239Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Manifest and CLI now expose reviewable-evidence capability while report/status show evidence basis, sources, reviewability, confidence, and limitations.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/cli.js ADAW_CAPABILITIES",
+                "path": "src/cli.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/core.js evidenceView and renderReport",
+                "path": "src/core.js"
+              }
+            ],
+            "reviewability": "Inspect ADAW_CAPABILITIES plus status/report evidence columns.",
+            "limitations": "Capability naming signals support; it does not enforce source availability outside the project.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:11:35.341Z"
+          }
+        ]
+      },
+      "AC-P-7": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Evidence sources are open objects or labels; ADAW preserves reviewable source metadata without enforcing a fixed adapter list.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/core.js normalizeEvidenceSource",
+                "path": "src/core.js"
+              },
+              {
+                "type": "artifact",
+                "label": "test flexible evidence sources",
+                "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Run the flexible evidence sources test and inspect the ledger sources array.",
+            "limitations": "ADAW validates the evidence shape, not whether every external reference remains available forever.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.278Z"
+          }
+        ]
+      },
+      "AC-P-8": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Evidence includes basis so users can distinguish tool observations, human confirmations, artifact reviews, protocol checks, and agent observations.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/core.js basisForEvidenceKind",
+                "path": "src/core.js"
+              },
+              {
+                "type": "artifact",
+                "label": "README evidence example",
+                "path": "README.md"
+              }
+            ],
+            "reviewability": "Inspect latest_evidence.basis in status JSON or the Basis column in the report.",
+            "limitations": "The basis is agent-submitted unless inferred from known evidence kinds.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.316Z"
+          }
+        ]
+      },
+      "AC-P-9": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Structured evidence supports reviewability and limitations, and report output displays both fields.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/core.js renderReport",
+                "path": "src/core.js"
+              },
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              }
+            ],
+            "reviewability": "Open the report and check Reviewability and Limitations columns.",
+            "limitations": "Older evidence entries without these fields fall back to source-provided or summary-only.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.353Z"
+          }
+        ]
+      },
+      "AC-P-10": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "A single evidence entry can contain multiple heterogeneous sources and the report combines them for review.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "test/core.test.js flexible evidence test",
+                "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/core.js formatEvidenceSources",
+                "path": "src/core.js"
+              }
+            ],
+            "reviewability": "Inspect the flexible evidence test, which records a command source and artifact label together.",
+            "limitations": "The report table summarizes sources compactly; the full JSON ledger preserves details.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.392Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "Report source formatting preserves arbitrary source metadata, including object values, without constraining agent evidence choices.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": "src/core.js formatEvidenceSource",
+                "path": "src/core.js",
+                "metadata": {
+                  "shape": "open"
+                }
+              }
+            ],
+            "reviewability": "Inspect formatEvidenceSource and rerun npm test.",
+            "limitations": "Nested metadata is displayed compactly as JSON in report tables.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:14:18.280Z"
+          }
+        ]
+      },
+      "AC-P-11": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "artifact",
+            "basis": "artifact-review",
+            "summary": "The exported ADAW Skill instructs agents to choose any suitable verification method and record basis, sources, reviewability, confidence, and limitations.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "artifact",
+                "label": ".agents/skills/adaw/SKILL.md",
+                "path": ".agents/skills/adaw/SKILL.md"
+              },
+              {
+                "type": "command",
+                "label": "adaw skill export",
+                "command": "node ./bin/adaw.js skill export --json",
+                "outcome": "passed"
+              }
+            ],
+            "reviewability": "Run adaw skill export --json or open the project Skill.",
+            "limitations": "The Skill guides agents; it cannot force an unrelated agent runtime to comply.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T02:10:38.430Z"
           }
         ]
       },
@@ -315,11 +670,28 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "artifact",
-            "summary": "Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'.",
+            "kind": "test-summary",
+            "basis": "tool-observation",
+            "summary": "AC-O-1 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.800Z"
+            "created_at": "2026-06-11T02:10:38.468Z"
           }
         ]
       },
@@ -330,11 +702,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw draft keeps acceptance_basis=draft and cannot become complete until adaw approve records user approval; tests cover draft gate and approval.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-O-2 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.845Z"
+            "created_at": "2026-06-11T02:10:38.507Z"
           }
         ]
       },
@@ -346,10 +735,27 @@
         "evidence": [
           {
             "kind": "review-result",
-            "summary": "resume --root . restores adaw-self from .adaw files and reports current gap without relying on prior chat context.",
+            "basis": "protocol-check",
+            "summary": "AC-O-3 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.890Z"
+            "created_at": "2026-06-11T02:10:38.548Z"
           }
         ]
       },
@@ -360,11 +766,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "status/completion answers are computed only from required AC statuses, profile compliance, and evidence; incomplete goals report the current unmet AC instead of complete.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-O-4 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.934Z"
+            "created_at": "2026-06-11T02:10:38.596Z"
           }
         ]
       },
@@ -376,10 +799,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "blocked evidence and profile blockers produce status.intervention with a concrete human action.",
+            "basis": "tool-observation",
+            "summary": "AC-O-5 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:45.981Z"
+            "created_at": "2026-06-11T02:10:38.635Z"
           }
         ]
       },
@@ -390,11 +830,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw criterion update records the user revision as approved acceptance basis and clears stale evidence for the changed AC.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-O-6 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.046Z"
+            "created_at": "2026-06-11T02:10:38.675Z"
           }
         ]
       },
@@ -406,10 +863,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw brainstorm creates selectable acceptance directions under .adaw/brainstorms, not a process plan; Skill tells Codex to invoke it from natural language and not treat output as contract or completion evidence.",
+            "basis": "tool-observation",
+            "summary": "AC-O-7 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.091Z"
+            "created_at": "2026-06-11T02:10:38.714Z"
           }
         ]
       },
@@ -420,11 +894,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "Capability Profile records user-declared Skills/stacks/constraints separately from ACs; must/avoid compliance affects completion and appears in status/report.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-O-8 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.143Z"
+            "created_at": "2026-06-11T02:10:38.754Z"
           }
         ]
       },
@@ -436,10 +927,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw skill export emits a Codex Skill draft covering setup, doctor, destructive install preview, uninstall preview, brainstorm, draft, approve, criterion update, profile, resume, next, evidence, evaluate, status, and report.",
+            "basis": "tool-observation",
+            "summary": "AC-Z-1 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.199Z"
+            "created_at": "2026-06-11T02:10:38.794Z"
           }
         ]
       },
@@ -450,11 +958,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw install creates .adaw assets, optional repo-local Skill, manifest, and a structured install plan while skipping existing content by default.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-2 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.243Z"
+            "created_at": "2026-06-11T02:10:38.834Z"
           }
         ]
       },
@@ -466,10 +991,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw changes groups .adaw acceptance artifacts separately from implementation files for review.",
+            "basis": "tool-observation",
+            "summary": "AC-Z-3 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.289Z"
+            "created_at": "2026-06-11T02:10:38.874Z"
           }
         ]
       },
@@ -480,11 +1022,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw list shows multiple active goals from .adaw/active and resume/status/report require --goal instead of random selection.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-4 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.329Z"
+            "created_at": "2026-06-11T02:10:38.916Z"
           }
         ]
       },
@@ -495,11 +1054,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "adaw archive moves complete and blocked goals out of .adaw/active while preserving contract, evidence ledger, and report.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-5 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.371Z"
+            "created_at": "2026-06-11T02:10:38.955Z"
           }
         ]
       },
@@ -511,10 +1087,27 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "Default ADAW writes target .adaw/protocol.md, .adaw/manifest.json, .adaw/active, .adaw/reports, .adaw/completed, .adaw/blocked, and .adaw/brainstorms; tests assert install does not create process/.",
+            "basis": "tool-observation",
+            "summary": "AC-Z-6 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.414Z"
+            "created_at": "2026-06-11T02:10:38.994Z"
           }
         ]
       },
@@ -525,11 +1118,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "install dry-run and install output expose structured actions and .adaw/manifest.json records version, managed files, active goals, Skill state, and capabilities.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-7 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.463Z"
+            "created_at": "2026-06-11T02:10:39.032Z"
           }
         ]
       },
@@ -540,11 +1150,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "doctor reports ready, needs-action, and broken states, detects stale manifest version/capabilities, and includes checks for structure, manifest, active goal recoverability, Skill sync, runtime, and recovery actions.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-8 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.505Z"
+            "created_at": "2026-06-11T02:10:39.071Z"
           }
         ]
       },
@@ -555,11 +1182,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "install dry-run returns install_plan actions with action, kind, managed, would_write, will_write, destructive, and reason; tests assert dry-run writes nothing and force overwrite is destructive.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-9 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.548Z"
+            "created_at": "2026-06-11T02:10:39.110Z"
           }
         ]
       },
@@ -570,11 +1214,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "Real install --force fails without --confirm, force dry-run previews destructive overwrite, and force --confirm performs the overwrite only after explicit confirmation.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-10 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.591Z"
+            "created_at": "2026-06-11T02:10:39.150Z"
           }
         ]
       },
@@ -585,11 +1246,28 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
-            "summary": "uninstall dry-run returns uninstall_plan, default uninstall preserves active goals/evidence/reports/archives, unconfirmed uninstall fails, and --include-state --confirm is required to remove .adaw state.",
+            "kind": "review-result",
+            "basis": "protocol-check",
+            "summary": "AC-Z-11 has reviewable evidence from the ADAW self-test, protocol, and generated report artifacts.",
             "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm test",
+                "command": "npm test",
+                "outcome": "passed"
+              },
+              {
+                "type": "artifact",
+                "label": "examples/adaw-self.json",
+                "path": "examples/adaw-self.json"
+              }
+            ],
+            "reviewability": "Rerun npm test and inspect examples/adaw-self.json plus the active ADAW report.",
+            "limitations": "This is self-acceptance evidence for the current CLI and Skill implementation.",
             "gate": "accepted",
-            "created_at": "2026-06-11T01:43:46.634Z"
+            "created_at": "2026-06-11T02:10:39.190Z"
           }
         ]
       }
@@ -602,15 +1280,15 @@
           "name": "profile-stays-out-of-user-acs",
           "strength": "must",
           "purpose": "Capability Profile records agent execution preferences without turning them into user acceptance criteria.",
-          "scope": "ADAW self-development",
+          "scope": "",
           "install_policy": "existing_only",
           "evidence": [
             {
               "item_id": "constraint-profile-stays-out-of-user-acs",
               "result": "satisfied",
-              "summary": "Capability Profile constraints are rendered separately from the AC table and are not converted into user acceptance criteria.",
+              "summary": "Capability Profile remains separate from user ACs in the contract and report.",
               "path": ".adaw/active/adaw-self.acceptance.md",
-              "created_at": "2026-06-11T01:43:45.409Z"
+              "created_at": "2026-06-11T02:09:42.262Z"
             }
           ]
         }
@@ -619,9 +1297,9 @@
         {
           "item_id": "constraint-profile-stays-out-of-user-acs",
           "result": "satisfied",
-          "summary": "Capability Profile constraints are rendered separately from the AC table and are not converted into user acceptance criteria.",
+          "summary": "Capability Profile remains separate from user ACs in the contract and report.",
           "path": ".adaw/active/adaw-self.acceptance.md",
-          "created_at": "2026-06-11T01:43:45.409Z"
+          "created_at": "2026-06-11T02:09:42.262Z"
         }
       ]
     }

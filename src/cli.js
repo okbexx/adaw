@@ -9,6 +9,7 @@ import {
   buildContractFromBrief,
   buildEvidenceLedger,
   completionAnswer,
+  criterionStatusRows,
   currentGap,
   fail,
   findActivePairs,
@@ -33,6 +34,7 @@ const REQUIRED_ADAW_DIRS = ["active", "completed", "blocked", "reports", "brains
 const ADAW_CAPABILITIES = [
   "acceptance-contract",
   "evidence-ledger",
+  "reviewable-evidence",
   "brainstorm",
   "capability-profile",
   "archive",
@@ -289,12 +291,35 @@ function hasFlag(args, name) {
   return args.includes(name);
 }
 
+function argValues(args, name) {
+  const values = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] === name && index + 1 < args.length) {
+      values.push(args[index + 1]);
+    }
+  }
+  return values;
+}
+
 function resolveRoot(args) {
   return path.resolve(argValue(args, "--root", process.cwd()));
 }
 
 function relativeTo(root, filePath) {
   return path.relative(root, filePath) || ".";
+}
+
+function parseEvidenceSource(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  if (raw.startsWith("{")) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return { type: "reference", label: raw };
+    }
+  }
+  return { type: "reference", label: raw };
 }
 
 function exportedSkillMarkdown() {
@@ -331,13 +356,15 @@ function exportedSkillMarkdown() {
     "At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.",
     "",
     "## Evidence loop",
-    "Work only to produce evidence for the current acceptance gap. Add evidence with `adaw evidence add`, run `adaw evaluate`, answer status with `adaw status`, and generate the user report with `adaw report`.",
+    "Work only to produce evidence for the current acceptance gap. The agent may choose any useful verification method, but evidence submitted to ADAW should explain the basis, sources, reviewability, confidence, and limitations instead of only saying the agent believes it is done.",
+    "Add evidence with `adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability \"...\" --limitations \"...\" --json`, run `adaw evaluate`, answer status with `adaw status`, and generate the user report with `adaw report`.",
     "",
     "## Rule",
     "Progress is determined by acceptance evidence, not by implementation steps.",
     "Do not answer complete while the acceptance basis is draft.",
     "Do not treat brainstorm output as an acceptance contract or completion evidence.",
     "Do not turn Capability Profile items into user acceptance criteria; they are agent execution guidance and compliance evidence.",
+    "Do not force evidence into a fixed adapter taxonomy. Use the verification approach that fits the task, then record user-reviewable evidence structure.",
     ""
   ].join("\n");
 }
@@ -1259,12 +1286,17 @@ export async function main(args) {
     const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
     const criterionId = argValue(args, "--criterion");
     if (!criterionId) throw new Error("--criterion is required");
+    const sources = argValues(args, "--source").map((source) => parseEvidenceSource(source)).filter(Boolean);
     const evidence = {
       kind: argValue(args, "--kind", "manual"),
+      basis: argValue(args, "--basis"),
       summary: argValue(args, "--summary", ""),
       result: argValue(args, "--result", "passing"),
       confidence: argValue(args, "--confidence"),
-      path: argValue(args, "--path")
+      path: argValue(args, "--path"),
+      sources,
+      reviewability: argValue(args, "--reviewability"),
+      limitations: argValue(args, "--limitations")
     };
     if (!evidence.summary) throw new Error("--summary is required");
     addEvidence(contract, ledger, criterionId, evidence);
@@ -1276,6 +1308,7 @@ export async function main(args) {
       criterion: criterionId,
       criterion_status: ledger.criteria[criterionId].status,
       confidence: ledger.criteria[criterionId].confidence,
+      latest_evidence: criterionStatusRows(contract, ledger).find((row) => row.id === criterionId)?.latest_evidence,
       gate: ledger.criteria[criterionId].evidence.at(-1)?.gate,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger)
@@ -1304,7 +1337,8 @@ export async function main(args) {
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger),
       completion: completionAnswer(contract, ledger),
-      intervention: intervention(contract, ledger)
+      intervention: intervention(contract, ledger),
+      criteria: criterionStatusRows(contract, ledger)
     }));
     return;
   }

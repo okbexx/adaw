@@ -30,10 +30,12 @@ If the user asks whether ADAW is set up, healthy, recoverable, or ready in a pro
 At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.
 
 ## Evidence loop
-Work only to produce evidence for the current acceptance gap. Add evidence with `adaw evidence add`, run `adaw evaluate`, answer status with `adaw status`, and generate the user report with `adaw report`.
+Work only to produce evidence for the current acceptance gap. The agent may choose any useful verification method, but evidence submitted to ADAW should explain the basis, sources, reviewability, confidence, and limitations instead of only saying the agent believes it is done.
+Add evidence with `adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary "..." --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "..." --limitations "..." --json`, run `adaw evaluate`, answer status with `adaw status`, and generate the user report with `adaw report`.
 
 ## Rule
 Progress is determined by acceptance evidence, not by implementation steps.
 Do not answer complete while the acceptance basis is draft.
 Do not treat brainstorm output as an acceptance contract or completion evidence.
 Do not turn Capability Profile items into user acceptance criteria; they are agent execution guidance and compliance evidence.
+Do not force evidence into a fixed adapter taxonomy. Use the verification approach that fits the task, then record user-reviewable evidence structure.

@@ -24,6 +24,12 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-P-3 | protocol | 作为用户，我运行 adaw next 或 adaw status 后，看到的是当前验收缺口和完成判断，而不是任务步骤列表。 | 运行 adaw next/status 并查看返回的 current_gap、completion 和 intervention。 | 输出默认回答“当前差哪条 AC、是否完成、是否需要人类动作”，不把过程任务当作主线。 | passing |
 | AC-P-4 | protocol | 作为用户，我查看高风险 AC 的状态时，能看到弱证据不能让它变成 passing。 | 给 high risk AC 添加弱 passing 证据，再查看 status 或 report。 | 高风险 passing 不能只由 agent 自我总结证明；缺少强证据时必须保持 failing、unknown 或 blocked。 | passing |
 | AC-P-5 | protocol | 作为用户，我运行 adaw report 后，能看到目标、分层 AC 状态、证据摘要、当前缺口、是否需要我介入和结论。 | 运行 adaw report 或让 Codex 生成 ADAW 报告。 | 报告默认围绕验收状态和证据组织，不把过程任务当作主线。 | passing |
+| AC-P-6 | protocol | 作为用户，我查看 ADAW 报告时，能知道每条通过、阻塞或豁免的 AC 是基于什么证据判断的。 | 给 AC 添加不同来源的证据后运行 adaw report 或 adaw status。 | 报告或状态输出展示证据摘要、判断基础、证据强度和剩余限制；不会只显示 agent 自我结论。 | passing |
+| AC-P-7 | protocol | 作为用户，我不需要限制 agent 使用哪种取证工具，但我能复查 agent 引用的证据来源。 | 让 agent 用任意验证方式完成一条 AC，并查看该 AC 的证据来源。 | 证据来源可以是命令、产物、URL、截图、diff、人类确认或其他引用；每个来源都包含用户可理解的 label 或复查线索。 | passing |
+| AC-P-8 | protocol | 作为用户，我能区分证据是来自工具观察、人类确认、产物审查、协议校验，还是 agent 的判断。 | 给不同 basis 的证据运行 status/report。 | 输出明确展示证据 basis；agent 判断可以记录，但不会伪装成工具验证或人类确认。 | passing |
+| AC-P-9 | protocol | 作为用户，我能看到证据的复查方式和限制，而不是只看到通过结论。 | 添加带复查说明和限制说明的证据后运行 report。 | 报告展示 reviewability 和 limitations；限制不会被隐藏在实现日志里。 | passing |
+| AC-P-10 | protocol | 作为用户，我能看到一条 AC 可以由多个证据来源共同支撑，而不要求 agent 把它们拆成固定适配器。 | 为一条 AC 添加包含多个来源的证据后查看 evidence ledger 和 report。 | 同一条证据可以包含多个 sources；报告能合并展示这些来源，并保留 agent 的自由取证空间。 | passing |
+| AC-P-11 | protocol | 作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 ADAW 结构记录，而不要求我记住 CLI 参数。 | 查看 ADAW Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。 | Skill 明确要求 agent 自由选择验证方式，但记录证据时说明 basis、sources、reviewability、confidence 和 limitations。 | passing |
 | AC-O-1 | operator | 作为用户，我在 Codex 对话里说“用 ADAW 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。 | 在 Codex 对话中查看 agent 返回的验收草案。 | 草案只描述用户通过工具执行操作后能完成的判断或动作；用户能直接 approve 或 revise。 | passing |
 | AC-O-2 | operator | 作为用户，我在 Codex 对话里 approve 或 revise 验收标准后，能控制什么叫完成，而不是让 agent 自动决定完成定义。 | 查看 active acceptance contract 中是否反映用户确认后的验收标准。 | agent 在用户确认前不能进入 complete 判断；用户修改过的 AC 会成为后续状态判断依据。 | passing |
 | AC-O-3 | operator | 作为用户，我在新的 Codex 会话里说“继续 ADAW”后，agent 能恢复当前 active goal 并告诉我当前关键验收缺口。 | 在新会话触发 ADAW 恢复流程，观察 agent 返回内容。 | 不依赖旧聊天上下文；能返回 goal id、当前状态、当前关键缺口和下一条需要证据的 AC。 | passing |

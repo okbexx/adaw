@@ -3,10 +3,11 @@
   "protocol_version": "adaw/v1",
   "adaw_version": "0.1.0",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-11T01:43:46.756Z",
+  "updated_at": "2026-06-11T02:14:18.331Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
+    "reviewable-evidence",
     "brainstorm",
     "capability-profile",
     "archive",
@@ -77,7 +78,7 @@
     "installed": true,
     "path": ".agents/skills/adaw/SKILL.md",
     "in_sync": true,
-    "expected_sha256": "d176c5235f2df3f5dced9453c4086feaac68b9bf004860607676aefd3ed40e66",
-    "actual_sha256": "d176c5235f2df3f5dced9453c4086feaac68b9bf004860607676aefd3ed40e66"
+    "expected_sha256": "67139d47bea64cc3d4e0a06b3eea8ae416a15d5db767d69033f55637935d7b80",
+    "actual_sha256": "67139d47bea64cc3d4e0a06b3eea8ae416a15d5db767d69033f55637935d7b80"
   }
 }
