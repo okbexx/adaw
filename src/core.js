@@ -34,6 +34,132 @@ const FORBIDDEN_USER_STORY_TERMS = [
   "计划",
   "实现步骤"
 ];
+const USER_OPERATION_TERMS = [
+  "运行",
+  "打开",
+  "查看",
+  "选择",
+  "阅读",
+  "询问",
+  "确认",
+  "比较",
+  "检查",
+  "审查",
+  "预览",
+  "安装",
+  "卸载",
+  "归档",
+  "添加",
+  "修改",
+  "提出",
+  "触发",
+  "执行",
+  "创建",
+  "run",
+  "open",
+  "view",
+  "select",
+  "read",
+  "ask",
+  "confirm",
+  "compare",
+  "review",
+  "preview",
+  "install",
+  "uninstall",
+  "archive",
+  "add",
+  "update",
+  "check"
+];
+const USER_OUTCOME_TERMS = [
+  "能",
+  "看到",
+  "显示",
+  "输出",
+  "返回",
+  "包含",
+  "结果",
+  "状态",
+  "缺口",
+  "反馈",
+  "报告",
+  "摘要",
+  "入口",
+  "建议",
+  "知道",
+  "判断",
+  "确认",
+  "区分",
+  "理解",
+  "提示",
+  "展示",
+  "保留",
+  "标明",
+  "说明",
+  "指出",
+  "回答",
+  "可复查",
+  "可执行",
+  "不需要",
+  "不会",
+  "不能",
+  "不创建",
+  "can",
+  "see",
+  "show",
+  "output",
+  "include",
+  "result",
+  "status",
+  "gap",
+  "report",
+  "summary",
+  "entry",
+  "action",
+  "return",
+  "understand",
+  "decide",
+  "confirm",
+  "distinguish",
+  "explain",
+  "answer",
+  "review"
+];
+const IMPLEMENTATION_ONLY_PHRASES = [
+  "文件存在",
+  "字段存在",
+  "命令执行成功",
+  "测试通过",
+  "用例通过",
+  "模块实现",
+  "接口实现",
+  "函数实现",
+  "组件实现",
+  "schema 校验通过",
+  "json 字段",
+  "manifest 字段",
+  "file exists",
+  "field exists",
+  "tests pass",
+  "test passes",
+  "module implemented",
+  "function implemented",
+  "schema passes"
+];
+const NEGATION_TERMS = ["不能", "不应", "不是", "不得", "避免", "cannot", "must not", "should not", "reject"];
+
+function includesAny(text, terms) {
+  const lowered = String(text || "").toLowerCase();
+  return terms.some((term) => lowered.includes(term.toLowerCase()));
+}
+
+function isImplementationOnly(text) {
+  const value = String(text || "");
+  if (includesAny(value, NEGATION_TERMS)) return false;
+  if (includesAny(value, USER_OPERATION_TERMS) && includesAny(value, USER_OUTCOME_TERMS)) return false;
+  return includesAny(value, IMPLEMENTATION_ONLY_PHRASES);
+}
 
 export function inferCriterionLayer(id) {
   if (String(id).startsWith("AC-P-")) return "protocol";
@@ -436,6 +562,31 @@ export function validateContract(contract, ledger = null) {
         message: "Implementation detail appears in user acceptance criterion",
         terms
       });
+    }
+
+    const measurement = String(criterion.measurement || "");
+    if (measurement && !includesAny(measurement, USER_OPERATION_TERMS)) {
+      issues.push({
+        path: `${prefix}.measurement`,
+        message: "Measurement must describe a user operation or review action"
+      });
+    }
+
+    const threshold = String(criterion.threshold || "");
+    if (threshold && !includesAny(threshold, USER_OUTCOME_TERMS)) {
+      issues.push({
+        path: `${prefix}.threshold`,
+        message: "Passing threshold must describe a user-observable outcome or judgment"
+      });
+    }
+
+    for (const [field, value] of Object.entries({ measurement, threshold })) {
+      if (isImplementationOnly(value)) {
+        issues.push({
+          path: `${prefix}.${field}`,
+          message: "Implementation-only completion condition is not a user acceptance criterion"
+        });
+      }
     }
 
     if (ledger && !ledger.criteria?.[criterion.id]) {

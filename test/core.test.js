@@ -357,9 +357,9 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 31);
+  assert.equal(brief.criteria.length, 32);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 11);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 12);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 12);
 
@@ -748,4 +748,51 @@ test("check rejects implementation details inside user acceptance criteria", () 
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, false);
   assert.equal(payload.issues[0].message, "Implementation detail appears in user acceptance criterion");
+});
+
+test("check requires measurable user operations and observable outcomes", () => {
+  const badRoot = tempRoot();
+  const badBrief = path.join(badRoot, "bad-quality.json");
+  fs.writeFileSync(badBrief, JSON.stringify({
+    goal_id: "bad-quality",
+    goal: "Bad quality example",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "作为用户，我能知道功能已经完成。",
+        measurement: "测试通过",
+        threshold: "字段存在"
+      }
+    ]
+  }));
+
+  const badResult = spawnSync(process.execPath, [CLI, "init", badBrief, "--root", badRoot, "--json"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(badResult.status, 1);
+  const badPayload = JSON.parse(badResult.stdout);
+  assert.equal(badPayload.ok, false);
+  assert.equal(badPayload.issues.some((issue) => issue.message === "Measurement must describe a user operation or review action"), true);
+  assert.equal(badPayload.issues.some((issue) => issue.message === "Passing threshold must describe a user-observable outcome or judgment"), true);
+  assert.equal(badPayload.issues.some((issue) => issue.message === "Implementation-only completion condition is not a user acceptance criterion"), true);
+
+  const goodRoot = tempRoot();
+  const goodBrief = path.join(goodRoot, "good-quality.json");
+  fs.writeFileSync(goodBrief, JSON.stringify({
+    goal_id: "good-quality",
+    goal: "Good quality example",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "作为用户，我运行 adaw report 后，能判断当前任务是否完成。",
+        measurement: "运行 adaw report 并查看 completion、current_gap 和 evidence summary。",
+        threshold: "报告显示完成状态、当前缺口和可复查证据；用户不需要阅读实现说明。"
+      }
+    ]
+  }));
+
+  const goodPayload = run(["init", goodBrief, "--root", goodRoot, "--json"]);
+  assert.equal(goodPayload.ok, true);
+  assert.equal(goodPayload.data.current_gap.id, "ACCEPTANCE-BASIS");
 });
