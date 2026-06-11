@@ -357,11 +357,11 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 30);
+  assert.equal(brief.criteria.length, 31);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 11);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 11);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 12);
 
   const expectedTools = [
     "Codex 对话",
@@ -375,6 +375,7 @@ test("protocol v1 example contains concrete user tool operations", () => {
     "adaw uninstall",
     "adaw doctor",
     "adaw list",
+    "Skill Pack",
     "证据来源",
     "复查"
   ];
@@ -387,27 +388,33 @@ test("protocol v1 example contains concrete user tool operations", () => {
 
 test("skill export gives agents the full ADAW command loop", () => {
   const payload = run(["skill", "export", "--json"]);
-  assert.match(payload.data.skill_md, /adaw brainstorm/);
-  assert.match(payload.data.skill_md, /candidate acceptance directions/);
-  assert.match(payload.data.skill_md, /adaw draft/);
-  assert.match(payload.data.skill_md, /adaw approve/);
-  assert.match(payload.data.skill_md, /adaw criterion update/);
+  assert.equal(payload.data.skill_name, "adaw");
+  assert.match(payload.data.skill_md, /adaw-acceptance/);
+  assert.match(payload.data.skill_md, /adaw-evidence/);
+  assert.match(payload.data.skill_md, /adaw-capability-profile/);
   assert.match(payload.data.skill_md, /adaw resume/);
-  assert.match(payload.data.skill_md, /adaw next/);
-  assert.match(payload.data.skill_md, /adaw evidence add/);
-  assert.match(payload.data.skill_md, /basis, sources, reviewability, confidence, and limitations/);
-  assert.match(payload.data.skill_md, /Do not force evidence into a fixed adapter taxonomy/);
-  assert.match(payload.data.skill_md, /adaw evaluate/);
   assert.match(payload.data.skill_md, /adaw status/);
-  assert.match(payload.data.skill_md, /adaw report/);
-  assert.match(payload.data.skill_md, /Capability Profile/);
-  assert.match(payload.data.skill_md, /adaw profile add/);
-  assert.match(payload.data.skill_md, /adaw profile evidence/);
-  assert.match(payload.data.skill_md, /adaw install --root <repo> --dry-run --json/);
-  assert.match(payload.data.skill_md, /adaw uninstall --root <repo> --dry-run --json/);
-  assert.match(payload.data.skill_md, /adaw doctor --root <repo> --json/);
-  assert.match(payload.data.skill_md, /Do not treat brainstorm output as an acceptance contract/);
+  assert.match(payload.data.skill_md, /Do not make the user remember CLI syntax/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
+
+  const pack = run(["skill", "export", "--pack", "--json"]);
+  const names = pack.data.skills.map((skill) => skill.name);
+  assert.deepEqual(names, [
+    "adaw",
+    "adaw-acceptance",
+    "adaw-evidence",
+    "adaw-capability-profile",
+    "adaw-project-health",
+    "adaw-reporting"
+  ]);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /adaw brainstorm/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /adaw draft/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-acceptance").skill_md, /Do not treat brainstorm output as an acceptance contract/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-evidence").skill_md, /Do not force evidence into a fixed adapter taxonomy/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-evidence").skill_md, /basis, sources, reviewability, confidence, and limitations/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-capability-profile").skill_md, /adaw profile add/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-reporting").skill_md, /adaw report --root <repo> --json/);
+  assert.match(pack.data.skills.find((skill) => skill.name === "adaw-project-health").skill_md, /adaw doctor --root <repo> --json/);
 });
 
 test("install creates project assets and skips existing user content by default", () => {
@@ -436,6 +443,8 @@ test("install creates project assets and skips existing user content by default"
   assert.equal(payload.data.actions.find((action) => action.path === ".adaw/manifest.json").will_write, true);
   assert.equal(fs.readFileSync(protocolPath, "utf8"), "custom protocol\n");
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-evidence", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-reporting", "SKILL.md")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "active")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "brainstorms")), true);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
@@ -446,8 +455,13 @@ test("install creates project assets and skips existing user content by default"
   assert.equal(manifest.adaw_version, "0.1.0");
   assert.equal(manifest.skill.installed, true);
   assert.equal(manifest.skill.in_sync, true);
+  assert.equal(manifest.skill_pack.installed, true);
+  assert.equal(manifest.skill_pack.in_sync, true);
+  assert.equal(manifest.skill_pack.skills.length, 6);
   assert.equal(manifest.managed_files.some((entry) => entry.path === ".adaw/protocol.md" && entry.exists), true);
+  assert.equal(manifest.managed_files.some((entry) => entry.path === ".agents/skills/adaw-evidence/SKILL.md" && entry.exists), true);
   assert.equal(manifest.capabilities.includes("doctor"), true);
+  assert.equal(manifest.capabilities.includes("skill-pack"), true);
 
   const forced = run(["install", "--root", root, "--skill", "--force", "--dry-run", "--json"]);
   const protocolAction = forced.data.install_plan.actions.find((action) => action.path === ".adaw/protocol.md");
@@ -478,6 +492,12 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(ready.data.status, "ready");
   assert.equal(ready.data.checks.every((check) => check.ok), true);
   assert.equal(ready.data.skill.in_sync, true);
+  assert.equal(ready.data.skill_pack.in_sync, true);
+
+  fs.unlinkSync(path.join(readyRoot, ".agents", "skills", "adaw-evidence", "SKILL.md"));
+  const missingPackSkill = run(["doctor", "--root", readyRoot, "--json"]);
+  assert.equal(missingPackSkill.data.status, "needs-action");
+  assert.equal(missingPackSkill.data.checks.find((check) => check.name === "skill_pack_sync").ok, false);
 
   const missingManifestRoot = tempRoot();
   run(["install", "--root", missingManifestRoot, "--json"]);
@@ -518,6 +538,7 @@ test("uninstall previews removals and preserves ADAW state by default", () => {
   const dryRun = run(["uninstall", "--root", root, "--dry-run", "--json"]);
   assert.equal(dryRun.data.uninstall_plan.schema_version, "adaw/uninstall-plan-v1");
   assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
+  assert.equal(dryRun.data.uninstall_plan.actions.filter((action) => action.kind === "skill").length, 6);
   assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/active").action, "preserve");
   assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/manifest.json").action, "delete");
   assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
@@ -532,6 +553,8 @@ test("uninstall previews removals and preserves ADAW state by default", () => {
   const removed = run(["uninstall", "--root", root, "--confirm", "--json"]);
   assert.equal(removed.data.confirmed, true);
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-evidence", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw-reporting", "SKILL.md")), false);
   assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
   assert.equal(fs.existsSync(init.data.acceptance_path), true);
   assert.equal(fs.existsSync(init.data.evidence_path), true);

@@ -27,6 +27,7 @@ plan internally, but progress is determined by acceptance evidence.
 node ./bin/adaw.js install --root . --dry-run --json
 node ./bin/adaw.js install --root . --skill --json
 node ./bin/adaw.js doctor --root . --json
+node ./bin/adaw.js skill export --pack --json
 node ./bin/adaw.js brainstorm --idea "Explore a fuzzy goal before acceptance" --root . --json
 node ./bin/adaw.js draft --from-brainstorm explore-a-fuzzy-goal-before-acceptance --candidate A --root . --json
 node ./bin/adaw.js draft --goal "Ship a user-visible task" --root . --json
@@ -46,7 +47,7 @@ node ./bin/adaw.js report --root . --json
 ```
 
 `adaw install` writes `.adaw/manifest.json` with the ADAW version, managed files, active goals,
-optional project Skill state, and supported protocol capabilities. `adaw doctor` reports whether a
+optional project Skill Pack state, and supported protocol capabilities. `adaw doctor` reports whether a
 project is `ready`, `needs-action`, or `broken`, with recovery actions for missing structure, stale
 manifest data, broken active goals, and stale Skills.
 
@@ -65,6 +66,10 @@ Evidence is intentionally open-ended. Agents can use tests, diffs, screenshots, 
 URLs, human confirmation, AW doctor, or any other useful signal. ADAW only requires the submitted
 evidence to be reviewable by the user: include a basis, one or more sources, reviewability,
 confidence, and limitations when the evidence affects completion.
+
+`adaw install --skill` installs the ADAW Skill Pack under `.agents/skills/`: the root `adaw` router
+plus focused Skills for acceptance, evidence, capability profile, project health, and reporting.
+Users keep using natural language; the Skills route agent behavior to the right CLI loop.
 
 ## Development
 

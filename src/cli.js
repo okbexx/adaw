@@ -35,6 +35,7 @@ const ADAW_CAPABILITIES = [
   "acceptance-contract",
   "evidence-ledger",
   "reviewable-evidence",
+  "skill-pack",
   "brainstorm",
   "capability-profile",
   "archive",
@@ -167,9 +168,7 @@ function summarizeUninstallPlan(actions) {
 }
 
 function buildUninstallActions(root, { includeState = false } = {}) {
-  const actions = [
-    plannedDelete(root, ".agents/skills/adaw/SKILL.md", "skill")
-  ];
+  const actions = SKILL_PACK.map((skill) => plannedDelete(root, `.agents/skills/${skill.name}/SKILL.md`, "skill"));
 
   if (includeState) {
     actions.push(plannedDelete(root, ".adaw", "state-directory", {
@@ -322,51 +321,164 @@ function parseEvidenceSource(value) {
   return { type: "reference", label: raw };
 }
 
-function exportedSkillMarkdown() {
+const SKILL_PACK = [
+  {
+    name: "adaw",
+    description: "Route ADAW work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
+    body: [
+      "## When to use",
+      "Use when the user mentions ADAW, asks to use ADAW for a task, continue ADAW, check completion, inspect project health, define acceptance criteria, record evidence, manage capability preferences, or produce an ADAW report.",
+      "",
+      "## Route",
+      "- Goal, brainstorm, approval, or AC revision -> use `adaw-acceptance`.",
+      "- Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `adaw-evidence`.",
+      "- Required Skills, preferred stacks, avoided tools, or install policy -> use `adaw-capability-profile`.",
+      "- Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `adaw-project-health`.",
+      "- Status, report, current gap, completion answer, user intervention, or change summary -> use `adaw-reporting`.",
+      "",
+      "## Baseline",
+      "At the start of each ADAW turn, run `adaw resume --root <repo> --json` or `adaw status --root <repo> --json` unless the task is only install/doctor/uninstall.",
+      "If `adaw` is not on PATH, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.",
+      "",
+      "## Rule",
+      "Progress is determined by acceptance evidence, not implementation steps.",
+      "Do not make the user remember CLI syntax or internal Skill names.",
+      "Do not answer complete while the acceptance basis is draft or required AC/profile evidence is missing."
+    ]
+  },
+  {
+    name: "adaw-acceptance",
+    description: "Create, review, approve, and revise ADAW human-centered acceptance criteria from natural language goals.",
+    body: [
+      "## When to use",
+      "Use when the user gives a goal, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.",
+      "",
+      "## Commands",
+      "- Fuzzy idea or discussion: `adaw brainstorm --idea \"<idea>\" --root <repo> --json`.",
+      "- Start from a goal: `adaw draft --goal \"<goal>\" --root <repo> --json`.",
+      "- Start from a chosen brainstorm candidate: `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
+      "- User approves criteria: `adaw approve --root <repo> --summary \"<approval>\" --json`.",
+      "- User revises a criterion: `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
+      "",
+      "## Rules",
+      "ACs must describe user actions or judgments, not implementation files, commands, modules, fields, tests, Skills, or technology choices.",
+      "Capability preferences belong in the Capability Profile, not user ACs.",
+      "Do not treat brainstorm output as an acceptance contract or completion evidence."
+    ]
+  },
+  {
+    name: "adaw-evidence",
+    description: "Record and judge ADAW evidence while preserving agent freedom to choose verification methods.",
+    body: [
+      "## When to use",
+      "Use when the user asks to record validation as evidence, asks why an AC is passing, asks whether evidence is enough, confirms or waives an AC, or wants a verification attached to ADAW.",
+      "",
+      "## Evidence Protocol",
+      "The agent may choose any useful verification method: tests, diff, screenshots, browser checks, logs, artifacts, URLs, AW doctor, human confirmation, or another reviewable signal.",
+      "When submitting evidence, explain basis, sources, reviewability, confidence, and limitations.",
+      "",
+      "## Command",
+      "`adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability \"...\" --limitations \"...\" --json`",
+      "",
+      "Use multiple `--source` values when one AC is supported by several signals.",
+      "For high-risk passing evidence, use a strong evidence kind or explicit strong confidence only when justified.",
+      "Do not force evidence into a fixed adapter taxonomy."
+    ]
+  },
+  {
+    name: "adaw-capability-profile",
+    description: "Record and report ADAW execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
+    body: [
+      "## When to use",
+      "Use when the user says a task must use a Skill, prefers a technology stack, wants to avoid a tool/library, or requires asking before installs.",
+      "",
+      "## Commands",
+      "- Add preference: `adaw profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
+      "- Add compliance evidence: `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json`.",
+      "- Show profile: `adaw profile show --root <repo> --json`.",
+      "",
+      "## Rules",
+      "Do not turn Skills or stack preferences into user ACs.",
+      "`must` and violated `avoid` items block completion unless satisfied or waived.",
+      "`prefer` should be reported but should not block completion by itself."
+    ]
+  },
+  {
+    name: "adaw-project-health",
+    description: "Install, uninstall, diagnose, and recover project-local ADAW assets, manifest, and Skill Pack sync.",
+    body: [
+      "## When to use",
+      "Use when the user asks to install ADAW, uninstall ADAW, check whether ADAW is ready, diagnose broken ADAW state, inspect manifest, or sync project Skills.",
+      "",
+      "## Commands",
+      "- Preview install: `adaw install --root <repo> --dry-run --json`.",
+      "- Install Skill Pack: `adaw install --root <repo> --skill --json`.",
+      "- Preview destructive install: `adaw install --root <repo> --skill --force --dry-run --json`.",
+      "- Confirm destructive install: `adaw install --root <repo> --skill --force --confirm --json`.",
+      "- Doctor: `adaw doctor --root <repo> --json`.",
+      "- Preview uninstall: `adaw uninstall --root <repo> --dry-run --json`.",
+      "- Remove entry assets while preserving state: `adaw uninstall --root <repo> --confirm --json`.",
+      "- Remove all ADAW state only after explicit user acceptance: `adaw uninstall --root <repo> --include-state --confirm --json`.",
+      "",
+      "## Rules",
+      "Always show dry-run plans before destructive writes.",
+      "Default uninstall preserves active goals, evidence, reports, archives, and brainstorms."
+    ]
+  },
+  {
+    name: "adaw-reporting",
+    description: "Summarize ADAW status, reports, current gaps, user intervention, and acceptance evidence for humans.",
+    body: [
+      "## When to use",
+      "Use when the user asks whether work is complete, what remains, what they need to do, what changed, or asks for an ADAW report.",
+      "",
+      "## Commands",
+      "- Resume: `adaw resume --root <repo> --json`.",
+      "- Next gap: `adaw next --root <repo> --json`.",
+      "- Status: `adaw status --root <repo> --json`.",
+      "- Report: `adaw report --root <repo> --json`.",
+      "- Changes: `adaw changes --root <repo> --json`.",
+      "- List goals: `adaw list --root <repo> --json`.",
+      "",
+      "## Rules",
+      "Lead with completion state, current gap, evidence basis, and required human intervention.",
+      "Summarize implementation details only as supporting evidence.",
+      "Never report complete unless all required ACs and blocking Capability Profile items are passing or waived."
+    ]
+  }
+];
+
+function skillMarkdown(skill) {
   return [
     "---",
-    "name: adaw",
-    "description: Drive agent work through user-centered acceptance criteria and evidence, not exposed process plans.",
+    `name: ${skill.name}`,
+    `description: ${skill.description}`,
     "---",
     "",
-    "## When to use",
-    "Use when a task needs the agent to keep working until human-centered acceptance criteria have passing or waived evidence.",
-    "",
-    "## Start",
-    "If the user says they want to discuss, brainstorm, explore, or are not ready to define acceptance criteria, run `adaw brainstorm --idea \"<idea>\" --root <repo> --json` and show only the candidate acceptance directions. Ask the user to choose or revise a direction.",
-    "",
-    "When the user says `用 ADAW 跑这个任务：目标是 X`, run `adaw draft --goal \"X\" --root <repo> --json` and show the draft acceptance criteria for approval or revision before implementation.",
-    "If `adaw` is not on PATH in this workspace, use `node /Users/jarl/code/jarlone/adaw/bin/adaw.js` with the same arguments.",
-    "",
-    "If the user chooses a brainstorm candidate, run `adaw draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
-    "",
-    "After the user approves the criteria, run `adaw approve --root <repo> --summary \"user approved acceptance criteria\" --json`. If the user revises a criterion, run `adaw criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
-    "",
-    "If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, translate the natural-language preference into a Capability Profile with `adaw profile add --root <repo> --type <skill|stack|constraint> --name \"<name>\" --strength <must|prefer|avoid> --purpose \"<why>\" --install-policy <existing_only|ask_before_install|allowed> --json`.",
-    "Before answering complete, add profile evidence with `adaw profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived> --summary \"<evidence>\" --json` for must/avoid items. Must items without satisfied or waived evidence block completion.",
-    "",
-    "## Project setup and health",
-    "If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize `install_plan`: created, skipped, overwritten, or updated assets; write intent; destructive actions; and reasons. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.",
-    "If a destructive install action is needed, preview it with `adaw install --root <repo> --force --dry-run --json` and wait for explicit user acceptance before running `adaw install --root <repo> --force --confirm --json`.",
-    "If the user asks to uninstall ADAW from a project, run `adaw uninstall --root <repo> --dry-run --json` first and summarize `uninstall_plan`. By default, uninstall removes entry assets but preserves active goals, evidence, reports, archives, and brainstorms. Only use `--include-state --confirm` after explicit user acceptance.",
-    "",
-    "If the user asks whether ADAW is set up, healthy, recoverable, or ready in a project, run `adaw doctor --root <repo> --json` and summarize the `ready`, `needs-action`, or `broken` status plus recovery actions. Do not make the user remember the doctor command.",
-    "",
-    "## Resume",
-    "At the start of each turn, run `adaw resume --root <repo> --json` or `adaw next --root <repo> --json` to recover the active goal and current acceptance gap.",
-    "",
-    "## Evidence loop",
-    "Work only to produce evidence for the current acceptance gap. The agent may choose any useful verification method, but evidence submitted to ADAW should explain the basis, sources, reviewability, confidence, and limitations instead of only saying the agent believes it is done.",
-    "Add evidence with `adaw evidence add --root <repo> --criterion <id> --kind <kind> --summary \"...\" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability \"...\" --limitations \"...\" --json`, run `adaw evaluate`, answer status with `adaw status`, and generate the user report with `adaw report`.",
-    "",
-    "## Rule",
-    "Progress is determined by acceptance evidence, not by implementation steps.",
-    "Do not answer complete while the acceptance basis is draft.",
-    "Do not treat brainstorm output as an acceptance contract or completion evidence.",
-    "Do not turn Capability Profile items into user acceptance criteria; they are agent execution guidance and compliance evidence.",
-    "Do not force evidence into a fixed adapter taxonomy. Use the verification approach that fits the task, then record user-reviewable evidence structure.",
+    ...skill.body,
     ""
   ].join("\n");
+}
+
+function exportedSkillMarkdown() {
+  return skillMarkdown(SKILL_PACK[0]);
+}
+
+function skillPackMarkdowns() {
+  return Object.fromEntries(SKILL_PACK.map((skill) => [skill.name, skillMarkdown(skill)]));
+}
+
+function skillPackPath(root, skillName) {
+  return path.join(root, ".agents", "skills", skillName, "SKILL.md");
+}
+
+function skillPackInstallActions(root, { dryRun = false, force = false } = {}) {
+  const markdowns = skillPackMarkdowns();
+  return SKILL_PACK.map((skill) => writeIfSafe(
+    skillPackPath(root, skill.name),
+    markdowns[skill.name],
+    { dryRun, force, kind: "skill" }
+  ));
 }
 
 function writeIfSafe(filePath, content, { dryRun = false, force = false, kind = "file", managed = true } = {}) {
@@ -410,7 +522,7 @@ function fileHash(filePath) {
 }
 
 function projectSkillState(root) {
-  const skillPath = path.join(root, ".agents", "skills", "adaw", "SKILL.md");
+  const skillPath = skillPackPath(root, "adaw");
   const exists = fs.existsSync(skillPath);
   const expectedHash = createHash("sha256").update(exportedSkillMarkdown()).digest("hex");
   const actualHash = fileHash(skillPath);
@@ -420,6 +532,31 @@ function projectSkillState(root) {
     in_sync: exists ? actualHash === expectedHash : false,
     expected_sha256: expectedHash,
     actual_sha256: actualHash
+  };
+}
+
+function projectSkillPackState(root) {
+  const markdowns = skillPackMarkdowns();
+  const skills = SKILL_PACK.map((skill) => {
+    const skillPath = skillPackPath(root, skill.name);
+    const exists = fs.existsSync(skillPath);
+    const expectedHash = createHash("sha256").update(markdowns[skill.name]).digest("hex");
+    const actualHash = fileHash(skillPath);
+    return {
+      name: skill.name,
+      path: relativeTo(root, skillPath),
+      installed: exists,
+      in_sync: exists ? actualHash === expectedHash : false,
+      expected_sha256: expectedHash,
+      actual_sha256: actualHash
+    };
+  });
+  return {
+    schema_version: "adaw/skill-pack-v1",
+    installed: skills.every((skill) => skill.installed),
+    in_sync: skills.every((skill) => skill.installed && skill.in_sync),
+    count: skills.length,
+    skills
   };
 }
 
@@ -455,8 +592,8 @@ function managedFiles(root, skill = projectSkillState(root), { assumeManifestExi
     { path: ".adaw/protocol.md", kind: "protocol", required: true },
     ...REQUIRED_ADAW_DIRS.map((dir) => ({ path: `.adaw/${dir}`, kind: "directory", required: true }))
   ];
-  if (skill.installed) {
-    entries.push({ path: skill.path, kind: "skill", required: false });
+  for (const packSkill of projectSkillPackState(root).skills.filter((entry) => entry.installed)) {
+    entries.push({ path: packSkill.path, kind: "skill", required: false });
   }
   return entries.map((entry) => ({
     ...entry,
@@ -477,6 +614,7 @@ function safeReadManifest(root) {
 function buildManifest(root, options = {}) {
   const existing = safeReadManifest(root);
   const skill = projectSkillState(root);
+  const skillPack = projectSkillPackState(root);
   const now = new Date().toISOString();
   return {
     schema_version: MANIFEST_SCHEMA_VERSION,
@@ -487,7 +625,8 @@ function buildManifest(root, options = {}) {
     capabilities: ADAW_CAPABILITIES,
     managed_files: managedFiles(root, skill, options),
     active_goals: activeGoalSummaries(root),
-    skill
+    skill,
+    skill_pack: skillPack
   };
 }
 
@@ -677,6 +816,7 @@ function doctor(root) {
   ));
 
   const skill = projectSkillState(root);
+  const skillPack = projectSkillPackState(root);
   const manifestSkillInstalled = manifest?.skill?.installed === true;
   const skillOk = !skill.installed && !manifestSkillInstalled ? true : skill.installed && skill.in_sync;
   if (manifestReadable) {
@@ -695,6 +835,28 @@ function doctor(root) {
       : "Project ADAW Skill is not installed; this is optional unless the manifest expects it.",
     "Run adaw install --root <project> --skill --force --json."
   ));
+  const manifestPackNames = new Set((manifest?.skill_pack?.skills || []).map((entry) => entry.name));
+  const packNames = new Set(skillPack.skills.map((entry) => entry.name));
+  const manifestPackMatches = !manifestReadable || (
+    manifest?.skill_pack?.schema_version === "adaw/skill-pack-v1"
+    && sameStringSet([...manifestPackNames], [...packNames])
+  );
+  checks.push(doctorCheck(
+    "skill_pack_manifest",
+    manifestPackMatches,
+    manifestPackMatches ? "Manifest Skill Pack state is readable." : "Manifest Skill Pack state is missing or stale.",
+    "Refresh the manifest with adaw install --root <project> --skill --json."
+  ));
+  const packExpected = manifest?.skill_pack?.installed === true || skillPack.skills.some((entry) => entry.installed);
+  const packOk = packExpected ? skillPack.installed && skillPack.in_sync : true;
+  checks.push(doctorCheck(
+    "skill_pack_sync",
+    packOk,
+    skillPack.installed
+      ? (skillPack.in_sync ? "ADAW Skill Pack is installed and in sync." : "ADAW Skill Pack is installed but stale.")
+      : "ADAW Skill Pack is not installed; this is optional unless the manifest expects it.",
+    "Run adaw install --root <project> --skill --force --json."
+  ));
 
   const status = checks.every((check) => check.ok)
     ? "ready"
@@ -707,7 +869,8 @@ function doctor(root) {
     active_goals: active.details,
     active_goal_issues: active.issues,
     manifest_path: manifestFile,
-    skill
+    skill,
+    skill_pack: skillPack
   };
 }
 
@@ -941,7 +1104,7 @@ export async function main(args) {
     ];
 
     if (requestedSkill) {
-      actions.push(writeIfSafe(path.join(root, ".agents", "skills", "adaw", "SKILL.md"), exportedSkillMarkdown(), { dryRun, force, kind: "skill" }));
+      actions.push(...skillPackInstallActions(root, { dryRun, force }));
     }
     const manifestAction = writeManifest(root, { dryRun });
     actions.push(manifestAction);
@@ -1422,7 +1585,24 @@ export async function main(args) {
   }
 
   if (command === "skill" && args[1] === "export") {
-    printJson(ok({ skill_md: exportedSkillMarkdown() }));
+    if (hasFlag(args, "--pack")) {
+      printJson(ok({
+        schema_version: "adaw/skill-pack-v1",
+        skills: SKILL_PACK.map((skill) => ({
+          name: skill.name,
+          skill_md: skillMarkdown(skill)
+        }))
+      }));
+      return;
+    }
+    const skillName = argValue(args, "--name", "adaw");
+    const skill = SKILL_PACK.find((entry) => entry.name === skillName);
+    if (!skill) {
+      printJson(fail("unknown_skill", `Unknown ADAW Skill: ${skillName}`, `Use one of: ${SKILL_PACK.map((entry) => entry.name).join(", ")}`));
+      process.exitCode = 1;
+      return;
+    }
+    printJson(ok({ skill_name: skill.name, skill_md: skillMarkdown(skill) }));
     return;
   }
 

@@ -82,6 +82,7 @@ a durable workflow asset.
 | AC-Z-9 | CLI | Preview install with `adaw install --dry-run` | The user can judge what ADAW would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
 | AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `adaw install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 | AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall ADAW entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.adaw` state is deleted only with `--include-state --confirm`. |
+| AC-Z-12 | CLI / Codex Skills | Install ADAW Skill Pack | The agent gets focused ADAW Skills for acceptance, evidence, capability profile, project health, and reporting while the user keeps using natural language. | `adaw skill export --pack` exposes the pack; `adaw install --skill` writes it; manifest records `skill_pack`; doctor detects missing or stale pack Skills. |
 
 ## Required Artifact Pair
 
@@ -112,6 +113,7 @@ Each active goal has:
 - managed `.adaw` files and directories
 - active goals recoverable from `.adaw/active`
 - optional repo-local ADAW Skill state
+- optional repo-local ADAW Skill Pack state
 - protocol capabilities exposed by this CLI
 
 `adaw install` creates or refreshes the manifest. State-changing ADAW commands refresh it when
@@ -136,6 +138,21 @@ Run `adaw install --dry-run --force` first to inspect destructive actions, then 
 repo-local ADAW Skill and manifest, while preserving acceptance contracts, evidence ledgers,
 reports, archives, and brainstorms. Real uninstall requires `--confirm`. Deleting the whole `.adaw`
 state directory requires both `--include-state` and `--confirm`.
+
+## Skill Pack
+
+ADAW exposes a Skill Pack for agent use. The user should not need to remember these Skill names;
+the root `adaw` Skill routes natural-language requests to focused Skills:
+
+- `adaw`: root router for ADAW turns
+- `adaw-acceptance`: brainstorm, draft, approve, and revise human-facing ACs
+- `adaw-evidence`: record reviewable evidence without forcing fixed adapters
+- `adaw-capability-profile`: record required Skills, preferred stacks, avoided tools, and install policy
+- `adaw-project-health`: install, uninstall, doctor, manifest, and Skill Pack sync
+- `adaw-reporting`: status, report, current gap, user intervention, and changes
+
+`adaw install --skill` installs the pack under `.agents/skills/`. The manifest records `skill_pack`
+state, and `adaw doctor` checks whether the pack is installed and in sync.
 
 ## Capability Profile
 
