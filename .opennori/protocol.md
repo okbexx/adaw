@@ -145,7 +145,7 @@ OpenNori exposes a Skill Pack for agent use. The user should not need to remembe
 the root `nori` Skill routes natural-language requests to focused Skills:
 
 - `nori`: root router for OpenNori turns
-- `nori-acceptance`: brainstorm, draft, approve, and revise human-facing ACs
+- `nori-acceptance`: discover AC gaps, brainstorm, draft, approve, and revise human-facing ACs
 - `nori-evidence`: record reviewable evidence without forcing fixed adapters
 - `nori-capability-profile`: record required Skills, preferred stacks, avoided tools, and install policy
 - `nori-project-health`: install, uninstall, doctor, manifest, and Skill Pack sync
@@ -239,23 +239,26 @@ all evidence through a narrow adapter taxonomy.
 
 On every turn:
 
-1. If the user wants to discuss, brainstorm, explore, or is not ready to define acceptance criteria, run `opennori brainstorm --idea "<idea>" --root <repo> --json`.
-2. Show only candidate acceptance directions and ask the user to choose or revise a direction. Brainstorm output is not a contract or completion evidence.
-3. If the user chooses a candidate, run `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
-4. If the user starts with "use OpenNori" / "用 OpenNori 跑这个任务", run `opennori draft --goal "<goal>" --root <repo> --json`.
-5. Show the draft acceptance criteria and ask the user to approve or revise them.
-6. After approval, run `opennori approve --root <repo> --summary "<approval>" --json`.
-7. If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, run `opennori profile add --root <repo> ... --json` and keep those items out of the user acceptance criteria.
-8. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-9. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
-10. Work only to produce evidence for that gap.
-11. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
-12. Run `opennori evaluate`.
-13. Report acceptance state, profile compliance, and evidence, not implementation steps.
+1. If the user gives a fuzzy goal or candidate AC, run `opennori discover --goal "<goal>" --root <repo> --json` before drafting.
+2. Ask only the discovery questions that affect completion judgment. Do not turn discovery gaps into implementation tasks or completion evidence.
+3. If the user wants to discuss, brainstorm, explore, or is not ready to define acceptance criteria, run `opennori brainstorm --idea "<idea>" --root <repo> --json`.
+4. Show only candidate acceptance directions and ask the user to choose or revise a direction. Brainstorm output is not a contract or completion evidence.
+5. If the user chooses a candidate, run `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
+6. If the user starts with "use OpenNori" / "用 OpenNori 跑这个任务" and discovery gaps are answered or explicitly accepted as assumptions, run `opennori draft --goal "<goal>" --root <repo> --json`.
+7. Show the draft acceptance criteria and ask the user to approve or revise them.
+8. After approval, run `opennori approve --root <repo> --summary "<approval>" --json`.
+9. If the user states required Skills, preferred stacks, avoided tools, install policy, or execution constraints, run `opennori profile add --root <repo> ... --json` and keep those items out of the user acceptance criteria.
+10. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
+11. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
+12. Work only to produce evidence for that gap.
+13. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
+14. Run `opennori evaluate`.
+15. Report acceptance state, profile compliance, and evidence, not implementation steps.
 
 Useful commands:
 
 - `opennori brainstorm --idea "<idea>" --root <repo>`: create selectable acceptance directions before a contract exists.
+- `opennori discover --goal "<goal>" --root <repo>`: find underspecified acceptance gaps before drafting a contract.
 - `opennori draft --goal "<goal>" --root <repo>`: create a draft Nori Contract that needs user approval.
 - `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
 - `opennori approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.

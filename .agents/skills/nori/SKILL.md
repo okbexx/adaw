@@ -7,7 +7,7 @@ description: Route OpenNori work through user-centered acceptance criteria, evid
 Use when the user mentions OpenNori, asks to use OpenNori for a task, continue OpenNori, check completion, inspect project health, define acceptance criteria, record evidence, manage capability preferences, or produce an OpenNori report.
 
 ## Route
-- Goal, brainstorm, approval, or AC revision -> use `nori-acceptance`.
+- Goal, acceptance discovery, brainstorm, approval, or AC revision -> use `nori-acceptance`.
 - Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `nori-evidence`.
 - Required Skills, preferred stacks, avoided tools, or install policy -> use `nori-capability-profile`.
 - Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `nori-project-health`.

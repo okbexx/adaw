@@ -243,6 +243,37 @@ test("brainstorm creates selectable acceptance directions, not a process plan", 
   assert.equal(draft.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
 });
 
+test("discover finds underspecified acceptance gaps before draft", () => {
+  const root = tempRoot();
+  const discovery = run([
+    "discover",
+    "--goal", "做一个设置页，用户可以修改个人资料，保存后刷新仍然生效，失败时有提示。",
+    "--root", root,
+    "--json"
+  ]);
+
+  assert.equal(discovery.data.status, "needs-user-answers");
+  assert.equal(discovery.data.is_acceptance_contract, false);
+  assert.equal(fs.existsSync(discovery.data.discovery_path), true);
+  assert.equal(fs.existsSync(discovery.data.markdown_path), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "active")), false);
+
+  const gapIds = discovery.data.gaps.map((gap) => gap.id);
+  assert.equal(gapIds.includes("missing-field-scope"), true);
+  assert.equal(gapIds.includes("missing-validation-rule"), true);
+  assert.equal(gapIds.includes("missing-success-signal"), true);
+  assert.equal(gapIds.includes("missing-persistence-scope"), false);
+  assert.equal(gapIds.includes("missing-failure-case"), true);
+  assert.equal(gapIds.includes("missing-out-of-scope-boundary"), true);
+  assert.equal(discovery.data.gaps.some((gap) => /哪些具体字段/.test(gap.question)), true);
+  assert.equal(discovery.data.gaps.some((gap) => /有效规则/.test(gap.question)), true);
+
+  const text = fs.readFileSync(discovery.data.markdown_path, "utf8");
+  assert.match(text, /Acceptance Discovery/);
+  assert.match(text, /not a Nori Contract/);
+  assert.doesNotMatch(text, /Implementation plan/);
+});
+
 test("Nori Profile records required skills and blocks completion until satisfied", () => {
   const root = tempRoot();
   const init = run(["draft", "--goal", "Build a frontend page", "--root", root, "--json"]);

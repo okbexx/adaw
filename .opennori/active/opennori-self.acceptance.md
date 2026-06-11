@@ -7,7 +7,7 @@
 ## Acceptance Basis
 
 Status: approved
-Summary: User clarified that the npm quickstart should be interactive for humans while preserving machine-readable output for agents.
+Summary: User clarified that OpenNori must discover underspecified acceptance criteria, not only validate AC wording.
 
 ## Nori Profile
 
@@ -28,7 +28,7 @@ Summary: User clarified that the npm quickstart should be interactive for humans
 | AC-P-9 | protocol | 作为用户，我能看到证据的复查方式和限制，而不是只看到通过结论。 | 添加带复查说明和限制说明的证据后运行 report。 | 报告展示 reviewability 和 limitations；限制不会被隐藏在实现日志里。 | passing |
 | AC-P-10 | protocol | 作为用户，我能看到一条 AC 可以由多个证据来源共同支撑，而不要求 agent 把它们拆成固定适配器。 | 为一条 AC 添加包含多个来源的证据后查看 evidence record 和 report。 | 同一条证据可以包含多个 sources；报告能合并展示这些来源，并保留 agent 的自由取证空间。 | passing |
 | AC-P-11 | protocol | 作为用户，我在 Codex 对话中说“把这次验证作为证据”后，agent 能按 OpenNori 结构记录，而不要求我记住 CLI 参数。 | 查看 OpenNori Skill 导出的证据记录说明，并检查 agent 使用自然语言到 CLI 的映射。 | Skill 明确要求 agent 自由选择验证方式，但记录证据时说明 basis、sources、reviewability、confidence 和 limitations。 | passing |
-| AC-P-12 | protocol | 作为用户，我运行 opennori check 后，能发现 AC 是否缺少真实用户操作或可观察结果，而不是只检查是否以“作为用户”开头。 | 对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 opennori check，再对包含真实用户操作和报告结果的草案运行 opennori check。 | 内部完成条件会被拒绝；包含用户运行、打开、查看、确认等操作，并说明用户能看到或判断什么结果的 AC 可以通过。 | passing |
+| AC-P-12 | protocol | 作为用户，我运行 opennori discover 或 opennori check 后，能发现 AC 是否缺少真实用户操作、可观察结果或关键验收信息，而不是只检查是否以“作为用户”开头。 | 对包含“测试通过”“字段存在”等内部完成条件的验收草案运行 opennori check；对包含“修改字段”“失败时有提示”等空泛完成条件的目标运行 opennori discover。 | 内部完成条件会被 check 拒绝；空泛目标会被 discover 标出字段范围、校验规则、成功反馈、失败场景、范围边界等验收缺口；包含用户运行、打开、查看、确认等操作，并说明用户能看到或判断什么结果的 AC 可以通过。 | passing |
 | AC-P-13 | protocol | 作为用户，我打开 opennori report 后，能先看到完成结论、当前缺口和是否需要我介入，再查看详细 AC 表格。 | 运行 opennori report 并阅读报告顶部内容，再向下查看 Acceptance Status 表格。 | 报告在详细表格前显示 Decision Summary，包含 completion、current gap、user intervention 和 workflow status；blocked 报告也先显示需要用户采取的动作。 | passing |
 | AC-O-1 | operator | 作为用户，我在 Codex 对话里说“用 OpenNori 跑这个任务：目标是 X”后，能看到一份待确认的人类视角验收草案。 | 在 Codex 对话中查看 agent 返回的验收草案。 | 草案只描述用户通过工具执行操作后能完成的判断或动作；用户能直接 approve 或 revise。 | passing |
 | AC-O-2 | operator | 作为用户，我在 Codex 对话里 approve 或 revise 验收标准后，能控制什么叫完成，而不是让 agent 自动决定完成定义。 | 查看 active Nori Contract 中是否反映用户确认后的验收标准。 | agent 在用户确认前不能进入 complete 判断；用户修改过的 AC 会成为后续状态判断依据。 | passing |

@@ -45,6 +45,10 @@ Use OpenNori for this project. Start from my goal, define a Nori Contract,
 and keep working only from acceptance gaps until the report says whether it is complete.
 ```
 
+For fuzzy goals, ask Nori to discover the real acceptance gaps first. It should ask about missing
+field scope, validation rules, success signals, persistence, failure cases, and out-of-scope
+boundaries before it turns the goal into a Nori Contract.
+
 ## What Gets Added
 
 OpenNori uses one project-local state directory:
@@ -69,6 +73,7 @@ It does not create a `process/` directory as the main workflow surface.
 ```bash
 opennori bootstrap
 opennori doctor --root .
+opennori discover --goal "Ship a settings page" --root .
 opennori brainstorm --idea "Explore this goal" --root .
 opennori draft --goal "Ship a user-visible result" --root .
 opennori approve --root . --summary "User approved the acceptance checks."
@@ -87,6 +92,8 @@ language requests to the deterministic CLI state layer.
   require explicit confirmation.
 - In a human terminal, `npx opennori` is interactive. With `--json` or non-interactive stdio it
   returns structured JSON for agents and automation.
+- `discover` finds underspecified acceptance gaps before draft, so vague ACs such as "modify fields"
+  or "show an error" become user questions instead of weak contracts.
 - `doctor` reports whether project state is `ready`, `needs-action`, or `broken`, with recovery
   actions.
 - Nori Profile records required Skills, preferred stacks, avoided tools, and install policy without

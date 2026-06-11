@@ -1,15 +1,16 @@
 {
   "schema_version": "opennori/manifest-v1",
   "protocol_version": "opennori/v1",
-  "opennori_version": "0.1.5",
+  "opennori_version": "0.1.6",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-11T11:54:47.430Z",
+  "updated_at": "2026-06-11T12:30:42.416Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
     "reviewable-evidence",
     "skill-pack",
     "brainstorm",
+    "acceptance-discovery",
     "capability-profile",
     "profile-check",
     "archive",
@@ -113,8 +114,8 @@
     "installed": true,
     "path": ".agents/skills/nori/SKILL.md",
     "in_sync": true,
-    "expected_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789",
-    "actual_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789"
+    "expected_sha256": "baf44e15e483ae6c943f68af9f85dfd9d9b72eaa7abdd486ee8ffff67e63c4d4",
+    "actual_sha256": "baf44e15e483ae6c943f68af9f85dfd9d9b72eaa7abdd486ee8ffff67e63c4d4"
   },
   "skill_pack": {
     "schema_version": "opennori/skill-pack-v1",
@@ -127,16 +128,16 @@
         "path": ".agents/skills/nori/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789",
-        "actual_sha256": "6bf468e7bcbbd30fb53c9f971369f009ff8f47dec4885ec95a6a545904827789"
+        "expected_sha256": "baf44e15e483ae6c943f68af9f85dfd9d9b72eaa7abdd486ee8ffff67e63c4d4",
+        "actual_sha256": "baf44e15e483ae6c943f68af9f85dfd9d9b72eaa7abdd486ee8ffff67e63c4d4"
       },
       {
         "name": "nori-acceptance",
         "path": ".agents/skills/nori-acceptance/SKILL.md",
         "installed": true,
         "in_sync": true,
-        "expected_sha256": "0884334a250c09108075c25a2c29063b0d74b9b840594964588d4b31491bbf1a",
-        "actual_sha256": "0884334a250c09108075c25a2c29063b0d74b9b840594964588d4b31491bbf1a"
+        "expected_sha256": "74f625bc17474b87cbbabbd70ef4ea55a00aecbc7314e0cc105d3a94e8339050",
+        "actual_sha256": "74f625bc17474b87cbbabbd70ef4ea55a00aecbc7314e0cc105d3a94e8339050"
       },
       {
         "name": "nori-evidence",

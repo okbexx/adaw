@@ -38,6 +38,7 @@ const NORI_CAPABILITIES = [
   "reviewable-evidence",
   "skill-pack",
   "brainstorm",
+  "acceptance-discovery",
   "capability-profile",
   "profile-check",
   "archive",
@@ -371,6 +372,103 @@ const DEFAULT_CRITERIA = [
   }
 ];
 
+const DISCOVERY_GAPS = [
+  {
+    id: "missing-field-scope",
+    patterns: ["设置", "资料", "个人资料", "profile", "settings", "字段", "field"],
+    question: "本轮用户可以修改或查看哪些具体字段？哪些字段明确不在范围内？",
+    why: "没有字段范围，用户无法判断修改能力是否完整。"
+  },
+  {
+    id: "missing-validation-rule",
+    patterns: ["修改", "输入", "保存", "上传", "表单", "edit", "input", "save", "upload", "form"],
+    question: "每个可输入内容的有效规则是什么，例如长度、必填、格式、文件类型或大小？",
+    why: "没有校验规则，失败和边界输入无法验收。"
+  },
+  {
+    id: "missing-success-signal",
+    patterns: ["保存", "提交", "创建", "更新", "完成", "save", "submit", "create", "update"],
+    question: "操作成功后，用户会看到什么明确反馈或结果变化？",
+    why: "没有成功反馈，用户无法判断操作是否真的完成。"
+  },
+  {
+    id: "missing-persistence-scope",
+    patterns: ["保存", "刷新", "重新打开", "重新登录", "持久", "save", "refresh", "reload", "reopen", "login", "persist"],
+    question: "结果需要在刷新、重新打开、重新登录或跨设备后仍然存在吗？",
+    why: "没有持久化范围，完成判断会在当前页面和真实保存之间摇摆。"
+  },
+  {
+    id: "missing-failure-case",
+    patterns: ["失败", "错误", "提示", "网络", "权限", "error", "fail", "failure", "invalid", "permission", "network"],
+    question: "哪些失败情况必须覆盖，用户分别应该看到什么提示或保留什么原状态？",
+    why: "没有失败场景，错误体验可能被一句“有提示”掩盖。"
+  },
+  {
+    id: "missing-out-of-scope-boundary",
+    patterns: ["页面", "页", "设置", "功能", "支持", "完成", "page", "feature", "support", "complete"],
+    question: "哪些相关能力明确不属于本轮完成范围？",
+    why: "没有范围边界，agent 可能扩大实现，也可能漏掉用户真正期待的部分。"
+  },
+  {
+    id: "missing-user-entry",
+    patterns: ["使用", "打开", "查看", "进入", "run", "open", "view", "use", "entry"],
+    question: "用户从哪个入口开始操作，最终在哪里查看结果？",
+    why: "没有用户入口，AC 容易变成内部状态而不是可执行验收。"
+  },
+  {
+    id: "missing-review-method",
+    patterns: ["判断", "验收", "完成", "review", "accept", "done", "complete"],
+    question: "用户或评审者应该用什么可复查方式判断这条 AC 通过？",
+    why: "没有复查方式，完成判断会退化成 agent 自我总结。"
+  }
+];
+
+function sentenceHasSpecifics(text, terms) {
+  const value = String(text || "").toLowerCase();
+  return terms.some((term) => value.includes(term.toLowerCase()));
+}
+
+function discoverAcceptance(goal, explicitId = undefined) {
+  const text = String(goal || "").trim();
+  const lowered = text.toLowerCase();
+  const gaps = DISCOVERY_GAPS
+    .filter((gap) => gap.patterns.some((pattern) => lowered.includes(pattern.toLowerCase())))
+    .filter((gap) => {
+      if (gap.id === "missing-field-scope") return !sentenceHasSpecifics(text, ["昵称", "头像", "简介", "邮箱", "手机号", "name", "avatar", "bio", "email", "phone"]);
+      if (gap.id === "missing-validation-rule") return !sentenceHasSpecifics(text, ["长度", "必填", "格式", "大小", "类型", "字符", "required", "format", "length", "size", "type"]);
+      if (gap.id === "missing-success-signal") return !sentenceHasSpecifics(text, ["成功", "保存成功", "成功反馈", "result", "success"]);
+      if (gap.id === "missing-persistence-scope") return !sentenceHasSpecifics(text, ["刷新", "重新打开", "重新登录", "跨设备", "refresh", "reload", "reopen", "login"]);
+      if (gap.id === "missing-failure-case") return !sentenceHasSpecifics(text, ["网络", "权限", "无效", "错误码", "保留原", "network", "permission", "invalid"]);
+      if (gap.id === "missing-out-of-scope-boundary") return !sentenceHasSpecifics(text, ["不在范围", "不包含", "本轮不", "out of scope", "exclude"]);
+      if (gap.id === "missing-user-entry") return !sentenceHasSpecifics(text, ["设置页", "登录页", "report", "dashboard", "页面", "page"]);
+      if (gap.id === "missing-review-method") return !sentenceHasSpecifics(text, ["截图", "浏览器", "报告", "测试", "review", "screenshot", "browser", "report"]);
+      return true;
+    });
+
+  const selectedGaps = gaps.length > 0 ? gaps : [
+    {
+      id: "missing-review-method",
+      question: "用户或评审者应该用什么可复查方式判断这个目标完成？",
+      why: "OpenNori 需要先知道完成判断方式，才能形成真正可验收的 AC。"
+    }
+  ];
+
+  return {
+    protocol_version: "opennori/discovery-v1",
+    id: explicitId || slugify(text.slice(0, 40) || "acceptance-discovery"),
+    goal: text,
+    status: selectedGaps.length > 0 ? "needs-user-answers" : "ready-for-draft",
+    is_acceptance_contract: false,
+    gaps: selectedGaps.map((gap, index) => ({
+      id: gap.id,
+      question: gap.question,
+      why: gap.why,
+      priority: index < 3 ? "must-answer" : "can-default"
+    })),
+    next: "Ask the must-answer questions before drafting a Nori Contract. Use assumptions only when the user accepts them."
+  };
+}
+
 function printJson(payload) {
   console.log(JSON.stringify(payload, null, 2));
 }
@@ -398,7 +496,7 @@ function isInteractive(args) {
 }
 
 const CLI_NAME = "opennori";
-const TOP_LEVEL_USAGE = `${CLI_NAME} <bootstrap|doctor|install|upgrade|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|context|changes|archive|skill>`;
+const TOP_LEVEL_USAGE = `${CLI_NAME} <bootstrap|doctor|install|upgrade|uninstall|brainstorm|discover|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|context|changes|archive|skill>`;
 
 function wantsHelp(args) {
   return args.includes("--help") || args.includes("-h");
@@ -413,6 +511,7 @@ function usageFor(args) {
   if (command === "uninstall") return `${CLI_NAME} uninstall --root <project> [--include-state] [--dry-run] [--confirm] [--json]`;
   if (command === "doctor") return `${CLI_NAME} doctor --root <project> [--json]`;
   if (command === "brainstorm") return `${CLI_NAME} brainstorm --idea "<idea>" --root <project> [--id <id>] [--json]`;
+  if (command === "discover") return `${CLI_NAME} discover --goal "<goal>" --root <project> [--id <id>] [--json]`;
   if (command === "draft") return `${CLI_NAME} draft --goal "<goal>" --root <project> [--goal-id <id>] [--json]`;
   if (command === "init") return `${CLI_NAME} init <brief.json> --root <project> [--json]`;
   if (command === "criterion" && subcommand === "update") return `${CLI_NAME} criterion update --root <project> --criterion <id> --user-story ... --measurement ... --threshold ... [--json]`;
@@ -573,7 +672,7 @@ const SKILL_PACK = [
       "Use when the user mentions OpenNori, asks to use OpenNori for a task, continue OpenNori, check completion, inspect project health, define acceptance criteria, record evidence, manage capability preferences, or produce an OpenNori report.",
       "",
       "## Route",
-      "- Goal, brainstorm, approval, or AC revision -> use `nori-acceptance`.",
+      "- Goal, acceptance discovery, brainstorm, approval, or AC revision -> use `nori-acceptance`.",
       "- Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `nori-evidence`.",
       "- Required Skills, preferred stacks, avoided tools, or install policy -> use `nori-capability-profile`.",
       "- Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `nori-project-health`.",
@@ -596,9 +695,10 @@ const SKILL_PACK = [
     description: "Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.",
     body: [
       "## When to use",
-      "Use when the user gives a goal, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.",
+      "Use when the user gives a goal, wants to discover real acceptance criteria, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.",
       "",
       "## Commands",
+      "- Before drafting from a fuzzy goal: `opennori discover --goal \"<goal>\" --root <repo> --json`.",
       "- Fuzzy idea or discussion: `opennori brainstorm --idea \"<idea>\" --root <repo> --json`.",
       "- Start from a goal: `opennori draft --goal \"<goal>\" --root <repo> --json`.",
       "- Start from a chosen brainstorm candidate: `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.",
@@ -606,6 +706,9 @@ const SKILL_PACK = [
       "- User revises a criterion: `opennori criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.",
       "",
       "## Rules",
+      "Run discovery before draft when the goal or candidate AC contains vague verbs such as modify, save, support, show an error, or improve.",
+      "Discovery gaps are questions for the user, not implementation tasks and not completion evidence.",
+      "Do not draft generic ACs like 'modify fields' or 'show failure prompt' until field scope, validation rules, success signal, persistence scope, failure cases, and out-of-scope boundaries are clear enough for the user to judge.",
       "ACs must describe user actions or judgments, not implementation files, commands, modules, fields, tests, Skills, or technology choices.",
       "Capability preferences belong in the Nori Profile, not user ACs.",
       "Do not treat brainstorm output as a Nori Contract or completion evidence."
@@ -1354,6 +1457,47 @@ function brainstormPaths(root, brainstormId) {
   };
 }
 
+function discoveryPaths(root, discoveryId) {
+  const dir = path.join(root, ".opennori", "brainstorms");
+  return {
+    jsonPath: path.join(dir, `${discoveryId}.discovery.json`),
+    markdownPath: path.join(dir, `${discoveryId}.discovery.md`)
+  };
+}
+
+function renderDiscoveryMarkdown(discovery) {
+  const lines = [
+    `# ${discovery.id} Acceptance Discovery`,
+    "",
+    "## Goal",
+    "",
+    discovery.goal,
+    "",
+    "## Rule",
+    "",
+    "This is an acceptance discovery source, not a Nori Contract, process plan, or completion evidence.",
+    "",
+    "## Acceptance Gaps",
+    ""
+  ];
+
+  for (const gap of discovery.gaps) {
+    lines.push(
+      `### ${gap.id}`,
+      "",
+      `Priority: ${gap.priority}`,
+      "",
+      `Question: ${gap.question}`,
+      "",
+      `Why it matters: ${gap.why}`,
+      ""
+    );
+  }
+
+  lines.push("## Next", "", discovery.next);
+  return `${lines.join("\n")}\n`;
+}
+
 function renderBrainstormMarkdown(brainstorm) {
   const lines = [
     `# ${brainstorm.id} Brainstorm`,
@@ -1760,6 +1904,37 @@ export async function main(args) {
       ],
       [],
       ["Ask the user to choose or revise a candidate before running opennori draft."]
+    ));
+    return;
+  }
+
+  if (command === "discover") {
+    const root = resolveRoot(args);
+    const goal = String(argValue(args, "--goal", argValue(args, "--idea", ""))).trim();
+    if (!goal) throw new Error("--goal is required");
+    const discovery = discoverAcceptance(goal, argValue(args, "--id"));
+    const paths = discoveryPaths(root, discovery.id);
+    writeJson(paths.jsonPath, discovery);
+    fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
+    fs.writeFileSync(paths.markdownPath, renderDiscoveryMarkdown(discovery));
+    refreshManifest(root);
+    printJson(ok(
+      {
+        discovery_id: discovery.id,
+        status: discovery.status,
+        goal: discovery.goal,
+        gaps: discovery.gaps,
+        questions: discovery.gaps.map((gap) => gap.question),
+        discovery_path: paths.jsonPath,
+        markdown_path: paths.markdownPath,
+        is_acceptance_contract: false
+      },
+      [
+        { kind: "acceptance_discovery", path: paths.jsonPath },
+        { kind: "acceptance_discovery_markdown", path: paths.markdownPath }
+      ],
+      [],
+      [discovery.next]
     ));
     return;
   }
