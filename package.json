@@ -1,6 +1,6 @@
 {
   "name": "opennori",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "OpenNori: human-centered Nori Contracts and evidence records for coding agents.",
   "type": "module",
   "bin": {

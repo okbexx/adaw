@@ -28,6 +28,9 @@ judgment.
 npx opennori
 ```
 
+It shows a short project setup preview and asks before writing `.opennori/` or the OpenNori Skill
+Pack. Agents and CI can add `--json` for the deterministic machine-readable protocol.
+
 For a project install:
 
 ```bash
@@ -82,6 +85,8 @@ language requests to the deterministic CLI state layer.
 - `bootstrap` gives agents one short entry for readiness checks and first-time preview. Lower-level
   `install`, `upgrade`, and `uninstall` still support preview-first workflows; destructive writes
   require explicit confirmation.
+- In a human terminal, `npx opennori` is interactive. With `--json` or non-interactive stdio it
+  returns structured JSON for agents and automation.
 - `doctor` reports whether project state is `ready`, `needs-action`, or `broken`, with recovery
   actions.
 - Nori Profile records required Skills, preferred stacks, avoided tools, and install policy without

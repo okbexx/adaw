@@ -7,7 +7,7 @@
 ## Acceptance Basis
 
 Status: approved
-Summary: User agreed to the layered OpenNori self acceptance criteria.
+Summary: User clarified that the npm quickstart should be interactive for humans while preserving machine-readable output for agents.
 
 ## Nori Profile
 
@@ -53,7 +53,7 @@ Summary: User agreed to the layered OpenNori self acceptance criteria.
 | AC-Z-13 | productization | 作为用户，我运行 opennori doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。 | 分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 opennori doctor。 | doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 OpenNori 命令或要检查的 .opennori/active 文件位置。 | passing |
 | AC-Z-14 | productization | 作为用户，我让 agent 继续 OpenNori 工作时，不需要每轮都追问下一步是什么。 | 运行 opennori resume、opennori status、opennori next 和 opennori report，分别查看未完成、阻塞和已完成 goal 的输出。 | 输出包含 next_recommendation 或顶部推荐动作；未完成时指向当前验收缺口，阻塞时指向需要用户介入的事项，完成时提示 agent 可进入下一轮 OpenNori loop。 | passing |
 | AC-Z-15 | productization | 作为用户，我让 agent 记录验收证据时，不需要 agent 为常见来源手写复杂结构。 | 运行 opennori evidence add，分别使用 --source-command、--source-path、--source-url 和自由 --source 记录证据，再查看 status/report。 | 证据来源能显示为 command、artifact、url 或自由 reference；report/status 中仍保留 basis、reviewability、limitations 和 confidence。 | passing |
-| AC-Z-16 | productization | 作为用户，我通过 npm 获取 OpenNori 后，能用 npx opennori 这个短入口开始，而不需要理解 install、root、dry-run 或 Skill Pack 参数。 | 在全新临时项目中运行 npx opennori 或本地等价 opennori bin，再确认 bootstrap 后运行 opennori doctor。 | npm 包只提供 opennori 这个 bin；短入口默认只返回首次接入 preview 且不写入项目；显式确认后才创建 .opennori 和项目 Skill Pack；doctor 为 ready。 | passing |
+| AC-Z-16 | productization | 作为用户，我通过 npm 获取 OpenNori 后，在项目终端运行 npx opennori 就能看到简短接入预览，并选择是否安装，而不需要理解 install、root、dry-run 或 Skill Pack 参数。 | 在全新临时项目的终端运行 npx opennori 或本地等价 opennori bin，分别选择取消和确认；再让 agent 或 CI 用机器可读方式检查同一入口。 | 终端用户先看到将添加 .opennori 和 OpenNori Skill Pack 的简短预览；选择取消不会写入项目；选择确认后创建 .opennori 和项目 Skill Pack 且 doctor 为 ready；agent 或 CI 仍能获得结构化输出。 | passing |
 | AC-Z-17 | productization | 作为用户，我第一次打开 README 或官网 Quick Start 时，能看到短到可以直接复制的 npx opennori 入口，而不是一串内部安装参数。 | 阅读 README Try It 和官网首屏 Quick Start / Start 区域。 | README 和官网第一眼 Quick Start 展示 npx opennori；更详细的 opennori bootstrap、install、dry-run、confirm 只作为 agent 或高级用户的底层安全路径出现。 | passing |
 
 ## Rule

@@ -6,7 +6,8 @@
     "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
-      "summary": "User agreed to the layered OpenNori self acceptance criteria."
+      "summary": "User clarified that the npm quickstart should be interactive for humans while preserving machine-readable output for agents.",
+      "approved_at": "2026-06-11T11:37:33.263Z"
     },
     "criteria": [
       {
@@ -336,9 +337,9 @@
       {
         "id": "AC-Z-16",
         "layer": "productization",
-        "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能用 npx opennori 这个短入口开始，而不需要理解 install、root、dry-run 或 Skill Pack 参数。",
-        "measurement": "在全新临时项目中运行 npx opennori 或本地等价 opennori bin，再确认 bootstrap 后运行 opennori doctor。",
-        "threshold": "npm 包只提供 opennori 这个 bin；短入口默认只返回首次接入 preview 且不写入项目；显式确认后才创建 .opennori 和项目 Skill Pack；doctor 为 ready。",
+        "user_story": "作为用户，我通过 npm 获取 OpenNori 后，在项目终端运行 npx opennori 就能看到简短接入预览，并选择是否安装，而不需要理解 install、root、dry-run 或 Skill Pack 参数。",
+        "measurement": "在全新临时项目的终端运行 npx opennori 或本地等价 opennori bin，分别选择取消和确认；再让 agent 或 CI 用机器可读方式检查同一入口。",
+        "threshold": "终端用户先看到将添加 .opennori 和 OpenNori Skill Pack 的简短预览；选择取消不会写入项目；选择确认后创建 .opennori 和项目 Skill Pack 且 doctor 为 ready；agent 或 CI 仍能获得结构化输出。",
         "required": true,
         "risk": "high"
       },
@@ -357,7 +358,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-11T10:08:25.563Z",
+    "updated_at": "2026-06-11T11:47:14.003Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -2564,7 +2565,7 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "AC-Z-16 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
+            "summary": "OpenNori 0.1.4 makes the short npm entry interactive for human terminals: users see a setup preview, can cancel without writes, or confirm to create .opennori and the Skill Pack; non-interactive and --json use still returns structured output for agents and CI.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -2579,93 +2580,63 @@
                 "command": "npm pack --dry-run --json"
               },
               {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
                 "type": "artifact",
                 "label": "src/cli.js",
                 "path": "src/cli.js"
               },
               {
                 "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
-              },
-              {
-                "type": "url",
-                "label": "https://opennori.okbexx.com",
-                "url": "https://opennori.okbexx.com"
-              }
-            ],
-            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
-            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
-            "gate": "accepted",
-            "created_at": "2026-06-11T09:51:31.015Z"
-          },
-          {
-            "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "OpenNori now exposes only the opennori bin and the short no-argument entry previews bootstrap without requiring users to learn nori, install, root, dry-run, or Skill Pack flags.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "command",
-                "label": "rg old nori command residuals",
-                "command": "rg old nori command residuals"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
               },
               {
                 "type": "artifact",
                 "label": "README.md",
                 "path": "README.md"
+              },
+              {
+                "type": "artifact",
+                "label": "package.json",
+                "path": "package.json"
               }
             ],
-            "reviewability": "Run npm run check, inspect package.json bin mapping, run npm pack --dry-run --json, and scan for old nori command residuals.",
-            "limitations": "Local implementation and package tarball are verified; public npm still requires publishing this version.",
+            "reviewability": "Run npm run check to see the interactive quickstart test and doctor result, inspect src/cli.js for TTY vs JSON routing, inspect README Try It, and run npm pack --dry-run --json before publishing.",
+            "limitations": "The test simulates TTY stdin/stdout in-process; public npm users will see this after version 0.1.4 is published.",
             "gate": "accepted",
-            "created_at": "2026-06-11T10:08:25.532Z"
+            "created_at": "2026-06-11T11:45:13.855Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "A real PTY smoke test showed the human terminal flow: answering n leaves the project untouched; answering y installs .opennori and the OpenNori Skill Pack, and doctor reports ready.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js in /tmp/opennori-tty-decline.tGxJja, answer n",
+                "command": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js in /tmp/opennori-tty-decline.tGxJja, answer n"
+              },
+              {
+                "type": "command",
+                "label": "test ! -e .opennori in /tmp/opennori-tty-decline.tGxJja",
+                "command": "test ! -e .opennori in /tmp/opennori-tty-decline.tGxJja"
+              },
+              {
+                "type": "command",
+                "label": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js in /tmp/opennori-tty-confirm.a3g7kL, answer y",
+                "command": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js in /tmp/opennori-tty-confirm.a3g7kL, answer y"
+              },
+              {
+                "type": "command",
+                "label": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js doctor --root . --json in /tmp/opennori-tty-confirm.a3g7kL",
+                "command": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js doctor --root . --json in /tmp/opennori-tty-confirm.a3g7kL"
+              }
+            ],
+            "reviewability": "Re-run the same PTY smoke test in fresh temporary directories and inspect the prompt output plus doctor result.",
+            "limitations": "The smoke test used the local 0.1.4 bin before npm publish; npm latest must be checked after publishing.",
+            "gate": "accepted",
+            "created_at": "2026-06-11T11:47:14.002Z"
           }
         ]
       },

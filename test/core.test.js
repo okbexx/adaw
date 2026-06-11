@@ -4,9 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const CLI = path.join(ROOT, "bin", "opennori.js");
+const CLI_MODULE = pathToFileURL(path.join(ROOT, "src", "cli.js")).href;
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
 function run(args, options = {}) {
@@ -22,6 +24,20 @@ function run(args, options = {}) {
 
 function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "nori-test-"));
+}
+
+function runInteractiveBootstrap(root, answer) {
+  const script = `
+import { main } from ${JSON.stringify(CLI_MODULE)};
+Object.defineProperty(process.stdin, "isTTY", { value: true });
+Object.defineProperty(process.stdout, "isTTY", { value: true });
+queueMicrotask(() => process.stdin.emit("data", ${JSON.stringify(`${answer}\n`)}));
+await main(["bootstrap", "--root", ${JSON.stringify(root)}]);
+`;
+  return spawnSync(process.execPath, ["--input-type=module", "-e", script], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
 }
 
 test("command help is side-effect free", () => {
@@ -59,6 +75,27 @@ test("opennori quickstart previews bootstrap without requiring install flags", (
   assert.equal(ready.data.status, "ready");
   assert.equal(ready.data.side_effect, "none");
   assert.equal(ready.data.doctor.status, "ready");
+});
+
+test("opennori quickstart is interactive for human terminals", () => {
+  const declinedRoot = tempRoot();
+  const declined = runInteractiveBootstrap(declinedRoot, "n");
+
+  assert.equal(declined.status, 0);
+  assert.match(declined.stdout, /OpenNori project setup/);
+  assert.match(declined.stdout, /No files have been written yet/);
+  assert.match(declined.stdout, /Install OpenNori here\? \[y\/N\]/);
+  assert.match(declined.stdout, /No changes made/);
+  assert.equal(fs.existsSync(path.join(declinedRoot, ".opennori")), false);
+
+  const confirmedRoot = tempRoot();
+  const confirmed = runInteractiveBootstrap(confirmedRoot, "y");
+
+  assert.equal(confirmed.status, 0);
+  assert.match(confirmed.stdout, /OpenNori installed/);
+  assert.match(confirmed.stdout, /Next: tell your agent the goal/);
+  assert.equal(fs.existsSync(path.join(confirmedRoot, ".opennori", "manifest.json")), true);
+  assert.equal(fs.existsSync(path.join(confirmedRoot, ".agents", "skills", "nori", "SKILL.md")), true);
 });
 
 test("init creates markdown contract and evidence record", () => {
