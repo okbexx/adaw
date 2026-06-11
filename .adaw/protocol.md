@@ -75,6 +75,7 @@ a durable workflow asset.
 | AC-Z-8 | CLI | Run `adaw doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.adaw` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
 | AC-Z-9 | CLI | Preview install with `adaw install --dry-run` | The user can judge what ADAW would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
 | AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `adaw install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
+| AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall ADAW entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.adaw` state is deleted only with `--include-state --confirm`. |
 
 ## Required Artifact Pair
 
@@ -124,6 +125,11 @@ and a short human-readable reason.
 Real `adaw install --force` can overwrite ADAW-managed files, so it requires explicit confirmation.
 Run `adaw install --dry-run --force` first to inspect destructive actions, then rerun with
 `--confirm` only if those writes are acceptable.
+
+`adaw uninstall --dry-run` returns an uninstall plan. By default it removes entry assets such as the
+repo-local ADAW Skill and manifest, while preserving acceptance contracts, evidence ledgers,
+reports, archives, and brainstorms. Real uninstall requires `--confirm`. Deleting the whole `.adaw`
+state directory requires both `--include-state` and `--confirm`.
 
 ## Capability Profile
 

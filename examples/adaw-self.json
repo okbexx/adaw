@@ -189,6 +189,14 @@
       "measurement": "在已有 ADAW 入口的项目中运行 adaw install --force、adaw install --force --dry-run 和确认后的安装。",
       "threshold": "未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。",
       "risk": "high"
+    },
+    {
+      "id": "AC-Z-11",
+      "layer": "productization",
+      "user_story": "作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。",
+      "measurement": "在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
+      "threshold": "默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。",
+      "risk": "high"
     }
   ]
 }

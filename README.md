@@ -57,6 +57,10 @@ managed status, write intent, destructive overwrite flag, and reason. Dry-run pl
 Real `adaw install --force` requires `--confirm`. Preview destructive actions with
 `adaw install --force --dry-run --json` before applying a confirmed overwrite.
 
+`adaw uninstall --dry-run --json` previews removals. Default uninstall removes entry assets while
+preserving active goals, evidence, reports, archives, and brainstorms; deleting `.adaw` state
+requires `adaw uninstall --include-state --confirm --json`.
+
 ## Development
 
 ```bash

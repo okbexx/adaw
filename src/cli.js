@@ -40,6 +40,7 @@ const ADAW_CAPABILITIES = [
   "doctor"
 ];
 const WRITING_INSTALL_ACTIONS = new Set(["create", "overwrite", "update"]);
+const WRITING_UNINSTALL_ACTIONS = new Set(["delete", "delete-tree"]);
 
 function sameStringSet(left, right) {
   if (!Array.isArray(left) || !Array.isArray(right)) return false;
@@ -98,6 +99,117 @@ function buildInstallPlan(root, actions, { dryRun = false, force = false, reques
     summary: summarizeInstallPlan(enrichedActions),
     actions: enrichedActions
   };
+}
+
+function uninstallActionReason(action, kind) {
+  if (action === "delete") return `Existing ADAW ${kind} will be removed.`;
+  if (action === "delete-tree") return `Existing ADAW ${kind} and its contents will be removed.`;
+  if (action === "absent") return `ADAW ${kind} is already absent.`;
+  if (action === "preserve") return `ADAW ${kind} is preserved by default.`;
+  return `ADAW ${kind} action: ${action}.`;
+}
+
+function plannedDelete(root, relativePath, kind, { recursive = false, reason = undefined } = {}) {
+  const target = path.join(root, relativePath);
+  const exists = fs.existsSync(target);
+  return {
+    path: target,
+    kind,
+    action: exists ? (recursive ? "delete-tree" : "delete") : "absent",
+    managed: true,
+    recursive,
+    reason
+  };
+}
+
+function plannedPreserve(root, relativePath, kind, reason) {
+  return {
+    path: path.join(root, relativePath),
+    kind,
+    action: "preserve",
+    managed: true,
+    recursive: false,
+    reason
+  };
+}
+
+function enrichUninstallAction(root, action, { dryRun = false } = {}) {
+  const wouldWrite = WRITING_UNINSTALL_ACTIONS.has(action.action);
+  return {
+    path: relativeTo(root, action.path),
+    kind: action.kind || "file",
+    action: action.action,
+    managed: action.managed !== false,
+    would_write: wouldWrite,
+    will_write: wouldWrite && !dryRun,
+    destructive: wouldWrite,
+    recursive: Boolean(action.recursive),
+    reason: action.reason || uninstallActionReason(action.action, action.kind || "file")
+  };
+}
+
+function summarizeUninstallPlan(actions) {
+  const byAction = {};
+  for (const action of actions) {
+    byAction[action.action] = (byAction[action.action] || 0) + 1;
+  }
+  return {
+    total: actions.length,
+    by_action: byAction,
+    would_write: actions.filter((action) => action.would_write).length,
+    will_write: actions.filter((action) => action.will_write).length,
+    destructive: actions.filter((action) => action.destructive).length,
+    preserved: actions.filter((action) => action.action === "preserve").length,
+    managed: actions.filter((action) => action.managed).length
+  };
+}
+
+function buildUninstallActions(root, { includeState = false } = {}) {
+  const actions = [
+    plannedDelete(root, ".agents/skills/adaw/SKILL.md", "skill")
+  ];
+
+  if (includeState) {
+    actions.push(plannedDelete(root, ".adaw", "state-directory", {
+      recursive: true,
+      reason: "Full ADAW state removal was requested with --include-state."
+    }));
+    return actions;
+  }
+
+  actions.push(
+    plannedDelete(root, ".adaw/manifest.json", "manifest"),
+    plannedPreserve(root, ".adaw/protocol.md", "protocol", "Protocol is preserved unless --include-state is provided."),
+    plannedPreserve(root, ".adaw/active", "active-goals", "Active goals and evidence are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".adaw/reports", "reports", "Acceptance reports are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".adaw/completed", "completed-archive", "Completed archives are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".adaw/blocked", "blocked-archive", "Blocked archives are preserved unless --include-state is provided."),
+    plannedPreserve(root, ".adaw/brainstorms", "brainstorms", "Brainstorms are preserved unless --include-state is provided.")
+  );
+  return actions;
+}
+
+function buildUninstallPlan(root, actions, { dryRun = false, includeState = false } = {}) {
+  const enrichedActions = actions.map((action) => enrichUninstallAction(root, action, { dryRun }));
+  return {
+    schema_version: "adaw/uninstall-plan-v1",
+    root,
+    dry_run: dryRun,
+    include_state: includeState,
+    summary: summarizeUninstallPlan(enrichedActions),
+    actions: enrichedActions
+  };
+}
+
+function applyUninstallActions(actions) {
+  for (const action of actions) {
+    if (action.action === "delete") {
+      fs.rmSync(action.path, { force: true });
+    }
+    if (action.action === "delete-tree") {
+      fs.rmSync(action.path, { recursive: true, force: true });
+    }
+  }
 }
 
 const BRAINSTORM_CANDIDATES = [
@@ -211,6 +323,7 @@ function exportedSkillMarkdown() {
     "## Project setup and health",
     "If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize `install_plan`: created, skipped, overwritten, or updated assets; write intent; destructive actions; and reasons. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.",
     "If a destructive install action is needed, preview it with `adaw install --root <repo> --force --dry-run --json` and wait for explicit user acceptance before running `adaw install --root <repo> --force --confirm --json`.",
+    "If the user asks to uninstall ADAW from a project, run `adaw uninstall --root <repo> --dry-run --json` first and summarize `uninstall_plan`. By default, uninstall removes entry assets but preserves active goals, evidence, reports, archives, and brainstorms. Only use `--include-state --confirm` after explicit user acceptance.",
     "",
     "If the user asks whether ADAW is set up, healthy, recoverable, or ready in a project, run `adaw doctor --root <repo> --json` and summarize the `ready`, `needs-action`, or `broken` status plus recovery actions. Do not make the user remember the doctor command.",
     "",
@@ -745,7 +858,7 @@ function loadPair(args) {
 export async function main(args) {
   const command = args[0];
   if (!command || command === "--help" || command === "-h") {
-    printJson(ok({ usage: "adaw <doctor|install|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
+    printJson(ok({ usage: "adaw <doctor|install|uninstall|brainstorm|draft|init|list|check|approve|criterion|profile|resume|next|evidence|evaluate|status|report|changes|archive|skill>" }));
     return;
   }
 
@@ -815,6 +928,39 @@ export async function main(args) {
       install_plan: installPlan,
       actions: installPlan.actions,
       manifest: manifestAction.manifest
+    }));
+    return;
+  }
+
+  if (command === "uninstall") {
+    const root = resolveRoot(args);
+    const dryRun = hasFlag(args, "--dry-run");
+    const confirmed = hasFlag(args, "--confirm");
+    const includeState = hasFlag(args, "--include-state");
+    const actions = buildUninstallActions(root, { includeState });
+    const uninstallPlan = buildUninstallPlan(root, actions, { dryRun, includeState });
+
+    if (!dryRun && !confirmed) {
+      printJson(fail(
+        "confirm_required",
+        "Uninstall removes ADAW-managed project assets.",
+        "Run adaw uninstall --root <project> --dry-run --json first, then rerun with --confirm if the planned removals are acceptable."
+      ));
+      process.exitCode = 1;
+      return;
+    }
+
+    if (!dryRun) {
+      applyUninstallActions(actions);
+    }
+
+    printJson(ok({
+      root,
+      dry_run: dryRun,
+      confirmed,
+      include_state: includeState,
+      uninstall_plan: uninstallPlan,
+      actions: uninstallPlan.actions
     }));
     return;
   }

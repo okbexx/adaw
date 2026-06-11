@@ -314,11 +314,11 @@ test("high-risk criteria require strong evidence before passing", () => {
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "adaw-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 23);
+  assert.equal(brief.criteria.length, 24);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 5);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 10);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 11);
 
   const expectedTools = [
     "Codex 对话",
@@ -329,6 +329,7 @@ test("protocol v1 example contains concrete user tool operations", () => {
     "ADAW 报告",
     "Git 或 PR diff",
     "adaw install",
+    "adaw uninstall",
     "adaw doctor",
     "adaw list"
   ];
@@ -356,6 +357,7 @@ test("skill export gives agents the full ADAW command loop", () => {
   assert.match(payload.data.skill_md, /adaw profile add/);
   assert.match(payload.data.skill_md, /adaw profile evidence/);
   assert.match(payload.data.skill_md, /adaw install --root <repo> --dry-run --json/);
+  assert.match(payload.data.skill_md, /adaw uninstall --root <repo> --dry-run --json/);
   assert.match(payload.data.skill_md, /adaw doctor --root <repo> --json/);
   assert.match(payload.data.skill_md, /Do not treat brainstorm output as an acceptance contract/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
@@ -458,6 +460,60 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(broken.data.checks.find((check) => check.name === "active_goals_recoverable").ok, false);
   assert.equal(broken.data.active_goal_issues.length, 1);
   assert.match(broken.data.checks.find((check) => check.name === "active_goals_recoverable").recovery, /Fix the reported active goal pair/);
+});
+
+test("uninstall previews removals and preserves ADAW state by default", () => {
+  const root = tempRoot();
+  const init = run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  run(["install", "--root", root, "--skill", "--json"]);
+  run(["report", "--root", root, "--json"]);
+
+  const dryRun = run(["uninstall", "--root", root, "--dry-run", "--json"]);
+  assert.equal(dryRun.data.uninstall_plan.schema_version, "adaw/uninstall-plan-v1");
+  assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
+  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/active").action, "preserve");
+  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw/manifest.json").action, "delete");
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), true);
+
+  const unconfirmed = spawnSync(process.execPath, [CLI, "uninstall", "--root", root, "--json"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(unconfirmed.status, 1);
+  assert.equal(JSON.parse(unconfirmed.stdout).error.type, "confirm_required");
+
+  const removed = run(["uninstall", "--root", root, "--confirm", "--json"]);
+  assert.equal(removed.data.confirmed, true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "adaw", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "manifest.json")), false);
+  assert.equal(fs.existsSync(init.data.acceptance_path), true);
+  assert.equal(fs.existsSync(init.data.evidence_path), true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw", "reports", "adaw-self.report.md")), true);
+});
+
+test("uninstall include-state requires confirmation before removing ADAW state", () => {
+  const root = tempRoot();
+  run(["init", "examples/adaw-self.json", "--root", root, "--json"]);
+  run(["install", "--root", root, "--skill", "--json"]);
+
+  const dryRun = run(["uninstall", "--root", root, "--include-state", "--dry-run", "--json"]);
+  const stateAction = dryRun.data.uninstall_plan.actions.find((action) => action.path === ".adaw");
+  assert.equal(stateAction.action, "delete-tree");
+  assert.equal(stateAction.recursive, true);
+  assert.equal(stateAction.destructive, true);
+  assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
+  assert.equal(fs.existsSync(path.join(root, ".adaw")), true);
+
+  const unconfirmed = spawnSync(process.execPath, [CLI, "uninstall", "--root", root, "--include-state", "--json"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(unconfirmed.status, 1);
+  assert.equal(fs.existsSync(path.join(root, ".adaw")), true);
+
+  const removed = run(["uninstall", "--root", root, "--include-state", "--confirm", "--json"]);
+  assert.equal(removed.data.include_state, true);
+  assert.equal(fs.existsSync(path.join(root, ".adaw")), false);
 });
 
 test("changes groups acceptance artifacts separately from implementation files", () => {

@@ -3,7 +3,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "goal": "让 ADAW 成为人类用户可验收、agent 可执行、跨会话可恢复的验收驱动协议；用户通过真实工具判断目标是否达成，而不是追踪过程计划。",
-    "created_at": "2026-06-10T10:27:41.905Z",
+    "created_at": "2026-06-11T01:43:45.286Z",
     "acceptance_basis": {
       "status": "approved",
       "summary": "User agreed to the layered ADAW self acceptance criteria."
@@ -215,6 +215,15 @@
         "threshold": "未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。",
         "required": true,
         "risk": "high"
+      },
+      {
+        "id": "AC-Z-11",
+        "layer": "productization",
+        "user_story": "作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。",
+        "measurement": "在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。",
+        "threshold": "默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。",
+        "required": true,
+        "risk": "high"
       }
     ]
   },
@@ -222,7 +231,7 @@
     "protocol_version": "adaw/v1",
     "goal_id": "adaw-self",
     "status": "complete",
-    "updated_at": "2026-06-10T10:27:42.934Z",
+    "updated_at": "2026-06-11T01:43:46.674Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -235,7 +244,7 @@
             "summary": "Acceptance contract renders goal, Capability Profile, layered ACs, status, and current gap in .adaw/active/adaw-self.acceptance.md.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.030Z"
+            "created_at": "2026-06-11T01:43:45.488Z"
           }
         ]
       },
@@ -250,7 +259,7 @@
             "summary": "adaw check validates contracts and rejects implementation-detail ACs.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.069Z"
+            "created_at": "2026-06-11T01:43:45.543Z"
           }
         ]
       },
@@ -265,7 +274,7 @@
             "summary": "adaw next/status return current_gap, completion, and intervention instead of process steps.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.107Z"
+            "created_at": "2026-06-11T01:43:45.653Z"
           }
         ]
       },
@@ -280,7 +289,7 @@
             "summary": "High-risk gate downgrades weak passing evidence and accepts only strong evidence kinds or confidence.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.147Z"
+            "created_at": "2026-06-11T01:43:45.701Z"
           }
         ]
       },
@@ -295,7 +304,7 @@
             "summary": "adaw report renders layered AC status, Capability Profile, evidence summary, current gap, user intervention, and conclusion.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.187Z"
+            "created_at": "2026-06-11T01:43:45.756Z"
           }
         ]
       },
@@ -310,7 +319,7 @@
             "summary": "Repo-local .agents/skills/adaw/SKILL.md instructs Codex to run adaw draft when the user says '用 ADAW 跑这个任务：目标是 X'.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.226Z"
+            "created_at": "2026-06-11T01:43:45.800Z"
           }
         ]
       },
@@ -325,7 +334,7 @@
             "summary": "adaw draft keeps acceptance_basis=draft and cannot become complete until adaw approve records user approval; tests cover draft gate and approval.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.265Z"
+            "created_at": "2026-06-11T01:43:45.845Z"
           }
         ]
       },
@@ -340,7 +349,7 @@
             "summary": "resume --root . restores adaw-self from .adaw files and reports current gap without relying on prior chat context.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.304Z"
+            "created_at": "2026-06-11T01:43:45.890Z"
           }
         ]
       },
@@ -355,7 +364,7 @@
             "summary": "status/completion answers are computed only from required AC statuses, profile compliance, and evidence; incomplete goals report the current unmet AC instead of complete.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.343Z"
+            "created_at": "2026-06-11T01:43:45.934Z"
           }
         ]
       },
@@ -370,7 +379,7 @@
             "summary": "blocked evidence and profile blockers produce status.intervention with a concrete human action.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.382Z"
+            "created_at": "2026-06-11T01:43:45.981Z"
           }
         ]
       },
@@ -385,7 +394,7 @@
             "summary": "adaw criterion update records the user revision as approved acceptance basis and clears stale evidence for the changed AC.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.421Z"
+            "created_at": "2026-06-11T01:43:46.046Z"
           }
         ]
       },
@@ -400,7 +409,7 @@
             "summary": "adaw brainstorm creates selectable acceptance directions under .adaw/brainstorms, not a process plan; Skill tells Codex to invoke it from natural language and not treat output as contract or completion evidence.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.460Z"
+            "created_at": "2026-06-11T01:43:46.091Z"
           }
         ]
       },
@@ -415,7 +424,7 @@
             "summary": "Capability Profile records user-declared Skills/stacks/constraints separately from ACs; must/avoid compliance affects completion and appears in status/report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.500Z"
+            "created_at": "2026-06-11T01:43:46.143Z"
           }
         ]
       },
@@ -427,10 +436,10 @@
         "evidence": [
           {
             "kind": "test-summary",
-            "summary": "adaw skill export emits a Codex Skill draft covering setup, doctor, destructive install preview, brainstorm, draft, approve, criterion update, profile, resume, next, evidence, evaluate, status, and report.",
+            "summary": "adaw skill export emits a Codex Skill draft covering setup, doctor, destructive install preview, uninstall preview, brainstorm, draft, approve, criterion update, profile, resume, next, evidence, evaluate, status, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.540Z"
+            "created_at": "2026-06-11T01:43:46.199Z"
           }
         ]
       },
@@ -445,7 +454,7 @@
             "summary": "adaw install creates .adaw assets, optional repo-local Skill, manifest, and a structured install plan while skipping existing content by default.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.579Z"
+            "created_at": "2026-06-11T01:43:46.243Z"
           }
         ]
       },
@@ -460,7 +469,7 @@
             "summary": "adaw changes groups .adaw acceptance artifacts separately from implementation files for review.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.618Z"
+            "created_at": "2026-06-11T01:43:46.289Z"
           }
         ]
       },
@@ -475,7 +484,7 @@
             "summary": "adaw list shows multiple active goals from .adaw/active and resume/status/report require --goal instead of random selection.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.659Z"
+            "created_at": "2026-06-11T01:43:46.329Z"
           }
         ]
       },
@@ -490,7 +499,7 @@
             "summary": "adaw archive moves complete and blocked goals out of .adaw/active while preserving contract, evidence ledger, and report.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.698Z"
+            "created_at": "2026-06-11T01:43:46.371Z"
           }
         ]
       },
@@ -505,7 +514,7 @@
             "summary": "Default ADAW writes target .adaw/protocol.md, .adaw/manifest.json, .adaw/active, .adaw/reports, .adaw/completed, .adaw/blocked, and .adaw/brainstorms; tests assert install does not create process/.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.737Z"
+            "created_at": "2026-06-11T01:43:46.414Z"
           }
         ]
       },
@@ -520,7 +529,7 @@
             "summary": "install dry-run and install output expose structured actions and .adaw/manifest.json records version, managed files, active goals, Skill state, and capabilities.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.777Z"
+            "created_at": "2026-06-11T01:43:46.463Z"
           }
         ]
       },
@@ -535,7 +544,7 @@
             "summary": "doctor reports ready, needs-action, and broken states, detects stale manifest version/capabilities, and includes checks for structure, manifest, active goal recoverability, Skill sync, runtime, and recovery actions.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.817Z"
+            "created_at": "2026-06-11T01:43:46.505Z"
           }
         ]
       },
@@ -550,7 +559,7 @@
             "summary": "install dry-run returns install_plan actions with action, kind, managed, would_write, will_write, destructive, and reason; tests assert dry-run writes nothing and force overwrite is destructive.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.855Z"
+            "created_at": "2026-06-11T01:43:46.548Z"
           }
         ]
       },
@@ -565,7 +574,22 @@
             "summary": "Real install --force fails without --confirm, force dry-run previews destructive overwrite, and force --confirm performs the overwrite only after explicit confirmation.",
             "result": "passing",
             "gate": "accepted",
-            "created_at": "2026-06-10T10:27:42.895Z"
+            "created_at": "2026-06-11T01:43:46.591Z"
+          }
+        ]
+      },
+      "AC-Z-11": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "test-summary",
+            "summary": "uninstall dry-run returns uninstall_plan, default uninstall preserves active goals/evidence/reports/archives, unconfirmed uninstall fails, and --include-state --confirm is required to remove .adaw state.",
+            "result": "passing",
+            "gate": "accepted",
+            "created_at": "2026-06-11T01:43:46.634Z"
           }
         ]
       }
@@ -586,7 +610,7 @@
               "result": "satisfied",
               "summary": "Capability Profile constraints are rendered separately from the AC table and are not converted into user acceptance criteria.",
               "path": ".adaw/active/adaw-self.acceptance.md",
-              "created_at": "2026-06-10T10:27:41.987Z"
+              "created_at": "2026-06-11T01:43:45.409Z"
             }
           ]
         }
@@ -597,7 +621,7 @@
           "result": "satisfied",
           "summary": "Capability Profile constraints are rendered separately from the AC table and are not converted into user acceptance criteria.",
           "path": ".adaw/active/adaw-self.acceptance.md",
-          "created_at": "2026-06-10T10:27:41.987Z"
+          "created_at": "2026-06-11T01:43:45.409Z"
         }
       ]
     }

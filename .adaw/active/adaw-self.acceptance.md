@@ -42,6 +42,7 @@ Summary: User agreed to the layered ADAW self acceptance criteria.
 | AC-Z-8 | productization | 作为用户，我运行 adaw doctor 后，能判断当前项目是 ready、needs-action 还是 broken，并知道下一步修复动作。 | 在已安装项目、缺少接入登记的项目或 active goal 异常的项目中运行 adaw doctor。 | 输出包含整体健康状态、逐项检查结果、active goal 可恢复性、Skill 同步状态和可执行的 recovery 建议。 | passing |
 | AC-Z-9 | productization | 作为用户，我预览 ADAW 安装时，能判断每个项目入口会被创建、跳过、更新还是覆盖，并确认 dry-run 不会写入项目。 | 运行 adaw install --dry-run，查看 install plan，再检查项目文件是否未被写入。 | install plan 对每个入口显示 action、kind、managed、would_write、will_write、destructive 和 reason；dry-run 下 will_write 为 0；覆盖类动作必须被标记为 destructive。 | passing |
 | AC-Z-10 | productization | 作为用户，我执行可能覆盖已有 ADAW 入口的安装时，必须先看到预览并显式确认，才能真正写入项目。 | 在已有 ADAW 入口的项目中运行 adaw install --force、adaw install --force --dry-run 和确认后的安装。 | 未确认的真实 --force 安装会失败并提示先 dry-run；dry-run 可展示 destructive overwrite；只有带显式确认的 --force 才会执行覆盖写入。 | passing |
+| AC-Z-11 | productization | 作为用户，我卸载 ADAW 前，能预览将移除什么，并确认默认卸载不会丢失 active goals、证据、报告或归档。 | 在已安装且有 active goal 的项目中运行 adaw uninstall --dry-run、未确认 uninstall、确认 uninstall 和 include-state uninstall。 | 默认 uninstall plan 标明 entry assets 会被移除、验收状态会被 preserve；未确认真实卸载会失败；确认后只移除入口资产；只有显式 --include-state --confirm 才会删除 .adaw 状态目录。 | passing |
 
 ## Rule
 

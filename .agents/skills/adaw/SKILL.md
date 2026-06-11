@@ -22,6 +22,7 @@ Before answering complete, add profile evidence with `adaw profile evidence --ro
 ## Project setup and health
 If the user asks to install ADAW, enable ADAW in a project, or preview what ADAW would add, run `adaw install --root <repo> --dry-run --json` first and summarize `install_plan`: created, skipped, overwritten, or updated assets; write intent; destructive actions; and reasons. Only run install without `--dry-run` when the user asks to apply it or the task clearly requires project-local ADAW assets.
 If a destructive install action is needed, preview it with `adaw install --root <repo> --force --dry-run --json` and wait for explicit user acceptance before running `adaw install --root <repo> --force --confirm --json`.
+If the user asks to uninstall ADAW from a project, run `adaw uninstall --root <repo> --dry-run --json` first and summarize `uninstall_plan`. By default, uninstall removes entry assets but preserves active goals, evidence, reports, archives, and brainstorms. Only use `--include-state --confirm` after explicit user acceptance.
 
 If the user asks whether ADAW is set up, healthy, recoverable, or ready in a project, run `adaw doctor --root <repo> --json` and summarize the `ready`, `needs-action`, or `broken` status plus recovery actions. Do not make the user remember the doctor command.
 
