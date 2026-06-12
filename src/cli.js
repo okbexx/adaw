@@ -48,7 +48,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
-import { runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
+import { runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -1142,16 +1142,7 @@ export async function main(args) {
   }
 
   if (command === "evaluate") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    recomputeWorkflowStatus(contract, ledger);
-    writeJson(evidencePath, { contract, ledger });
-    syncAcceptanceMarkdown(acceptancePath, contract, ledger);
-    refreshManifest(root);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
-    }));
+    printJson(await runEvaluateCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 

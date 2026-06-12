@@ -3,14 +3,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
+import { runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
-import { buildEvidenceLedger, writeJson } from "../src/core.js";
+import { addEvidence, buildEvidenceLedger, writeJson } from "../src/core.js";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 
@@ -192,4 +192,37 @@ test("report command module renders a report artifact", async () => {
   assert.equal(report.data.evidence_health.status, "clear");
   assert.equal(report.artifacts[0].kind, "acceptance_report");
   assert.match(fs.readFileSync(outputPath, "utf8"), /## Decision Summary/);
+});
+
+test("evaluate command module recomputes and writes workflow state", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    goal_id: "module-goal",
+    goal: "Ship module evaluation",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can evaluate a completed acceptance criterion."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+  addEvidence(contract, ledger, "AC-1", { kind: "test-summary", summary: "AC-1 passes.", result: "passing" });
+  fs.mkdirSync(path.dirname(acceptancePath), { recursive: true });
+  fs.writeFileSync(acceptancePath, "# Module goal\n");
+  writeJson(evidencePath, { contract, ledger });
+
+  const evaluated = await runEvaluateCommand(["--json"], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+  assert.equal(evaluated.ok, true);
+  assert.equal(evaluated.data.goal_id, "module-goal");
+  assert.equal(evaluated.data.workflow_status, "complete");
+  assert.equal(evaluated.data.current_gap, null);
+  assert.equal(JSON.parse(fs.readFileSync(evidencePath, "utf8")).ledger.status, "complete");
+  assert.match(fs.readFileSync(acceptancePath, "utf8"), /\| AC-1 .* passing \|/);
 });

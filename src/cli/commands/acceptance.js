@@ -1,6 +1,18 @@
 import { defineCommand } from "citty";
-import { completionAnswer, criterionStatusRows, currentGap, evidenceHealth, intervention, nextRecommendation, ok } from "../../core.js";
+import {
+  completionAnswer,
+  criterionStatusRows,
+  currentGap,
+  evidenceHealth,
+  intervention,
+  nextRecommendation,
+  ok,
+  recomputeWorkflowStatus,
+  syncAcceptanceMarkdown,
+  writeJson
+} from "../../core.js";
 import { architectureState } from "../../architecture.js";
+import { refreshManifest } from "../../lifecycle.js";
 import { runJsonCommand } from "../runtime.js";
 
 export const nextCommand = defineCommand({
@@ -124,4 +136,43 @@ export const statusCommand = defineCommand({
 
 export async function runStatusCommand(rawArgs, { loadPair }) {
   return runJsonCommand(statusCommand, rawArgs, { loadPair });
+}
+
+export const evaluateCommand = defineCommand({
+  meta: {
+    name: "evaluate",
+    description: "Recompute the current OpenNori workflow status from recorded acceptance evidence."
+  },
+  args: {
+    root: {
+      type: "string",
+      description: "Project root.",
+      default: process.cwd()
+    },
+    goal: {
+      type: "string",
+      description: "Active goal id to evaluate."
+    },
+    json: {
+      type: "boolean",
+      description: "Keep deterministic JSON output for agents.",
+      default: false
+    }
+  },
+  run({ data }) {
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    recomputeWorkflowStatus(contract, ledger);
+    writeJson(evidencePath, { contract, ledger });
+    syncAcceptanceMarkdown(acceptancePath, contract, ledger);
+    refreshManifest(root);
+    return ok({
+      goal_id: contract.goal_id,
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    });
+  }
+});
+
+export async function runEvaluateCommand(rawArgs, { loadPair }) {
+  return runJsonCommand(evaluateCommand, rawArgs, { loadPair });
 }

@@ -448,7 +448,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-12T08:14:59.966Z",
+    "updated_at": "2026-06-12T09:18:35.935Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
