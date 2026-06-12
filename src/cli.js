@@ -53,6 +53,7 @@ import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cl
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runProfileCheckCommand, runProfileShowCommand } from "./cli/commands/profile.js";
+import { runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
@@ -1160,28 +1161,7 @@ export async function main(args) {
   }
 
   if (command === "report") {
-    const { contract, ledger, root } = loadPair(args);
-    const output = path.resolve(argValue(args, "--output") || pathsForGoal(root, contract.goal_id).reportPath);
-    fs.mkdirSync(path.dirname(output), { recursive: true });
-    fs.writeFileSync(output, renderReportWithArchitecture(root, contract, ledger));
-    refreshManifest(root);
-    const recommendation = nextRecommendation(contract, ledger);
-    printJson(ok(
-      {
-        goal_id: contract.goal_id,
-        report_path: output,
-        workflow_status: ledger.status,
-        current_gap: currentGap(contract, ledger),
-        completion: completionAnswer(contract, ledger),
-        intervention: intervention(contract, ledger),
-        evidence_health: evidenceHealth(contract, ledger),
-        architecture: architectureState(root, contract.goal_id),
-        next_recommendation: recommendation
-      },
-      [{ kind: "acceptance_report", path: output }],
-      [],
-      recommendation.actions
-    ));
+    printJson(await runReportCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 

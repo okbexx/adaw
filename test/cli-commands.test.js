@@ -8,6 +8,7 @@ import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileShowCommand } from "../src/cli/commands/profile.js";
+import { runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
 import { buildEvidenceLedger, writeJson } from "../src/core.js";
 
@@ -168,4 +169,27 @@ test("status command module includes criteria and completion state", async () =>
   assert.equal(status.data.criteria.length, 1);
   assert.equal(status.data.criteria[0].id, "AC-1");
   assert.equal(status.next_actions.some((action) => /AC-1/.test(action)), true);
+});
+
+test("report command module renders a report artifact", async () => {
+  const root = tempRoot();
+  const outputPath = path.join(root, "report.md");
+  const contract = {
+    goal_id: "module-goal",
+    goal: "Ship module reporting",
+    criteria: [],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = { status: "complete", criteria: {}, capability_profile: { items: [], evidence: [] } };
+
+  const report = await runReportCommand(["--output", outputPath, "--json"], {
+    loadPair: () => ({ contract, ledger, root })
+  });
+  assert.equal(report.ok, true);
+  assert.equal(report.data.goal_id, "module-goal");
+  assert.equal(report.data.report_path, outputPath);
+  assert.equal(report.data.completion.complete, true);
+  assert.equal(report.data.evidence_health.status, "clear");
+  assert.equal(report.artifacts[0].kind, "acceptance_report");
+  assert.match(fs.readFileSync(outputPath, "utf8"), /## Decision Summary/);
 });
