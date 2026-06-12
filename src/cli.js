@@ -50,6 +50,7 @@ import { packagePath } from "./package-root.js";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
+import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { runChangesCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runReportCommand } from "./cli/commands/reporting.js";
@@ -238,33 +239,6 @@ function resolveRoot(args) {
 
 function relativeTo(root, filePath) {
   return path.relative(root, filePath) || ".";
-}
-
-function parseEvidenceSource(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  if (raw.startsWith("{")) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return { type: "reference", label: raw };
-    }
-  }
-  return { type: "reference", label: raw };
-}
-
-function evidenceSourcesFromArgs(args) {
-  const sources = argValues(args, "--source").map((source) => parseEvidenceSource(source)).filter(Boolean);
-  for (const command of argValues(args, "--source-command")) {
-    sources.push({ type: "command", label: command, command });
-  }
-  for (const sourcePath of argValues(args, "--source-path")) {
-    sources.push({ type: "artifact", label: sourcePath, path: sourcePath });
-  }
-  for (const url of argValues(args, "--source-url")) {
-    sources.push({ type: "url", label: url, url });
-  }
-  return sources;
 }
 
 function brainstormPaths(root, brainstormId) {
@@ -982,36 +956,7 @@ export async function main(args) {
   }
 
   if (command === "evidence" && args[1] === "add") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    const criterionId = argValue(args, "--criterion");
-    if (!criterionId) throw new Error("--criterion is required");
-    const sources = evidenceSourcesFromArgs(args);
-    const evidence = {
-      kind: argValue(args, "--kind", "manual"),
-      basis: argValue(args, "--basis"),
-      summary: argValue(args, "--summary", ""),
-      result: argValue(args, "--result", "passing"),
-      confidence: argValue(args, "--confidence"),
-      path: argValue(args, "--path"),
-      sources,
-      reviewability: argValue(args, "--reviewability"),
-      limitations: argValue(args, "--limitations")
-    };
-    if (!evidence.summary) throw new Error("--summary is required");
-    addEvidence(contract, ledger, criterionId, evidence);
-    writeJson(evidencePath, { contract, ledger });
-    syncAcceptanceMarkdown(acceptancePath, contract, ledger);
-    refreshManifest(root);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      criterion: criterionId,
-      criterion_status: ledger.criteria[criterionId].status,
-      confidence: ledger.criteria[criterionId].confidence,
-      latest_evidence: criterionStatusRows(contract, ledger).find((row) => row.id === criterionId)?.latest_evidence,
-      gate: ledger.criteria[criterionId].evidence.at(-1)?.gate,
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
-    }));
+    printJson(await runEvidenceAddCommand(args.slice(2), { loadPair: () => loadPair(args) }));
     return;
   }
 

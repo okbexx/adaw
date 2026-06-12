@@ -7,6 +7,7 @@ import { test } from "vitest";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
+import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
 import { runChangesCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runReportCommand } from "../src/cli/commands/reporting.js";
@@ -373,4 +374,57 @@ test("criterion update command module clears stale evidence after a user revisio
   const written = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
   assert.equal(written.ledger.criteria["AC-1"].status, "unknown");
   assert.equal(written.ledger.criteria["AC-1"].evidence.length, 0);
+});
+
+test("evidence add command module records flexible reviewable sources", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    protocol_version: "opennori/v1",
+    goal_id: "module-goal",
+    goal: "Record reviewable evidence",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can review evidence for the completed behavior.",
+        measurement: "Open the evidence report.",
+        threshold: "I can see reviewable evidence."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+  fs.mkdirSync(path.dirname(acceptancePath), { recursive: true });
+  fs.writeFileSync(acceptancePath, "# Module goal\n");
+  writeJson(evidencePath, { contract, ledger });
+
+  const added = await runEvidenceAddCommand([
+    "--criterion", "AC-1",
+    "--kind", "agent-observation",
+    "--basis", "tool-observation",
+    "--summary", "The user-visible workflow can be reviewed.",
+    "--source", "{\"type\":\"command\",\"label\":\"npm run check\",\"command\":\"npm run check\",\"outcome\":\"passed\"}",
+    "--source", "screenshots/reviewable-flow.png",
+    "--source-command", "npm run check",
+    "--source-path", "src/cli.js",
+    "--source-url", "https://example.com/review",
+    "--reviewability", "User can rerun the command or open the artifact.",
+    "--limitations", "Browser-specific visual review was not performed.",
+    "--confidence", "verified",
+    "--result", "passing",
+    "--json"
+  ], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+  assert.equal(added.ok, true);
+  assert.equal(added.data.criterion_status, "passing");
+  assert.equal(added.data.latest_evidence.sources.length, 5);
+  assert.equal(added.data.latest_evidence.sources[0].command, "npm run check");
+  assert.equal(added.data.latest_evidence.sources[1].label, "screenshots/reviewable-flow.png");
+  assert.equal(added.data.latest_evidence.sources[2].type, "command");
+  assert.equal(added.data.latest_evidence.sources[3].type, "artifact");
+  assert.equal(added.data.latest_evidence.sources[4].type, "url");
+  assert.equal(JSON.parse(fs.readFileSync(evidencePath, "utf8")).ledger.criteria["AC-1"].status, "passing");
 });
