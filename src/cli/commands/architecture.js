@@ -1,7 +1,8 @@
 import path from "node:path";
-import { defineCommand, runCommand } from "citty";
+import { defineCommand } from "citty";
 import { architectureProfiles, architectureState, readArchitectureBaseline } from "../../architecture.js";
 import { ok } from "../../core.js";
+import { runJsonCommand } from "../runtime.js";
 
 const rootArg = {
   type: "string",
@@ -59,11 +60,9 @@ export const architectureShowCommand = defineCommand({
 });
 
 export async function runArchitectureProfilesCommand(rawArgs) {
-  const { result } = await runCommand(architectureProfilesCommand, { rawArgs });
-  return result;
+  return runJsonCommand(architectureProfilesCommand, rawArgs);
 }
 
 export async function runArchitectureShowCommand(rawArgs) {
-  const { result } = await runCommand(architectureShowCommand, { rawArgs });
-  return result;
+  return runJsonCommand(architectureShowCommand, rawArgs);
 }
