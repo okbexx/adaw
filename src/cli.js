@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
-import { applyUninstallActions, applyUpgradeActions, autoProfileChecks, bootstrap, buildContextExport, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, doctor, installActions, recordAutoProfileChecks, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
+import { applyUninstallActions, applyUpgradeActions, autoProfileChecks, bootstrap, buildContextExport, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, recordAutoProfileChecks, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
 import { auditAcceptanceQuality, briefFromBrainstorm, briefFromGoal, buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "./acceptance.js";
 import {
   addEvidence,
@@ -49,6 +49,7 @@ import {
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
+import { runDoctorCommand } from "./cli/commands/health.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
@@ -378,13 +379,7 @@ export async function main(args) {
   }
 
   if (command === "doctor") {
-    const root = resolveRoot(args);
-    printJson(ok({
-      name: "opennori",
-      root,
-      ...doctor(root),
-      side_effect: "none"
-    }));
+    printJson(await runDoctorCommand(args.slice(1)));
     return;
   }
 
