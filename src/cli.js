@@ -49,7 +49,7 @@ import {
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
-import { runDoctorCommand } from "./cli/commands/health.js";
+import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
@@ -577,18 +577,7 @@ export async function main(args) {
   }
 
   if (command === "list") {
-    const root = resolveRoot(args);
-    const pairs = findActivePairs(root).map((pair) => {
-      const payload = readJson(pair.evidencePath);
-      return {
-        goal_id: pair.goalId,
-        status: payload.ledger?.status || "unknown",
-        current_gap: currentGap(payload.contract, payload.ledger),
-        acceptance_path: pair.acceptancePath,
-        evidence_path: pair.evidencePath
-      };
-    });
-    printJson(ok({ root, active_goals: pairs }));
+    printJson(await runListCommand(args.slice(1)));
     return;
   }
 
