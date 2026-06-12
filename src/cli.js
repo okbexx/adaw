@@ -29,7 +29,6 @@ import {
   validateContract,
   writeJson
 } from "./core.js";
-import { SKILL_PACK, skillMarkdown } from "./skills.js";
 import {
   ARCHITECTURE_CHALLENGE_SCHEMA_VERSION,
   BUILD_VS_BUY_SCHEMA_VERSION,
@@ -49,6 +48,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
+import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
 function printJson(payload) {
@@ -1352,24 +1352,9 @@ export async function main(args) {
   }
 
   if (command === "skill" && args[1] === "export") {
-    if (hasFlag(args, "--pack")) {
-      printJson(ok({
-        schema_version: "opennori/skill-pack-v1",
-        skills: SKILL_PACK.map((skill) => ({
-          name: skill.name,
-          skill_md: skillMarkdown(skill)
-        }))
-      }));
-      return;
-    }
-    const skillName = argValue(args, "--name", "nori");
-    const skill = SKILL_PACK.find((entry) => entry.name === skillName);
-    if (!skill) {
-      printJson(fail("unknown_skill", `Unknown OpenNori Skill: ${skillName}`, `Use one of: ${SKILL_PACK.map((entry) => entry.name).join(", ")}`));
-      process.exitCode = 1;
-      return;
-    }
-    printJson(ok({ skill_name: skill.name, skill_md: skillMarkdown(skill) }));
+    const payload = await runSkillExportCommand(args.slice(2));
+    printJson(payload);
+    if (!payload.ok) process.exitCode = 1;
     return;
   }
 

@@ -655,6 +655,11 @@ test("skill export gives agents the full OpenNori command loop", () => {
   assert.match(payload.data.skill_md, /Do not make the user remember CLI syntax/);
   assert.doesNotMatch(payload.data.skill_md, /process steps/);
 
+  const named = run(["skill", "export", "--name=nori-evidence", "--json"]);
+  const evidenceAsset = fs.readFileSync(path.join(ROOT, "skills", "nori-evidence", "SKILL.md"), "utf8");
+  assert.equal(named.data.skill_name, "nori-evidence");
+  assert.equal(named.data.skill_md, evidenceAsset);
+
   const pack = run(["skill", "export", "--pack", "--json"]);
   const names = pack.data.skills.map((skill) => skill.name);
   assert.deepEqual(names, [
