@@ -48,6 +48,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
+import { runNextCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -1114,14 +1115,7 @@ export async function main(args) {
   }
 
   if (command === "next") {
-    const { contract, ledger } = loadPair(args);
-    const recommendation = nextRecommendation(contract, ledger);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      current_gap: currentGap(contract, ledger),
-      complete: currentGap(contract, ledger) === null,
-      next_recommendation: recommendation
-    }, [], [], recommendation.actions));
+    printJson(await runNextCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
+import { runNextCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -92,4 +93,28 @@ test("profile show command module reads the active goal via injected loader", as
   assert.equal(profile.data.goal_id, "module-goal");
   assert.equal(profile.data.workflow_status, "active");
   assert.equal(profile.data.profile.items.length, 0);
+});
+
+test("next command module returns the current acceptance gap and actions", async () => {
+  const contract = {
+    goal_id: "module-goal",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can see the current acceptance gap."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = { status: "active", criteria: { "AC-1": { status: "unknown", evidence: [] } } };
+
+  const next = await runNextCommand(["--json"], {
+    loadPair: () => ({ contract, ledger })
+  });
+  assert.equal(next.ok, true);
+  assert.equal(next.data.goal_id, "module-goal");
+  assert.equal(next.data.current_gap.id, "AC-1");
+  assert.equal(next.data.complete, false);
+  assert.equal(next.data.next_recommendation.status, "work-on-current-gap");
+  assert.equal(next.next_actions.some((action) => /AC-1/.test(action)), true);
 });
