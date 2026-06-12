@@ -6,6 +6,7 @@ import { test } from "vitest";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
 import { buildEvidenceLedger, writeJson } from "../src/core.js";
 
@@ -74,4 +75,21 @@ test("context export command module can write a review artifact", async () => {
   assert.equal(exported.data.output_path, outputPath);
   assert.equal(exported.artifacts[0].kind, "opennori_context_export");
   assert.equal(JSON.parse(fs.readFileSync(outputPath, "utf8")).goal_id, "module-goal");
+});
+
+test("profile show command module reads the active goal via injected loader", async () => {
+  const contract = {
+    goal_id: "module-goal",
+    criteria: [],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = { status: "active", criteria: {}, capability_profile: { items: [], evidence: [] } };
+
+  const profile = await runProfileShowCommand(["--json"], {
+    loadPair: () => ({ contract, ledger })
+  });
+  assert.equal(profile.ok, true);
+  assert.equal(profile.data.goal_id, "module-goal");
+  assert.equal(profile.data.workflow_status, "active");
+  assert.equal(profile.data.profile.items.length, 0);
 });

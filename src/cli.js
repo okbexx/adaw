@@ -51,6 +51,7 @@ import { packagePath } from "./package-root.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
+import { runProfileShowCommand } from "./cli/commands/profile.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
@@ -1081,14 +1082,7 @@ export async function main(args) {
   }
 
   if (command === "profile" && args[1] === "show") {
-    const { contract, ledger } = loadPair(args);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      profile: ledger.capability_profile || { items: [], evidence: [] },
-      compliance: profileCompliance(ledger),
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
-    }));
+    printJson(await runProfileShowCommand(args.slice(2), { loadPair: () => loadPair(args) }));
     return;
   }
 
