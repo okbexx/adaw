@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
+import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
@@ -106,6 +106,40 @@ test("discover command module finds acceptance gaps without creating an active g
   assert.equal(gapIds.includes("missing-validation-rule"), true);
   assert.equal(discovery.artifacts.some((artifact) => artifact.kind === "acceptance_discovery"), true);
   assert.match(fs.readFileSync(discovery.data.markdown_path, "utf8"), /not a Nori Contract/);
+});
+
+test("draft command module creates active Nori Contracts from goals and brainstorm candidates", async () => {
+  const root = tempRoot();
+  const draft = await runDraftCommand([
+    "--root", root,
+    "--goal", "Ship an OpenNori-backed task",
+    "--goal-id", "module-goal",
+    "--json"
+  ]);
+  assert.equal(draft.ok, true);
+  assert.equal(draft.data.goal_id, "module-goal");
+  assert.equal(draft.data.acceptance_basis.status, "draft");
+  assert.equal(draft.data.current_gap.id, "ACCEPTANCE-BASIS");
+  assert.equal(fs.existsSync(draft.data.acceptance_path), true);
+  assert.equal(fs.existsSync(draft.data.evidence_path), true);
+  assert.equal(draft.artifacts.some((artifact) => artifact.kind === "draft_acceptance_contract"), true);
+
+  const brainstorm = await runBrainstormCommand([
+    "--root", root,
+    "--idea", "我想让 OpenNori 支持头脑风暴",
+    "--id", "module-brainstorm",
+    "--json"
+  ]);
+  const fromBrainstorm = await runDraftCommand([
+    "--root", root,
+    "--from-brainstorm", brainstorm.data.brainstorm_id,
+    "--candidate", "A",
+    "--json"
+  ]);
+  assert.equal(fromBrainstorm.ok, true);
+  assert.equal(fromBrainstorm.data.acceptance_basis.status, "draft");
+  assert.equal(fromBrainstorm.data.current_gap.id, "ACCEPTANCE-BASIS");
+  assert.equal(fromBrainstorm.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
 });
 
 test("check command module reports acceptance architecture and evidence health", async () => {

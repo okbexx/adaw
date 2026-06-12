@@ -1,16 +1,22 @@
 import { defineCommand } from "citty";
 import fs from "node:fs";
 import path from "node:path";
-import { buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "../../acceptance.js";
+import { briefFromBrainstorm, briefFromGoal, buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "../../acceptance.js";
 import {
+  buildContractFromBrief,
+  buildEvidenceLedger,
   completionAnswer,
   criterionStatusRows,
   currentGap,
   evidenceHealth,
+  fail,
   intervention,
   nextRecommendation,
   ok,
+  pathsForGoal,
+  readJson,
   recomputeWorkflowStatus,
+  renderAcceptanceMarkdown,
   syncAcceptanceMarkdown,
   validateContract,
   writeJson
@@ -156,6 +162,86 @@ export const discoverCommand = defineCommand({
 
 export async function runDiscoverCommand(rawArgs) {
   return runJsonCommand(discoverCommand, rawArgs);
+}
+
+export const draftCommand = defineCommand({
+  meta: {
+    name: "draft",
+    description: "Create a draft Nori Contract from a goal or selected brainstorm candidate."
+  },
+  args: {
+    root: {
+      type: "string",
+      description: "Project root.",
+      default: process.cwd()
+    },
+    goal: {
+      type: "string",
+      description: "Natural language goal to draft."
+    },
+    goalId: {
+      type: "string",
+      description: "Optional stable goal id."
+    },
+    fromBrainstorm: {
+      type: "string",
+      description: "Brainstorm id to draft from."
+    },
+    candidate: {
+      type: "string",
+      description: "Brainstorm candidate id."
+    },
+    json: {
+      type: "boolean",
+      description: "Keep deterministic JSON output for agents.",
+      default: false
+    }
+  },
+  run({ args }) {
+    const root = path.resolve(String(args.root || process.cwd()));
+    const brainstormId = args.fromBrainstorm;
+    let brief;
+    if (brainstormId) {
+      const candidateId = args.candidate;
+      if (!candidateId) throw new Error("--candidate is required with --from-brainstorm");
+      brief = briefFromBrainstorm(readJson(brainstormPaths(root, brainstormId).jsonPath), candidateId);
+    } else {
+      const goal = String(args.goal || "").trim();
+      if (!goal) throw new Error("--goal is required");
+      brief = briefFromGoal(goal, args.goalId);
+    }
+    const contract = buildContractFromBrief(brief);
+    const ledger = buildEvidenceLedger(contract);
+    const issues = validateContract(contract, ledger);
+    if (issues.length > 0) {
+      return { ...fail("invalid_acceptance", "Draft does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
+    }
+    const paths = pathsForGoal(root, contract.goal_id);
+    fs.mkdirSync(path.dirname(paths.acceptancePath), { recursive: true });
+    fs.writeFileSync(paths.acceptancePath, renderAcceptanceMarkdown(contract, ledger));
+    writeJson(paths.evidencePath, { contract, ledger });
+    refreshManifest(root);
+    return ok(
+      {
+        goal_id: contract.goal_id,
+        acceptance_basis: contract.acceptance_basis,
+        acceptance_path: paths.acceptancePath,
+        evidence_path: paths.evidencePath,
+        criteria: contract.criteria,
+        current_gap: currentGap(contract, ledger)
+      },
+      [
+        { kind: "draft_acceptance_contract", path: paths.acceptancePath },
+        { kind: "evidence_ledger", path: paths.evidencePath }
+      ],
+      [],
+      ["Ask the user to approve or revise these acceptance criteria before implementation."]
+    );
+  }
+});
+
+export async function runDraftCommand(rawArgs) {
+  return runJsonCommand(draftCommand, rawArgs);
 }
 
 export const nextCommand = defineCommand({
