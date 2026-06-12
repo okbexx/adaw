@@ -48,7 +48,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
-import { runNextCommand } from "./cli/commands/acceptance.js";
+import { runNextCommand, runResumeCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -1097,20 +1097,7 @@ export async function main(args) {
   }
 
   if (command === "resume") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    const recommendation = nextRecommendation(contract, ledger);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger),
-      completion: completionAnswer(contract, ledger),
-      intervention: intervention(contract, ledger),
-      evidence_health: evidenceHealth(contract, ledger),
-      architecture: architectureState(root, contract.goal_id),
-      next_recommendation: recommendation,
-      acceptance_path: acceptancePath,
-      evidence_path: evidencePath
-    }, [], [], recommendation.actions));
+    printJson(await runResumeCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 

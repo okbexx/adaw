@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runNextCommand } from "../src/cli/commands/acceptance.js";
+import { runNextCommand, runResumeCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -117,4 +117,27 @@ test("next command module returns the current acceptance gap and actions", async
   assert.equal(next.data.complete, false);
   assert.equal(next.data.next_recommendation.status, "work-on-current-gap");
   assert.equal(next.next_actions.some((action) => /AC-1/.test(action)), true);
+});
+
+test("resume command module includes completion, health, architecture, and next actions", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    goal_id: "module-goal",
+    criteria: [],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = { status: "complete", criteria: {}, capability_profile: { items: [], evidence: [] } };
+
+  const resume = await runResumeCommand(["--json"], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+  assert.equal(resume.ok, true);
+  assert.equal(resume.data.goal_id, "module-goal");
+  assert.equal(resume.data.completion.complete, true);
+  assert.equal(resume.data.evidence_health.status, "clear");
+  assert.equal(resume.data.architecture.decision, "missing");
+  assert.equal(resume.data.acceptance_path, acceptancePath);
+  assert.equal(resume.next_actions.some((action) => /next human-facing project goal/.test(action)), true);
 });
