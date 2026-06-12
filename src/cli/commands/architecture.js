@@ -5,15 +5,18 @@ import { defineCommand } from "citty";
 import {
   ARCHITECTURE_CHALLENGE_SCHEMA_VERSION,
   BUILD_VS_BUY_SCHEMA_VERSION,
+  architectureBaselinePaths,
   architectureChallengePath,
   architectureProfiles,
   architectureState,
+  buildArchitectureBaseline,
   buildVsBuyPath,
   normalizeArchitectureProfile,
   readArchitectureBaseline,
   renderArchitectureChallengeMarkdown,
   renderBuildVsBuyMarkdown,
   validateArchitectureProfile,
+  writeArchitectureBaseline,
   writeArchitectureProfile
 } from "../../architecture.js";
 import { fail, ok, readJson, slugify, writeJson } from "../../core.js";
@@ -36,6 +39,10 @@ function hasRawFlag(rawArgs, name) {
   const rawName = name.startsWith("--") ? name : `--${name}`;
   return parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens
     .some((item) => item.kind === "option" && item.rawName === rawName);
+}
+
+function relativeTo(root, filePath) {
+  return path.relative(root, filePath) || ".";
 }
 
 export const architectureProfilesCommand = defineCommand({
@@ -108,6 +115,85 @@ export const architectureProfileCommand = defineCommand({
       ],
       [],
       ["Preview an Architecture Baseline with this profile, then ask the user to confirm before implementation."]
+    );
+  }
+});
+
+export const architectureBaselineCommand = defineCommand({
+  meta: {
+    name: "baseline",
+    description: "Preview or confirm an Architecture Baseline for a goal."
+  },
+  args: {
+    root: rootArg,
+    goal: {
+      type: "string",
+      description: "Natural language goal the baseline applies to."
+    },
+    profile: {
+      type: "string",
+      description: "Architecture Profile id.",
+      default: "typescript-agent-state-cli"
+    },
+    goalId: {
+      type: "string",
+      description: "Optional stable goal id."
+    },
+    summary: {
+      type: "string",
+      description: "Optional baseline summary override."
+    },
+    confirm: {
+      type: "boolean",
+      description: "Persist the baseline after user confirmation.",
+      default: false
+    },
+    json: jsonArg
+  },
+  run({ args }) {
+    const root = path.resolve(String(args.root || process.cwd()));
+    const goal = String(args.goal || "").trim();
+    const profileId = args.profile || "typescript-agent-state-cli";
+    const goalId = args.goalId || slugify(goal || profileId);
+    const confirmed = Boolean(args.confirm);
+    if (!goal) throw new Error("--goal is required");
+    const baseline = buildArchitectureBaseline(root, {
+      profileId,
+      goal,
+      goalId,
+      summary: args.summary,
+      accepted: confirmed
+    });
+    const paths = architectureBaselinePaths(root);
+    if (confirmed) {
+      writeArchitectureBaseline(root, baseline);
+      refreshManifest(root);
+    }
+    return ok(
+      {
+        root,
+        confirmed,
+        baseline,
+        architecture: confirmed ? architectureState(root, goalId) : {
+          ...architectureState(root, goalId),
+          preview: {
+            baseline_path: relativeTo(root, paths.jsonPath),
+            markdown_path: relativeTo(root, paths.markdownPath),
+            side_effect: "none"
+          }
+        },
+        side_effect: confirmed ? "write" : "none"
+      },
+      confirmed
+        ? [
+            { kind: "architecture_baseline", path: paths.jsonPath },
+            { kind: "architecture_baseline_markdown", path: paths.markdownPath }
+          ]
+        : [],
+      [],
+      confirmed
+        ? ["Implement Product AC under this Architecture Baseline. Raise an Architecture Challenge if project evidence conflicts with it."]
+        : ["Show this Architecture Baseline to the user and rerun with --confirm only after they accept it."]
     );
   }
 });
@@ -344,6 +430,10 @@ export async function runArchitectureProfilesCommand(rawArgs) {
 
 export async function runArchitectureProfileCommand(rawArgs) {
   return runJsonCommand(architectureProfileCommand, rawArgs);
+}
+
+export async function runArchitectureBaselineCommand(rawArgs) {
+  return runJsonCommand(architectureBaselineCommand, rawArgs);
 }
 
 export async function runArchitectureShowCommand(rawArgs) {

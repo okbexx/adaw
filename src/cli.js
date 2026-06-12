@@ -28,17 +28,10 @@ import {
   validateContract,
   writeJson
 } from "./core.js";
-import {
-  architectureBaselinePaths,
-  architectureState,
-  buildArchitectureBaseline,
-  readArchitectureBaseline,
-  renderReportWithArchitecture,
-  writeArchitectureBaseline,
-} from "./architecture.js";
+import { readArchitectureBaseline, renderReportWithArchitecture } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
+import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -333,50 +326,7 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "baseline") {
-    const root = resolveRoot(args);
-    const goal = String(argValue(args, "--goal", "")).trim();
-    const profileId = argValue(args, "--profile", "typescript-agent-state-cli");
-    const goalId = argValue(args, "--goal-id") || slugify(goal || profileId);
-    const confirmed = hasFlag(args, "--confirm");
-    if (!goal) throw new Error("--goal is required");
-    const baseline = buildArchitectureBaseline(root, {
-      profileId,
-      goal,
-      goalId,
-      summary: argValue(args, "--summary"),
-      accepted: confirmed
-    });
-    const paths = architectureBaselinePaths(root);
-    if (confirmed) {
-      writeArchitectureBaseline(root, baseline);
-      refreshManifest(root);
-    }
-    printJson(ok(
-      {
-        root,
-        confirmed,
-        baseline,
-        architecture: confirmed ? architectureState(root, goalId) : {
-          ...architectureState(root, goalId),
-          preview: {
-            baseline_path: relativeTo(root, paths.jsonPath),
-            markdown_path: relativeTo(root, paths.markdownPath),
-            side_effect: "none"
-          }
-        },
-        side_effect: confirmed ? "write" : "none"
-      },
-      confirmed
-        ? [
-            { kind: "architecture_baseline", path: paths.jsonPath },
-            { kind: "architecture_baseline_markdown", path: paths.markdownPath }
-          ]
-        : [],
-      [],
-      confirmed
-        ? ["Implement Product AC under this Architecture Baseline. Raise an Architecture Challenge if project evidence conflicts with it."]
-        : ["Show this Architecture Baseline to the user and rerun with --confirm only after they accept it."]
-    ));
+    printJson(await runArchitectureBaselineCommand(args.slice(2)));
     return;
   }
 

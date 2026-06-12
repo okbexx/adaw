@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
+import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -199,6 +199,41 @@ test("architecture profile command module installs and validates project profile
   assert.equal(invalid.ok, false);
   assert.equal(invalid.error.type, "invalid_architecture_profile");
   assert.equal(invalid.issues.some((issue) => issue.path === "summary"), true);
+});
+
+test("architecture baseline command module previews before confirmed write", async () => {
+  const root = tempRoot();
+  const baselinePath = path.join(root, ".opennori", "architecture", "baseline.json");
+
+  const preview = await runArchitectureBaselineCommand([
+    "--root", root,
+    "--goal", "Ship a reviewable CLI architecture",
+    "--goal-id", "module-goal",
+    "--json"
+  ]);
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.confirmed, false);
+  assert.equal(preview.data.side_effect, "none");
+  assert.equal(preview.data.baseline.status, "draft");
+  assert.equal(preview.data.baseline.goal_id, "module-goal");
+  assert.equal(preview.data.architecture.preview.baseline_path, ".opennori/architecture/baseline.json");
+  assert.equal(fs.existsSync(baselinePath), false);
+
+  const confirmed = await runArchitectureBaselineCommand([
+    "--root", root,
+    "--goal", "Ship a reviewable CLI architecture",
+    "--goal-id", "module-goal",
+    "--confirm",
+    "--json"
+  ]);
+  assert.equal(confirmed.ok, true);
+  assert.equal(confirmed.data.confirmed, true);
+  assert.equal(confirmed.data.side_effect, "write");
+  assert.equal(confirmed.data.baseline.status, "active");
+  assert.equal(confirmed.data.architecture.decision, "valid");
+  assert.equal(fs.existsSync(baselinePath), true);
+  assert.equal(confirmed.artifacts.some((artifact) => artifact.kind === "architecture_baseline"), true);
+  assert.equal(confirmed.next_actions.some((action) => /Product AC/.test(action)), true);
 });
 
 test("context export command module can write a review artifact", async () => {
