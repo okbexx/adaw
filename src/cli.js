@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
-import { applyUninstallActions, applyUpgradeActions, autoProfileChecks, bootstrap, buildContextExport, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, recordAutoProfileChecks, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
+import { applyUninstallActions, applyUpgradeActions, autoProfileChecks, bootstrap, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, recordAutoProfileChecks, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
 import { auditAcceptanceQuality, briefFromBrainstorm, briefFromGoal, buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "./acceptance.js";
 import {
   addEvidence,
@@ -49,6 +49,7 @@ import {
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
+import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
@@ -1235,28 +1236,7 @@ export async function main(args) {
   }
 
   if (command === "context" && args[1] === "export") {
-    const root = resolveRoot(args);
-    const goal = argValue(args, "--goal");
-    const pairs = findActivePairs(root);
-    const pair = goal ? pairs.find((item) => item.goalId === goal) : pairs[0];
-    if (!pair) throw new Error(`No active OpenNori goal found under ${root}`);
-    if (!goal && pairs.length > 1) {
-      throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id>.");
-    }
-    const context = buildContextExport(root, pair);
-    const output = argValue(args, "--output");
-    if (output) {
-      const outputPath = path.resolve(output);
-      writeJson(outputPath, context);
-      printJson(ok(
-        { ...context, output_path: outputPath },
-        [{ kind: "opennori_context_export", path: outputPath }],
-        [],
-        context.next_recommendation.actions
-      ));
-      return;
-    }
-    printJson(ok(context, [], [], context.next_recommendation.actions));
+    printJson(await runContextExportCommand(args.slice(2)));
     return;
   }
 
