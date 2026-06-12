@@ -30,19 +30,15 @@ import {
 } from "./core.js";
 import {
   architectureBaselinePaths,
-  architectureProfiles,
   architectureState,
   buildArchitectureBaseline,
-  normalizeArchitectureProfile,
   readArchitectureBaseline,
   renderReportWithArchitecture,
-  validateArchitectureProfile,
   writeArchitectureBaseline,
-  writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
+import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -330,34 +326,9 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "profile") {
-    const root = resolveRoot(args);
-    const source = argValue(args, "--from") || argValue(args, "--path");
-    const force = hasFlag(args, "--force");
-    if (!source) throw new Error("--from is required");
-    const sourcePath = path.resolve(source);
-    const profile = normalizeArchitectureProfile(readJson(sourcePath), argValue(args, "--id"));
-    const issues = validateArchitectureProfile(profile);
-    if (issues.length > 0) {
-      printJson({ ...fail("invalid_architecture_profile", "Architecture Profile failed validation", "Add id, title, summary, principles, checks, and build_vs_buy_policy."), issues });
-      process.exitCode = 1;
-      return;
-    }
-    const target = writeArchitectureProfile(root, profile, { force });
-    refreshManifest(root);
-    printJson(ok(
-      {
-        root,
-        profile,
-        profile_path: target,
-        profiles: architectureProfiles(root),
-        side_effect: "write"
-      },
-      [
-        { kind: "architecture_profile", path: target }
-      ],
-      [],
-      ["Preview an Architecture Baseline with this profile, then ask the user to confirm before implementation."]
-    ));
+    const result = await runArchitectureProfileCommand(args.slice(2));
+    printJson(result);
+    if (!result.ok) process.exitCode = 1;
     return;
   }
 

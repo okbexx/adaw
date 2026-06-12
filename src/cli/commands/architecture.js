@@ -9,11 +9,14 @@ import {
   architectureProfiles,
   architectureState,
   buildVsBuyPath,
+  normalizeArchitectureProfile,
   readArchitectureBaseline,
   renderArchitectureChallengeMarkdown,
-  renderBuildVsBuyMarkdown
+  renderBuildVsBuyMarkdown,
+  validateArchitectureProfile,
+  writeArchitectureProfile
 } from "../../architecture.js";
-import { ok, slugify, writeJson } from "../../core.js";
+import { fail, ok, readJson, slugify, writeJson } from "../../core.js";
 import { refreshManifest } from "../../lifecycle.js";
 import { runJsonCommand } from "../runtime.js";
 
@@ -51,6 +54,61 @@ export const architectureProfilesCommand = defineCommand({
       profiles: architectureProfiles(root),
       side_effect: "none"
     });
+  }
+});
+
+export const architectureProfileCommand = defineCommand({
+  meta: {
+    name: "profile",
+    description: "Install a project Architecture Profile from a JSON file."
+  },
+  args: {
+    root: rootArg,
+    from: {
+      type: "string",
+      description: "Path to Architecture Profile JSON."
+    },
+    path: {
+      type: "string",
+      description: "Alias for --from."
+    },
+    id: {
+      type: "string",
+      description: "Optional profile id override."
+    },
+    force: {
+      type: "boolean",
+      description: "Overwrite an existing profile after review.",
+      default: false
+    },
+    json: jsonArg
+  },
+  run({ args }) {
+    const root = path.resolve(String(args.root || process.cwd()));
+    const source = args.from || args.path;
+    if (!source) throw new Error("--from is required");
+    const sourcePath = path.resolve(String(source));
+    const profile = normalizeArchitectureProfile(readJson(sourcePath), args.id);
+    const issues = validateArchitectureProfile(profile);
+    if (issues.length > 0) {
+      return { ...fail("invalid_architecture_profile", "Architecture Profile failed validation", "Add id, title, summary, principles, checks, and build_vs_buy_policy."), issues };
+    }
+    const target = writeArchitectureProfile(root, profile, { force: Boolean(args.force) });
+    refreshManifest(root);
+    return ok(
+      {
+        root,
+        profile,
+        profile_path: target,
+        profiles: architectureProfiles(root),
+        side_effect: "write"
+      },
+      [
+        { kind: "architecture_profile", path: target }
+      ],
+      [],
+      ["Preview an Architecture Baseline with this profile, then ask the user to confirm before implementation."]
+    );
   }
 });
 
@@ -282,6 +340,10 @@ export const architectureBuildVsBuyCommand = defineCommand({
 
 export async function runArchitectureProfilesCommand(rawArgs) {
   return runJsonCommand(architectureProfilesCommand, rawArgs);
+}
+
+export async function runArchitectureProfileCommand(rawArgs) {
+  return runJsonCommand(architectureProfileCommand, rawArgs);
 }
 
 export async function runArchitectureShowCommand(rawArgs) {

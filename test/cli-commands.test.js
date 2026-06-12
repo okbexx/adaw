@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
+import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -161,6 +161,44 @@ test("architecture challenge command module records baseline challenges", async 
   assert.equal(fs.existsSync(challenge.data.markdown_path), true);
   assert.equal(challenge.artifacts.some((artifact) => artifact.kind === "architecture_challenge"), true);
   assert.match(fs.readFileSync(challenge.data.markdown_path, "utf8"), /Do not silently replace/);
+});
+
+test("architecture profile command module installs and validates project profiles", async () => {
+  const root = tempRoot();
+  const sourcePath = path.join(root, "team-architecture.json");
+  writeJson(sourcePath, {
+    id: "module-team-cli",
+    title: "Module Team CLI",
+    summary: "Use the team command module shape.",
+    principles: ["team-command-module"],
+    checks: [
+      {
+        id: "TEAM-1",
+        audience: "maintainer",
+        statement: "Commands live in modules.",
+        review: "Inspect src/cli/commands."
+      }
+    ],
+    build_vs_buy_policy: {
+      order: ["current-project-dependency", "mature-open-source-library", "small-local-implementation"],
+      require_reason_when_self_building: true
+    }
+  });
+
+  const added = await runArchitectureProfileCommand(["--root", root, "--from", sourcePath, "--json"]);
+  assert.equal(added.ok, true);
+  assert.equal(added.data.profile.id, "module-team-cli");
+  assert.equal(added.data.profile_path, path.join(root, ".opennori", "architecture", "profiles", "module-team-cli.json"));
+  assert.equal(fs.existsSync(added.data.profile_path), true);
+  assert.equal(added.data.profiles[0].id, "module-team-cli");
+  assert.equal(added.artifacts.some((artifact) => artifact.kind === "architecture_profile"), true);
+
+  const invalidPath = path.join(root, "invalid-architecture.json");
+  writeJson(invalidPath, { id: "invalid-profile" });
+  const invalid = await runArchitectureProfileCommand(["--root", root, "--from", invalidPath, "--json"]);
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.error.type, "invalid_architecture_profile");
+  assert.equal(invalid.issues.some((issue) => issue.path === "summary"), true);
 });
 
 test("context export command module can write a review artifact", async () => {
