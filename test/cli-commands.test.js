@@ -5,13 +5,14 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
+import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
+import { buildArchitectureBaseline, writeArchitectureBaseline } from "../src/architecture.js";
 import { addEvidence, buildEvidenceLedger, writeJson } from "../src/core.js";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -129,6 +130,37 @@ test("architecture build-vs-buy command module records reviewable decisions", as
   assert.equal(decision.artifacts.some((artifact) => artifact.kind === "build_vs_buy_decision"), true);
   assert.equal(decision.warnings.some((warning) => warning.type === "build_vs_buy"), true);
   assert.match(fs.readFileSync(decision.data.markdown_path, "utf8"), /Build-vs-Buy Decision/);
+});
+
+test("architecture challenge command module records baseline challenges", async () => {
+  const root = tempRoot();
+  writeArchitectureBaseline(root, buildArchitectureBaseline(root, {
+    goal: "Keep architecture reviewable",
+    goalId: "module-goal",
+    accepted: true
+  }));
+
+  const challenge = await runArchitectureChallengeCommand([
+    "--root", root,
+    "--id", "module-challenge",
+    "--summary", "Current project already uses another CLI parser.",
+    "--evidence", "package.json contains a parser dependency.",
+    "--recommendation", "Ask the user whether to revise the baseline.",
+    "--no-user",
+    "--json"
+  ]);
+
+  assert.equal(challenge.ok, true);
+  assert.equal(challenge.data.challenge.schema_version, "opennori/architecture-challenge-v1");
+  assert.equal(challenge.data.challenge.id, "module-challenge");
+  assert.equal(challenge.data.challenge.needs_user, false);
+  assert.equal(challenge.data.challenge.baseline.goal_id, "module-goal");
+  assert.equal(challenge.data.architecture.decision, "challenged");
+  assert.equal(challenge.data.challenge_path, path.join(root, ".opennori", "architecture", "challenges", "module-challenge.json"));
+  assert.equal(fs.existsSync(challenge.data.challenge_path), true);
+  assert.equal(fs.existsSync(challenge.data.markdown_path), true);
+  assert.equal(challenge.artifacts.some((artifact) => artifact.kind === "architecture_challenge"), true);
+  assert.match(fs.readFileSync(challenge.data.markdown_path, "utf8"), /Do not silently replace/);
 });
 
 test("context export command module can write a review artifact", async () => {

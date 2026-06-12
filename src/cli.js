@@ -29,15 +29,12 @@ import {
   writeJson
 } from "./core.js";
 import {
-  ARCHITECTURE_CHALLENGE_SCHEMA_VERSION,
   architectureBaselinePaths,
-  architectureChallengePath,
   architectureProfiles,
   architectureState,
   buildArchitectureBaseline,
   normalizeArchitectureProfile,
   readArchitectureBaseline,
-  renderArchitectureChallengeMarkdown,
   renderReportWithArchitecture,
   validateArchitectureProfile,
   writeArchitectureBaseline,
@@ -45,7 +42,7 @@ import {
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
 import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
-import { runArchitectureBuildVsBuyCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
+import { runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -418,52 +415,7 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "challenge") {
-    const root = resolveRoot(args);
-    const baseline = readArchitectureBaseline(root);
-    if (!baseline) throw new Error("No Architecture Baseline found. Create one before challenging it.");
-    const summary = String(argValue(args, "--summary", "")).trim();
-    const evidence = String(argValue(args, "--evidence", "")).trim();
-    const recommendation = String(argValue(args, "--recommendation", "")).trim();
-    if (!summary) throw new Error("--summary is required");
-    if (!evidence) throw new Error("--evidence is required");
-    if (!recommendation) throw new Error("--recommendation is required");
-    const id = argValue(args, "--id") || slugify(summary.slice(0, 48));
-    const challenge = {
-      schema_version: ARCHITECTURE_CHALLENGE_SCHEMA_VERSION,
-      id,
-      status: "open",
-      created_at: new Date().toISOString(),
-      baseline: {
-        profile: baseline.profile,
-        goal_id: baseline.goal_id,
-        accepted_at: baseline.accepted_at
-      },
-      summary,
-      evidence,
-      recommendation,
-      needs_user: !hasFlag(args, "--no-user"),
-      rule: "Agent may challenge the Architecture Baseline with evidence, but must not silently replace it."
-    };
-    const paths = architectureChallengePath(root, id);
-    writeJson(paths.jsonPath, challenge);
-    fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
-    fs.writeFileSync(paths.markdownPath, renderArchitectureChallengeMarkdown(challenge));
-    refreshManifest(root);
-    printJson(ok(
-      {
-        root,
-        challenge,
-        architecture: architectureState(root, baseline.goal_id),
-        challenge_path: paths.jsonPath,
-        markdown_path: paths.markdownPath
-      },
-      [
-        { kind: "architecture_challenge", path: paths.jsonPath },
-        { kind: "architecture_challenge_markdown", path: paths.markdownPath }
-      ],
-      [],
-      ["Ask the user to confirm whether to revise or keep the current Architecture Baseline."]
-    ));
+    printJson(await runArchitectureChallengeCommand(args.slice(2)));
     return;
   }
 
