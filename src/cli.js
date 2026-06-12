@@ -51,7 +51,7 @@ import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNe
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runChangesCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
-import { runProfileCheckCommand, runProfileShowCommand } from "./cli/commands/profile.js";
+import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
@@ -940,50 +940,19 @@ export async function main(args) {
   }
 
   if (command === "profile" && args[1] === "add") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    const item = {
-      id: argValue(args, "--id"),
-      type: argValue(args, "--type", "constraint"),
-      name: argValue(args, "--name"),
-      strength: argValue(args, "--strength", "prefer"),
-      purpose: argValue(args, "--purpose", ""),
-      scope: argValue(args, "--scope", ""),
-      install_policy: argValue(args, "--install-policy", "ask_before_install")
-    };
-    addProfileItem(ledger, item);
-    recomputeWorkflowStatus(contract, ledger);
-    savePair(acceptancePath, evidencePath, contract, ledger);
-    refreshManifest(root);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      profile: ledger.capability_profile,
-      compliance: profileCompliance(ledger),
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
+    printJson(await runProfileAddCommand(args.slice(2), {
+      loadPair: () => loadPair(args),
+      savePair,
+      refreshManifest
     }));
     return;
   }
 
   if (command === "profile" && args[1] === "evidence") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    const itemId = argValue(args, "--item");
-    if (!itemId) throw new Error("--item is required");
-    const evidence = {
-      result: argValue(args, "--result", "satisfied"),
-      summary: argValue(args, "--summary", ""),
-      path: argValue(args, "--path")
-    };
-    if (!evidence.summary) throw new Error("--summary is required");
-    addProfileEvidence(ledger, itemId, evidence);
-    recomputeWorkflowStatus(contract, ledger);
-    savePair(acceptancePath, evidencePath, contract, ledger);
-    refreshManifest(root);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      item: itemId,
-      compliance: profileCompliance(ledger),
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
+    printJson(await runProfileEvidenceCommand(args.slice(2), {
+      loadPair: () => loadPair(args),
+      savePair,
+      refreshManifest
     }));
     return;
   }

@@ -1,7 +1,157 @@
 import { defineCommand } from "citty";
-import { currentGap, ok, profileCompliance, recomputeWorkflowStatus } from "../../core.js";
+import { addProfileEvidence, addProfileItem, currentGap, ok, profileCompliance, recomputeWorkflowStatus } from "../../core.js";
 import { autoProfileChecks, recordAutoProfileChecks } from "../../lifecycle.js";
 import { runJsonCommand } from "../runtime.js";
+
+export const profileAddCommand = defineCommand({
+  meta: {
+    name: "add",
+    description: "Add an execution preference to the Nori Profile for the active goal."
+  },
+  args: {
+    root: {
+      type: "string",
+      description: "Project root.",
+      default: process.cwd()
+    },
+    goal: {
+      type: "string",
+      description: "Active goal id to update."
+    },
+    id: {
+      type: "string",
+      description: "Optional stable profile item id."
+    },
+    type: {
+      type: "string",
+      description: "Preference type.",
+      default: "constraint"
+    },
+    name: {
+      type: "string",
+      description: "Skill, stack, or constraint name."
+    },
+    strength: {
+      type: "string",
+      description: "must, prefer, or avoid.",
+      default: "prefer"
+    },
+    purpose: {
+      type: "string",
+      description: "Why this preference matters.",
+      default: ""
+    },
+    scope: {
+      type: "string",
+      description: "Where this preference applies.",
+      default: ""
+    },
+    installPolicy: {
+      type: "string",
+      description: "Installation policy.",
+      default: "ask_before_install"
+    },
+    json: {
+      type: "boolean",
+      description: "Keep deterministic JSON output for agents.",
+      default: false
+    }
+  },
+  run({ args, data }) {
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const item = {
+      id: args.id,
+      type: args.type || "constraint",
+      name: args.name,
+      strength: args.strength || "prefer",
+      purpose: args.purpose || "",
+      scope: args.scope || "",
+      install_policy: args.installPolicy || "ask_before_install"
+    };
+    addProfileItem(ledger, item);
+    recomputeWorkflowStatus(contract, ledger);
+    data.savePair(acceptancePath, evidencePath, contract, ledger);
+    data.refreshManifest(root);
+    return ok({
+      goal_id: contract.goal_id,
+      profile: ledger.capability_profile,
+      compliance: profileCompliance(ledger),
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    });
+  }
+});
+
+export async function runProfileAddCommand(rawArgs, { loadPair, savePair, refreshManifest }) {
+  return runJsonCommand(profileAddCommand, rawArgs, { loadPair, savePair, refreshManifest });
+}
+
+export const profileEvidenceCommand = defineCommand({
+  meta: {
+    name: "evidence",
+    description: "Record evidence for a Nori Profile item."
+  },
+  args: {
+    root: {
+      type: "string",
+      description: "Project root.",
+      default: process.cwd()
+    },
+    goal: {
+      type: "string",
+      description: "Active goal id to update."
+    },
+    item: {
+      type: "string",
+      description: "Profile item id."
+    },
+    result: {
+      type: "string",
+      description: "satisfied, violated, or waived.",
+      default: "satisfied"
+    },
+    summary: {
+      type: "string",
+      description: "Evidence summary.",
+      default: ""
+    },
+    path: {
+      type: "string",
+      description: "Optional evidence path."
+    },
+    json: {
+      type: "boolean",
+      description: "Keep deterministic JSON output for agents.",
+      default: false
+    }
+  },
+  run({ args, data }) {
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const itemId = args.item;
+    if (!itemId) throw new Error("--item is required");
+    const evidence = {
+      result: args.result || "satisfied",
+      summary: args.summary || "",
+      path: args.path
+    };
+    if (!evidence.summary) throw new Error("--summary is required");
+    addProfileEvidence(ledger, itemId, evidence);
+    recomputeWorkflowStatus(contract, ledger);
+    data.savePair(acceptancePath, evidencePath, contract, ledger);
+    data.refreshManifest(root);
+    return ok({
+      goal_id: contract.goal_id,
+      item: itemId,
+      compliance: profileCompliance(ledger),
+      workflow_status: ledger.status,
+      current_gap: currentGap(contract, ledger)
+    });
+  }
+});
+
+export async function runProfileEvidenceCommand(rawArgs, { loadPair, savePair, refreshManifest }) {
+  return runJsonCommand(profileEvidenceCommand, rawArgs, { loadPair, savePair, refreshManifest });
+}
 
 export const profileShowCommand = defineCommand({
   meta: {
