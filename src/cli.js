@@ -48,6 +48,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
+import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
@@ -388,12 +389,7 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "profiles") {
-    const root = resolveRoot(args);
-    printJson(ok({
-      root,
-      profiles: architectureProfiles(root),
-      side_effect: "none"
-    }));
+    printJson(await runArchitectureProfilesCommand(args.slice(2)));
     return;
   }
 
@@ -478,13 +474,7 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "show") {
-    const root = resolveRoot(args);
-    printJson(ok({
-      root,
-      architecture: architectureState(root, argValue(args, "--goal")),
-      baseline: readArchitectureBaseline(root),
-      side_effect: "none"
-    }));
+    printJson(await runArchitectureShowCommand(args.slice(2)));
     return;
   }
 
