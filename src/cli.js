@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 import { applyUninstallActions, applyUpgradeActions, bootstrap, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
 import { auditAcceptanceQuality, briefFromBrainstorm, briefFromGoal, buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "./acceptance.js";
@@ -51,7 +50,7 @@ import { packagePath } from "./package-root.js";
 import { runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
-import { runDoctorCommand, runListCommand } from "./cli/commands/health.js";
+import { runChangesCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runProfileCheckCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
@@ -282,36 +281,6 @@ function discoveryPaths(root, discoveryId) {
     jsonPath: path.join(dir, `${discoveryId}.discovery.json`),
     markdownPath: path.join(dir, `${discoveryId}.discovery.md`)
   };
-}
-
-function classifyChangedFile(filePath) {
-  if (
-    filePath.startsWith(".opennori/") ||
-    filePath.startsWith("examples/")
-  ) {
-    return "acceptance";
-  }
-  return "implementation";
-}
-
-function gitChanges(root) {
-  const result = spawnSync("git", ["status", "--short", "--untracked-files=all"], {
-    cwd: root,
-    encoding: "utf8"
-  });
-  if (result.status !== 0) {
-    return { available: false, acceptance: [], implementation: [], raw_error: result.stderr.trim() };
-  }
-
-  const grouped = { available: true, acceptance: [], implementation: [] };
-  for (const line of result.stdout.split("\n")) {
-    if (!line.trim()) continue;
-    const status = line.slice(0, 2).trim() || "modified";
-    const rawPath = line.slice(3).trim();
-    const filePath = rawPath.includes(" -> ") ? rawPath.split(" -> ").at(-1) : rawPath;
-    grouped[classifyChangedFile(filePath)].push({ status, path: filePath });
-  }
-  return grouped;
 }
 
 function savePair(acceptancePath, evidencePath, contract, ledger) {
@@ -1162,20 +1131,7 @@ export async function main(args) {
   }
 
   if (command === "changes") {
-    const root = resolveRoot(args);
-    const pairs = findActivePairs(root).map((pair) => {
-      const payload = readJson(pair.evidencePath);
-      return {
-        goal_id: pair.goalId,
-        workflow_status: payload.ledger?.status || "unknown",
-        current_gap: currentGap(payload.contract, payload.ledger)
-      };
-    });
-    printJson(ok({
-      root,
-      active_goals: pairs,
-      changed_files: gitChanges(root)
-    }));
+    printJson(await runChangesCommand(args.slice(1)));
     return;
   }
 

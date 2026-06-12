@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -6,7 +7,7 @@ import { test } from "vitest";
 import { runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
-import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runChangesCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
@@ -225,4 +226,19 @@ test("evaluate command module recomputes and writes workflow state", async () =>
   assert.equal(evaluated.data.current_gap, null);
   assert.equal(JSON.parse(fs.readFileSync(evidencePath, "utf8")).ledger.status, "complete");
   assert.match(fs.readFileSync(acceptancePath, "utf8"), /\| AC-1 .* passing \|/);
+});
+
+test("changes command module groups acceptance and implementation files", async () => {
+  const root = tempRoot();
+  spawnSync("git", ["init"], { cwd: root, encoding: "utf8" });
+  writeActiveGoal(root);
+  fs.mkdirSync(path.join(root, "src"), { recursive: true });
+  fs.writeFileSync(path.join(root, "src", "index.js"), "console.log('demo')\n");
+
+  const changes = await runChangesCommand(["--root", root, "--json"]);
+  assert.equal(changes.ok, true);
+  assert.equal(changes.data.changed_files.available, true);
+  assert.equal(changes.data.active_goals.length, 1);
+  assert.equal(changes.data.changed_files.acceptance.some((item) => item.path === ".opennori/active/module-goal.acceptance.md"), true);
+  assert.equal(changes.data.changed_files.implementation.some((item) => item.path === "src/index.js"), true);
 });
