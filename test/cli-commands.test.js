@@ -8,7 +8,7 @@ import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNe
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runChangesCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
@@ -66,6 +66,38 @@ test("list command module reports active goal gaps without CLI dispatch", async 
   assert.equal(list.data.active_goals.length, 1);
   assert.equal(list.data.active_goals[0].goal_id, "module-goal");
   assert.equal(list.data.active_goals[0].current_gap.id, "ACCEPTANCE-BASIS");
+});
+
+test("check command module reports acceptance architecture and evidence health", async () => {
+  const root = tempRoot();
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    protocol_version: "opennori/v1",
+    goal_id: "module-goal",
+    goal: "Check module health",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can check the goal health.",
+        measurement: "Open status.",
+        threshold: "I can see health warnings."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+
+  const checked = await runCheckCommand(["--json"], {
+    loadPair: () => ({ contract, ledger, root })
+  });
+  assert.equal(checked.ok, true);
+  assert.equal(checked.data.goal_id, "module-goal");
+  assert.equal(checked.data.acceptance_quality.status, "clear");
+  assert.equal(checked.data.architecture_check.status, "needs-action");
+  assert.equal(checked.data.architecture_check.decision, "missing");
+  assert.equal(checked.data.evidence_health.status, "clear");
+  assert.equal(checked.warnings.some((warning) => warning.type === "architecture"), true);
+  assert.equal(checked.next_actions.some((action) => /architecture_check/.test(action)), true);
 });
 
 test("context export command module can write a review artifact", async () => {
