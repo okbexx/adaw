@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import fs from "node:fs";
 import path from "node:path";
-import { buildBrainstorm, renderBrainstormMarkdown } from "../../acceptance.js";
+import { buildBrainstorm, discoverAcceptance, renderBrainstormMarkdown, renderDiscoveryMarkdown } from "../../acceptance.js";
 import {
   completionAnswer,
   criterionStatusRows,
@@ -24,6 +24,14 @@ function brainstormPaths(root, brainstormId) {
   return {
     jsonPath: path.join(dir, `${brainstormId}.json`),
     markdownPath: path.join(dir, `${brainstormId}.md`)
+  };
+}
+
+function discoveryPaths(root, discoveryId) {
+  const dir = path.join(root, ".opennori", "brainstorms");
+  return {
+    jsonPath: path.join(dir, `${discoveryId}.discovery.json`),
+    markdownPath: path.join(dir, `${discoveryId}.discovery.md`)
   };
 }
 
@@ -84,6 +92,70 @@ export const brainstormCommand = defineCommand({
 
 export async function runBrainstormCommand(rawArgs) {
   return runJsonCommand(brainstormCommand, rawArgs);
+}
+
+export const discoverCommand = defineCommand({
+  meta: {
+    name: "discover",
+    description: "Discover underspecified acceptance gaps before drafting a Nori Contract."
+  },
+  args: {
+    root: {
+      type: "string",
+      description: "Project root.",
+      default: process.cwd()
+    },
+    goal: {
+      type: "string",
+      description: "Natural language goal to inspect."
+    },
+    idea: {
+      type: "string",
+      description: "Alias for --goal."
+    },
+    id: {
+      type: "string",
+      description: "Optional stable discovery id."
+    },
+    json: {
+      type: "boolean",
+      description: "Keep deterministic JSON output for agents.",
+      default: false
+    }
+  },
+  run({ args }) {
+    const root = path.resolve(String(args.root || process.cwd()));
+    const goal = String(args.goal || args.idea || "").trim();
+    if (!goal) throw new Error("--goal is required");
+    const discovery = discoverAcceptance(goal, args.id);
+    const paths = discoveryPaths(root, discovery.id);
+    writeJson(paths.jsonPath, discovery);
+    fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
+    fs.writeFileSync(paths.markdownPath, renderDiscoveryMarkdown(discovery));
+    refreshManifest(root);
+    return ok(
+      {
+        discovery_id: discovery.id,
+        status: discovery.status,
+        goal: discovery.goal,
+        gaps: discovery.gaps,
+        questions: discovery.gaps.map((gap) => gap.question),
+        discovery_path: paths.jsonPath,
+        markdown_path: paths.markdownPath,
+        is_acceptance_contract: false
+      },
+      [
+        { kind: "acceptance_discovery", path: paths.jsonPath },
+        { kind: "acceptance_discovery_markdown", path: paths.markdownPath }
+      ],
+      [],
+      [discovery.next]
+    );
+  }
+});
+
+export async function runDiscoverCommand(rawArgs) {
+  return runJsonCommand(discoverCommand, rawArgs);
 }
 
 export const nextCommand = defineCommand({

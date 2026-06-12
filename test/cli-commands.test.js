@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
+import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
@@ -85,6 +85,27 @@ test("brainstorm command module creates selectable directions without a contract
   assert.equal(fs.existsSync(brainstorm.data.markdown_path), true);
   assert.equal(brainstorm.artifacts.some((artifact) => artifact.kind === "brainstorm_source"), true);
   assert.match(fs.readFileSync(brainstorm.data.markdown_path, "utf8"), /not a Nori Contract/);
+});
+
+test("discover command module finds acceptance gaps without creating an active goal", async () => {
+  const root = tempRoot();
+  const discovery = await runDiscoverCommand([
+    "--root", root,
+    "--goal", "做一个设置页，用户可以修改个人资料，保存后刷新仍然生效，失败时有提示。",
+    "--json"
+  ]);
+
+  assert.equal(discovery.ok, true);
+  assert.equal(discovery.data.status, "needs-user-answers");
+  assert.equal(discovery.data.is_acceptance_contract, false);
+  assert.equal(fs.existsSync(discovery.data.discovery_path), true);
+  assert.equal(fs.existsSync(discovery.data.markdown_path), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "active")), false);
+  const gapIds = discovery.data.gaps.map((gap) => gap.id);
+  assert.equal(gapIds.includes("missing-field-scope"), true);
+  assert.equal(gapIds.includes("missing-validation-rule"), true);
+  assert.equal(discovery.artifacts.some((artifact) => artifact.kind === "acceptance_discovery"), true);
+  assert.match(fs.readFileSync(discovery.data.markdown_path, "utf8"), /not a Nori Contract/);
 });
 
 test("check command module reports acceptance architecture and evidence health", async () => {

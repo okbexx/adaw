@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { applyUninstallActions, applyUpgradeActions, bootstrap, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
-import { auditAcceptanceQuality, briefFromBrainstorm, briefFromGoal, discoverAcceptance, renderDiscoveryMarkdown } from "./acceptance.js";
+import { auditAcceptanceQuality, briefFromBrainstorm, briefFromGoal } from "./acceptance.js";
 import {
   addEvidence,
   addProfileEvidence,
@@ -30,7 +30,7 @@ import {
 } from "./core.js";
 import { readArchitectureBaseline, renderReportWithArchitecture } from "./architecture.js";
 import { packagePath } from "./package-root.js";
-import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
+import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
@@ -479,33 +479,7 @@ export async function main(args) {
   }
 
   if (command === "discover") {
-    const root = resolveRoot(args);
-    const goal = String(argValue(args, "--goal", argValue(args, "--idea", ""))).trim();
-    if (!goal) throw new Error("--goal is required");
-    const discovery = discoverAcceptance(goal, argValue(args, "--id"));
-    const paths = discoveryPaths(root, discovery.id);
-    writeJson(paths.jsonPath, discovery);
-    fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
-    fs.writeFileSync(paths.markdownPath, renderDiscoveryMarkdown(discovery));
-    refreshManifest(root);
-    printJson(ok(
-      {
-        discovery_id: discovery.id,
-        status: discovery.status,
-        goal: discovery.goal,
-        gaps: discovery.gaps,
-        questions: discovery.gaps.map((gap) => gap.question),
-        discovery_path: paths.jsonPath,
-        markdown_path: paths.markdownPath,
-        is_acceptance_contract: false
-      },
-      [
-        { kind: "acceptance_discovery", path: paths.jsonPath },
-        { kind: "acceptance_discovery_markdown", path: paths.markdownPath }
-      ],
-      [],
-      [discovery.next]
-    ));
+    printJson(await runDiscoverCommand(args.slice(1)));
     return;
   }
 
