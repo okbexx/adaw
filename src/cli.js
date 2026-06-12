@@ -47,7 +47,7 @@ import {
   writeArchitectureProfile
 } from "./architecture.js";
 import { packagePath } from "./package-root.js";
-import { runApproveCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
+import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runChangesCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
@@ -933,59 +933,9 @@ export async function main(args) {
   }
 
   if (command === "criterion" && args[1] === "update") {
-    const { contract, ledger, acceptancePath, evidencePath, root } = loadPair(args);
-    const criterionId = argValue(args, "--criterion");
-    if (!criterionId) throw new Error("--criterion is required");
-    const criterion = contract.criteria.find((item) => item.id === criterionId);
-    if (!criterion) throw new Error(`Criterion not found: ${criterionId}`);
-
-    const before = {
-      user_story: criterion.user_story,
-      measurement: criterion.measurement,
-      threshold: criterion.threshold,
-      risk: criterion.risk
-    };
-    criterion.user_story = argValue(args, "--user-story", criterion.user_story);
-    criterion.measurement = argValue(args, "--measurement", criterion.measurement);
-    criterion.threshold = argValue(args, "--threshold", criterion.threshold);
-    criterion.risk = argValue(args, "--risk", criterion.risk);
-    const changed = (
-      before.user_story !== criterion.user_story ||
-      before.measurement !== criterion.measurement ||
-      before.threshold !== criterion.threshold ||
-      before.risk !== criterion.risk
-    );
-    if (changed && ledger.criteria[criterionId]) {
-      ledger.criteria[criterionId] = {
-        status: "unknown",
-        confidence: "none",
-        required: criterion.required !== false,
-        risk: criterion.risk || "medium",
-        evidence: []
-      };
-    }
-    contract.acceptance_basis = {
-      status: "approved",
-      summary: argValue(args, "--summary", `User revised ${criterionId}.`),
-      approved_at: new Date().toISOString()
-    };
-    const issues = validateContract(contract, ledger);
-    if (issues.length > 0) {
-      printJson({ ...fail("invalid_acceptance", "Updated criterion failed validation", "Rewrite the criterion from the user's perspective"), issues });
-      process.exitCode = 1;
-      return;
-    }
-
-    recomputeWorkflowStatus(contract, ledger);
-    savePair(acceptancePath, evidencePath, contract, ledger);
-    refreshManifest(root);
-    printJson(ok({
-      goal_id: contract.goal_id,
-      criterion,
-      acceptance_basis: contract.acceptance_basis,
-      workflow_status: ledger.status,
-      current_gap: currentGap(contract, ledger)
-    }));
+    const result = await runCriterionUpdateCommand(args.slice(2), { loadPair: () => loadPair(args) });
+    printJson(result);
+    if (!result.ok) process.exitCode = 1;
     return;
   }
 

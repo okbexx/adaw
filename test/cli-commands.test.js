@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runApproveCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
+import { runApproveCommand, runCriterionUpdateCommand, runEvaluateCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runChangesCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -274,4 +274,48 @@ test("approve command module marks acceptance basis approved and recomputes stat
   assert.equal(approved.data.workflow_status, "complete");
   assert.equal(approved.data.current_gap, null);
   assert.match(fs.readFileSync(acceptancePath, "utf8"), /Status: approved/);
+});
+
+test("criterion update command module clears stale evidence after a user revision", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    protocol_version: "opennori/v1",
+    goal_id: "module-goal",
+    goal: "Revise module acceptance",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can inspect the old criterion.",
+        measurement: "Open the old screen.",
+        threshold: "I can see the old behavior."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+  addEvidence(contract, ledger, "AC-1", { kind: "test-summary", summary: "Old evidence passes.", result: "passing" });
+  fs.mkdirSync(path.dirname(acceptancePath), { recursive: true });
+  fs.writeFileSync(acceptancePath, "# Module goal\n");
+  writeJson(evidencePath, { contract, ledger });
+
+  const updated = await runCriterionUpdateCommand([
+    "--criterion", "AC-1",
+    "--user-story", "As a user, I can inspect the revised criterion.",
+    "--measurement", "Open the revised screen.",
+    "--threshold", "I can see the revised behavior.",
+    "--summary", "User revised AC-1.",
+    "--json"
+  ], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+  assert.equal(updated.ok, true);
+  assert.equal(updated.data.acceptance_basis.status, "approved");
+  assert.equal(updated.data.criterion.user_story, "As a user, I can inspect the revised criterion.");
+  assert.equal(updated.data.current_gap.id, "AC-1");
+  const written = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  assert.equal(written.ledger.criteria["AC-1"].status, "unknown");
+  assert.equal(written.ledger.criteria["AC-1"].evidence.length, 0);
 });
