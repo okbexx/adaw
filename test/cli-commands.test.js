@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runNextCommand, runResumeCommand } from "../src/cli/commands/acceptance.js";
+import { runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.js";
 import { runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
@@ -140,4 +140,32 @@ test("resume command module includes completion, health, architecture, and next 
   assert.equal(resume.data.architecture.decision, "missing");
   assert.equal(resume.data.acceptance_path, acceptancePath);
   assert.equal(resume.next_actions.some((action) => /next human-facing project goal/.test(action)), true);
+});
+
+test("status command module includes criteria and completion state", async () => {
+  const root = tempRoot();
+  const contract = {
+    goal_id: "module-goal",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can review the current delivery status."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = { status: "active", criteria: { "AC-1": { status: "unknown", evidence: [] } }, capability_profile: { items: [], evidence: [] } };
+
+  const status = await runStatusCommand(["--json"], {
+    loadPair: () => ({ contract, ledger, root })
+  });
+  assert.equal(status.ok, true);
+  assert.equal(status.data.goal_id, "module-goal");
+  assert.equal(status.data.workflow_status, "active");
+  assert.equal(status.data.completion.complete, false);
+  assert.equal(status.data.evidence_health.status, "clear");
+  assert.equal(status.data.architecture.decision, "missing");
+  assert.equal(status.data.criteria.length, 1);
+  assert.equal(status.data.criteria[0].id, "AC-1");
+  assert.equal(status.next_actions.some((action) => /AC-1/.test(action)), true);
 });
