@@ -11,7 +11,15 @@ import {
 } from "../core.ts";
 import { SKILL_PACK, exportedSkillMarkdown, skillPackMarkdowns } from "../skills.ts";
 import { fileHash } from "./managed-files.ts";
-import type { JsonObject } from "../types.ts";
+import type {
+  ActiveGoalSummary,
+  Manifest,
+  ManifestManagedFile,
+  ManifestWriteAction,
+  NoriEvidencePayload,
+  ProjectSkillPackState,
+  ProjectSkillState
+} from "../types.ts";
 import {
   MANIFEST_SCHEMA_VERSION,
   NORI_CAPABILITIES,
@@ -22,7 +30,7 @@ import {
   skillPackPath
 } from "./shared.ts";
 
-export function projectSkillState(root: string): JsonObject {
+export function projectSkillState(root: string): ProjectSkillState {
   const noriSkillPath = skillPackPath(root, "nori");
   const exists = fs.existsSync(noriSkillPath);
   const expectedHash = createHash("sha256").update(exportedSkillMarkdown()).digest("hex");
@@ -36,7 +44,7 @@ export function projectSkillState(root: string): JsonObject {
   };
 }
 
-export function projectSkillPackState(root: string): JsonObject {
+export function projectSkillPackState(root: string): ProjectSkillPackState {
   const markdowns = skillPackMarkdowns();
   const skills = SKILL_PACK.map((skill) => {
     const noriSkillPath = skillPackPath(root, skill.name);
@@ -61,10 +69,10 @@ export function projectSkillPackState(root: string): JsonObject {
   };
 }
 
-function activeGoalSummaries(root: string): JsonObject[] {
+function activeGoalSummaries(root: string): ActiveGoalSummary[] {
   return findActivePairs(root).map((pair) => {
     try {
-      const payload = readJson(pair.evidencePath);
+      const payload = readJson<NoriEvidencePayload>(pair.evidencePath);
       return {
         goal_id: pair.goalId,
         status: payload.ledger?.status || "unknown",
@@ -87,7 +95,7 @@ function activeGoalSummaries(root: string): JsonObject[] {
   });
 }
 
-export function managedFiles(root: string, skill = projectSkillState(root), { assumeManifestExists = false } = {}): JsonObject[] {
+export function managedFiles(root: string, skill = projectSkillState(root), { assumeManifestExists = false } = {}): ManifestManagedFile[] {
   const entries = [
     { path: ".opennori/manifest.json", kind: "manifest", required: true },
     { path: ".opennori/protocol.md", kind: "protocol", required: true },
@@ -100,7 +108,7 @@ export function managedFiles(root: string, skill = projectSkillState(root), { as
     { path: ".opennori/architecture/baseline.json", kind: "architecture-baseline", required: false },
     { path: ".opennori/architecture/baseline.md", kind: "architecture-baseline", required: false }
   ];
-  for (const packSkill of projectSkillPackState(root).skills.filter((entry: JsonObject) => entry.installed)) {
+  for (const packSkill of projectSkillPackState(root).skills.filter((entry) => entry.installed)) {
     entries.push({ path: packSkill.path, kind: "skill", required: false });
   }
   return entries.map((entry) => ({
@@ -111,15 +119,15 @@ export function managedFiles(root: string, skill = projectSkillState(root), { as
   }));
 }
 
-export function safeReadManifest(root: string): JsonObject | null {
+export function safeReadManifest(root: string): Manifest | null {
   try {
-    return readJson(manifestPath(root));
+    return readJson<Manifest>(manifestPath(root));
   } catch {
     return null;
   }
 }
 
-export function buildManifest(root: string, options: JsonObject = {}): JsonObject {
+export function buildManifest(root: string, options: { assumeManifestExists?: boolean } = {}): Manifest {
   const existing = safeReadManifest(root);
   const skill = projectSkillState(root);
   const skillPack = projectSkillPackState(root);
@@ -142,7 +150,7 @@ export function buildManifest(root: string, options: JsonObject = {}): JsonObjec
   };
 }
 
-export function writeManifest(root: string, { dryRun = false } = {}) {
+export function writeManifest(root: string, { dryRun = false } = {}): ManifestWriteAction {
   const target = manifestPath(root);
   const exists = fs.existsSync(target);
   const manifest = buildManifest(root, { assumeManifestExists: !dryRun || exists });

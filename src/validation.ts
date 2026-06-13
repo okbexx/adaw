@@ -13,7 +13,7 @@ const SCHEMA_FILES = {
 } as const;
 
 type SchemaName = keyof typeof SCHEMA_FILES;
-type SchemaValidationError = {
+export type SchemaValidationError = {
   path: string;
   message: string;
   keyword?: string;

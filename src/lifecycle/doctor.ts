@@ -22,29 +22,23 @@ import {
   sameStringSet
 } from "./shared.ts";
 import { projectSkillPackState, projectSkillState } from "./manifest.ts";
-import type { JsonObject } from "../types.ts";
-
-type DoctorIssue = {
-  goal_id: string;
-  message: string;
-  path?: string;
-};
-
-type DoctorCheck = {
-  name: string;
-  ok: boolean;
-  summary: string;
-  recovery?: string;
-  severity?: string;
-};
+import type {
+  ActiveGoalSummary,
+  DoctorCheck,
+  DoctorIssue,
+  DoctorRecoveryAction,
+  DoctorState,
+  Manifest,
+  NoriEvidencePayload
+} from "../types.ts";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function inspectActiveGoals(root: string): { details: JsonObject[]; issues: DoctorIssue[] } {
+function inspectActiveGoals(root: string): { details: ActiveGoalSummary[]; issues: DoctorIssue[] } {
   const activeDir = path.join(root, ".opennori", "active");
-  const details: JsonObject[] = [];
+  const details: ActiveGoalSummary[] = [];
   const issues: DoctorIssue[] = [];
   if (!fs.existsSync(activeDir)) return { details, issues };
 
@@ -69,7 +63,7 @@ function inspectActiveGoals(root: string): { details: JsonObject[]; issues: Doct
       continue;
     }
     try {
-      const payload = readJson(evidencePath);
+      const payload = readJson<NoriEvidencePayload>(evidencePath);
       const schemaResult = validateSchema("evidence-payload", payload);
       const validationIssues = validateContract(payload.contract, payload.ledger);
       details.push({
@@ -102,13 +96,13 @@ function doctorCheck(name: string, condition: boolean, summary: string, recovery
   return check;
 }
 
-function doctorRecoveryActions(checks: DoctorCheck[], activeIssues: DoctorIssue[] = []): JsonObject[] {
-  const actions: JsonObject[] = checks
+function doctorRecoveryActions(checks: DoctorCheck[], activeIssues: DoctorIssue[] = []): DoctorRecoveryAction[] {
+  const actions: DoctorRecoveryAction[] = checks
     .filter((check) => !check.ok && check.recovery)
     .map((check) => ({
       check: check.name,
       severity: check.severity || "needs-action",
-      action: check.recovery
+      action: check.recovery || "Inspect this OpenNori doctor check and rerun opennori doctor after recovery."
     }));
 
   for (const issue of activeIssues) {
@@ -126,7 +120,7 @@ function doctorRecoveryActions(checks: DoctorCheck[], activeIssues: DoctorIssue[
   return actions;
 }
 
-export function doctor(root: string): JsonObject {
+export function doctor(root: string): DoctorState {
   const checks: DoctorCheck[] = [];
   const noriDir = path.join(root, ".opennori");
   const protocolPath = path.join(root, ".opennori", "protocol.md");
@@ -218,10 +212,10 @@ export function doctor(root: string): JsonObject {
     architecture.build_vs_buy.status === "broken" ? "broken" : "needs-action"
   ));
 
-  let manifest: JsonObject | null = null;
+  let manifest: Manifest | null = null;
   let manifestReadable = false;
   try {
-    manifest = readJson(manifestFile);
+    manifest = readJson<Manifest>(manifestFile);
     manifestReadable = true;
   } catch (error) {
     checks.push(doctorCheck(
@@ -234,7 +228,7 @@ export function doctor(root: string): JsonObject {
   }
 
   if (manifestReadable) {
-    const readableManifest = manifest as JsonObject;
+    const readableManifest = manifest as Manifest;
     const manifestSchema = validateSchema("manifest", manifest);
     checks.push(doctorCheck(
       "manifest_schema",
@@ -273,7 +267,7 @@ export function doctor(root: string): JsonObject {
     ));
 
     const currentGoals = new Set(active.details.filter((goal) => goal.recoverable).map((goal) => goal.goal_id));
-    const manifestGoals = new Set((readableManifest.active_goals || []).map((goal: JsonObject) => goal.goal_id));
+    const manifestGoals = new Set((readableManifest.active_goals || []).map((goal) => goal.goal_id));
     const staleGoals = [
       ...[...currentGoals].filter((goalId) => !manifestGoals.has(goalId)),
       ...[...manifestGoals].filter((goalId) => !currentGoals.has(goalId))
@@ -286,9 +280,9 @@ export function doctor(root: string): JsonObject {
     ));
 
     const missingManaged = (readableManifest.managed_files || [])
-      .filter((entry: JsonObject) => entry.required !== false)
-      .filter((entry: JsonObject) => !fs.existsSync(path.join(root, entry.path)))
-      .map((entry: JsonObject) => entry.path);
+      .filter((entry) => entry.required !== false)
+      .filter((entry) => !fs.existsSync(path.join(root, entry.path)))
+      .map((entry) => entry.path);
     checks.push(doctorCheck(
       "managed_files",
       missingManaged.length === 0,
@@ -310,7 +304,7 @@ export function doctor(root: string): JsonObject {
   const manifestSkillInstalled = manifest?.skill?.installed === true;
   const skillOk = !skill.installed && !manifestSkillInstalled ? true : skill.installed && skill.in_sync;
   if (manifestReadable) {
-    const readableManifest = manifest as JsonObject;
+    const readableManifest = manifest as Manifest;
     checks.push(doctorCheck(
       "manifest_skill_state",
       Boolean(readableManifest.skill) && readableManifest.skill.installed === skill.installed && readableManifest.skill.path === skill.path,
@@ -326,8 +320,8 @@ export function doctor(root: string): JsonObject {
       : "Project OpenNori Skill is not installed; this is optional unless the manifest expects it.",
     "Preview opennori install --root <project> --skill --refresh-skill --dry-run --json, then rerun with --confirm if the updates are acceptable."
   ));
-  const manifestPackNames = new Set((manifest?.skill_pack?.skills || []).map((entry: JsonObject) => entry.name));
-  const packNames = new Set(skillPack.skills.map((entry: JsonObject) => entry.name));
+  const manifestPackNames = new Set((manifest?.skill_pack?.skills || []).map((entry) => entry.name));
+  const packNames = new Set(skillPack.skills.map((entry) => entry.name));
   const manifestPackMatches = !manifestReadable || (
     manifest?.skill_pack?.schema_version === "opennori/skill-pack-v1"
     && sameStringSet([...manifestPackNames], [...packNames])
@@ -338,7 +332,7 @@ export function doctor(root: string): JsonObject {
     manifestPackMatches ? "Manifest Skill Pack state is readable." : "Manifest Skill Pack state is missing or stale.",
     "Refresh the manifest with opennori install --root <project> --skill --json."
   ));
-  const packExpected = manifest?.skill_pack?.installed === true || skillPack.skills.some((entry: JsonObject) => entry.installed);
+  const packExpected = manifest?.skill_pack?.installed === true || skillPack.skills.some((entry) => entry.installed);
   const packOk = packExpected ? skillPack.installed && skillPack.in_sync : true;
   checks.push(doctorCheck(
     "skill_pack_sync",

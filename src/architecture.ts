@@ -1,7 +1,27 @@
 import fs from "node:fs";
 import path from "node:path";
 import { readJson, renderReport, slugify, writeJson } from "./core.ts";
-import type { JsonObject, PathPair, ValidationIssue } from "./types.ts";
+import type {
+  ArchitectureBaseline,
+  ArchitectureChallenge,
+  ArchitectureChallengeSummary,
+  ArchitectureProfile,
+  ArchitectureProfileDescriptor,
+  ArchitectureProfileListItem,
+  ArchitectureSource,
+  ArchitectureState,
+  ArchitectureSurfaceState,
+  BuildVsBuyDecision,
+  BuildVsBuyDecisionSummary,
+  BuildVsBuyFinding,
+  BuildVsBuyHealth,
+  JsonObject,
+  NoriContract,
+  EvidenceLedger,
+  PathPair,
+  PreferredLibraryPolicy,
+  ValidationIssue
+} from "./types.ts";
 import { schemaErrorSummary, validateSchema } from "./validation.ts";
 
 function errorMessage(error: unknown): string {
@@ -19,7 +39,7 @@ export const AGENT_ROUTE_START = "<!-- opennori:agent-route:start -->";
 export const AGENT_ROUTE_END = "<!-- opennori:agent-route:end -->";
 const ARCHITECTURE_BASELINE_SCHEMA_VERSION = "opennori/architecture-baseline-v1";
 
-const BUILTIN_ARCHITECTURE_PROFILES: Record<string, JsonObject> = {
+const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
   "typescript-agent-state-cli": {
     id: "typescript-agent-state-cli",
     title: "TypeScript Agent State CLI",
@@ -208,11 +228,11 @@ export function agentGuidePath(root: string): string {
   return path.join(root, ".opennori", "agent-guide.md");
 }
 
-function resolveArchitectureProfile(root: string, profileId = "typescript-agent-state-cli"): JsonObject {
+function resolveArchitectureProfile(root: string, profileId = "typescript-agent-state-cli"): ArchitectureProfile {
   const localPath = architectureProfilePath(root, profileId);
   if (fs.existsSync(localPath)) {
     return {
-      ...readJson(localPath),
+      ...readJson<ArchitectureProfile>(localPath),
       origin: "project"
     };
   }
@@ -224,7 +244,7 @@ function resolveArchitectureProfile(root: string, profileId = "typescript-agent-
   };
 }
 
-function localArchitectureProfiles(root: string): JsonObject[] {
+function localArchitectureProfiles(root: string): ArchitectureProfileListItem[] {
   const dir = path.join(architectureDir(root), "profiles");
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
@@ -232,7 +252,7 @@ function localArchitectureProfiles(root: string): JsonObject[] {
     .map((fileName) => {
       const profilePath = path.join(dir, fileName);
       try {
-        const profileInput = readJson(profilePath);
+        const profileInput = readJson<Partial<ArchitectureProfile>>(profilePath);
         const profile = normalizeArchitectureProfile(profileInput, profileInput.id ? undefined : fileName.replace(/\.json$/, ""));
         return architectureProfileDescriptor(profile, {
           origin: "project",
@@ -251,7 +271,7 @@ function localArchitectureProfiles(root: string): JsonObject[] {
     });
 }
 
-function architectureProfileDescriptor(profile: JsonObject, { origin, path: profilePath = undefined }: { origin?: string; path?: string } = {}): JsonObject {
+function architectureProfileDescriptor(profile: ArchitectureProfile, { origin, path: profilePath = undefined }: { origin?: string; path?: string } = {}): ArchitectureProfileDescriptor {
   const issues = validateArchitectureProfile(profile);
   return {
     id: profile.id,
@@ -280,7 +300,7 @@ function architectureProfileDescriptor(profile: JsonObject, { origin, path: prof
   };
 }
 
-export function architectureProfiles(root: string): JsonObject[] {
+export function architectureProfiles(root: string): ArchitectureProfileListItem[] {
   const builtins = Object.values(BUILTIN_ARCHITECTURE_PROFILES)
     .map((profile) => architectureProfileDescriptor(profile, { origin: "builtin" }));
   const local = localArchitectureProfiles(root);
@@ -297,7 +317,7 @@ export function buildArchitectureBaseline(root: string, {
   goalId = undefined,
   summary = undefined,
   accepted = false
-}: { profileId?: string; goal?: string; goalId?: string; summary?: string; accepted?: boolean } = {}): JsonObject {
+}: { profileId?: string; goal?: string; goalId?: string; summary?: string; accepted?: boolean } = {}): ArchitectureBaseline {
   const profile = resolveArchitectureProfile(root, profileId);
   const now = new Date().toISOString();
   return {
@@ -340,7 +360,7 @@ export function buildArchitectureBaseline(root: string, {
   };
 }
 
-function validateArchitectureBaseline(baseline: JsonObject): ValidationIssue[] {
+function validateArchitectureBaseline(baseline: ArchitectureBaseline | JsonObject): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (!baseline || typeof baseline !== "object") {
     return [{ path: "$", message: "Architecture Baseline is not an object." }];
@@ -369,7 +389,7 @@ function validateArchitectureBaseline(baseline: JsonObject): ValidationIssue[] {
   return issues;
 }
 
-export function validateArchitectureProfile(profile: JsonObject): ValidationIssue[] {
+export function validateArchitectureProfile(profile: ArchitectureProfile | JsonObject): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (!profile || typeof profile !== "object") {
     return [{ path: "$", message: "Architecture Profile is not an object." }];
@@ -389,13 +409,13 @@ export function validateArchitectureProfile(profile: JsonObject): ValidationIssu
   return issues;
 }
 
-export function readArchitectureBaseline(root: string): JsonObject | null {
+export function readArchitectureBaseline(root: string): ArchitectureBaseline | null {
   const paths = architectureBaselinePaths(root);
   if (!fs.existsSync(paths.jsonPath)) return null;
-  return readJson(paths.jsonPath);
+  return readJson<ArchitectureBaseline>(paths.jsonPath);
 }
 
-function renderArchitectureBaselineMarkdown(baseline: JsonObject): string {
+function renderArchitectureBaselineMarkdown(baseline: ArchitectureBaseline): string {
   const lines = [
     "# OpenNori Architecture Baseline",
     "",
@@ -430,7 +450,7 @@ function renderArchitectureBaselineMarkdown(baseline: JsonObject): string {
     "",
     "## Prefer",
     "",
-    ...((baseline.preferred_libraries || []).map((entry: JsonObject) => `- ${entry.area}: ${entry.policy}`)),
+    ...((baseline.preferred_libraries || []).map((entry: PreferredLibraryPolicy) => `- ${entry.area}: ${entry.policy}`)),
     "",
     "## Avoid",
     "",
@@ -445,12 +465,13 @@ function renderArchitectureBaselineMarkdown(baseline: JsonObject): string {
   return `${lines.join("\n")}\n`;
 }
 
-export function normalizeArchitectureProfile(input: JsonObject, idOverride: string | undefined = undefined): JsonObject {
+export function normalizeArchitectureProfile(input: Partial<ArchitectureProfile>, idOverride: string | undefined = undefined): ArchitectureProfile {
   const id = idOverride || input.id || slugify(input.title || input.summary || "architecture-profile");
   return {
     ...input,
     id,
     title: input.title || id,
+    summary: input.summary || "",
     applies_to: Array.isArray(input.applies_to) ? input.applies_to : [],
     sources: Array.isArray(input.sources) ? input.sources : [],
     principles: Array.isArray(input.principles) ? input.principles : [],
@@ -465,7 +486,7 @@ export function normalizeArchitectureProfile(input: JsonObject, idOverride: stri
   };
 }
 
-export function writeArchitectureProfile(root: string, profile: JsonObject, { force = false } = {}): string {
+export function writeArchitectureProfile(root: string, profile: ArchitectureProfile, { force = false } = {}): string {
   const target = architectureProfilePath(root, profile.id);
   if (fs.existsSync(target) && !force) {
     throw new Error(`Architecture Profile already exists: ${relativeTo(root, target)}. Rerun with --force only after review.`);
@@ -474,7 +495,7 @@ export function writeArchitectureProfile(root: string, profile: JsonObject, { fo
   return target;
 }
 
-export function writeArchitectureBaseline(root: string, baseline: JsonObject): PathPair {
+export function writeArchitectureBaseline(root: string, baseline: ArchitectureBaseline): PathPair {
   const paths = architectureBaselinePaths(root);
   writeJson(paths.jsonPath, baseline);
   fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
@@ -527,7 +548,7 @@ export function renderAgentRouteMarkdown(agentName: string): string {
   ].join("\n");
 }
 
-function architectureSurfaceState(root: string): JsonObject {
+function architectureSurfaceState(root: string): ArchitectureSurfaceState {
   const guide = agentGuidePath(root);
   const agents = path.join(root, "AGENTS.md");
   const claude = path.join(root, "CLAUDE.md");
@@ -552,14 +573,14 @@ function architectureSurfaceState(root: string): JsonObject {
   };
 }
 
-function architectureChallengeSummaries(root: string): JsonObject[] {
+function architectureChallengeSummaries(root: string): ArchitectureChallengeSummary[] {
   const dir = path.join(architectureDir(root), "challenges");
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .filter((fileName) => fileName.endsWith(".json"))
     .map((fileName) => {
       try {
-        const challenge = readJson(path.join(dir, fileName));
+        const challenge = readJson<ArchitectureChallenge>(path.join(dir, fileName));
         return {
           id: challenge.id || fileName.replace(/\.json$/, ""),
           status: challenge.status || "open",
@@ -579,14 +600,14 @@ function architectureChallengeSummaries(root: string): JsonObject[] {
     });
 }
 
-function buildVsBuyDecisionSummaries(root: string): JsonObject[] {
+function buildVsBuyDecisionSummaries(root: string): BuildVsBuyDecisionSummary[] {
   const dir = path.join(architectureDir(root), "decisions");
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .filter((fileName) => fileName.endsWith(".json"))
     .map((fileName) => {
       try {
-        const decision = readJson(path.join(dir, fileName));
+        const decision = readJson<BuildVsBuyDecision>(path.join(dir, fileName));
         const schemaResult = validateSchema("build-vs-buy", decision);
         return {
           id: decision.id || fileName.replace(/\.json$/, ""),
@@ -616,8 +637,8 @@ function buildVsBuyDecisionSummaries(root: string): JsonObject[] {
     });
 }
 
-function buildVsBuyHealth(decisions: JsonObject[]): JsonObject {
-  const findings: JsonObject[] = [];
+function buildVsBuyHealth(decisions: BuildVsBuyDecisionSummary[]): BuildVsBuyHealth {
+  const findings: BuildVsBuyFinding[] = [];
   const activeDecisions = decisions.filter((decision) => decision.status !== "superseded");
   for (const decision of activeDecisions) {
     if (decision.error) {
@@ -632,11 +653,11 @@ function buildVsBuyHealth(decisions: JsonObject[]): JsonObject {
     }
 
     if (decision.schema_valid === false) {
-      findings.push({
-        decision_id: decision.id,
-        severity: "broken",
-        issue: "schema-invalid-decision",
-        message: `Build-vs-buy decision ${decision.id} does not match the public schema: ${schemaErrorSummary({ valid: false, errors: decision.schema_errors || [] })}`,
+        findings.push({
+          decision_id: decision.id,
+          severity: "broken",
+          issue: "schema-invalid-decision",
+          message: `Build-vs-buy decision ${decision.id} does not match the public schema: ${schemaErrorSummary({ valid: false, errors: decision.schema_errors || [] })}`,
         recovery: `Inspect ${decision.path} and restore a valid opennori/build-vs-buy-v1 decision.`
       });
       continue;
@@ -681,7 +702,7 @@ function buildVsBuyHealth(decisions: JsonObject[]): JsonObject {
   };
 }
 
-export function architectureState(root: string, goalId: string | undefined = undefined): JsonObject {
+export function architectureState(root: string, goalId: string | undefined = undefined): ArchitectureState {
   const paths = architectureBaselinePaths(root);
   const surface = architectureSurfaceState(root);
   const challenges = architectureChallengeSummaries(root);
@@ -689,18 +710,18 @@ export function architectureState(root: string, goalId: string | undefined = und
   const decisions = buildVsBuyDecisionSummaries(root);
   const buildVsBuy = buildVsBuyHealth(decisions);
 
-  let baseline: JsonObject | null = null;
+  let baseline: ArchitectureBaseline | null = null;
   let issues: ValidationIssue[] = [];
   if (fs.existsSync(paths.jsonPath)) {
     try {
-      baseline = readJson(paths.jsonPath);
+      baseline = readJson<ArchitectureBaseline>(paths.jsonPath);
       issues = validateArchitectureBaseline(baseline);
     } catch (error) {
       issues = [{ path: "baseline", message: errorMessage(error) }];
     }
   }
 
-  let decision = "missing";
+  let decision: ArchitectureState["decision"] = "missing";
   if (baseline && issues.length > 0) decision = "invalid";
   if (baseline && issues.length === 0 && baseline.status === "draft") decision = "draft";
   if (baseline && issues.length === 0 && baseline.status === "active") decision = "valid";
@@ -772,12 +793,12 @@ function renderArchitectureReportSection(root: string, goalId: string | undefine
   return lines.join("\n");
 }
 
-export function renderReportWithArchitecture(root: string, contract: JsonObject, ledger: JsonObject): string {
+export function renderReportWithArchitecture(root: string, contract: NoriContract, ledger: EvidenceLedger): string {
   const base = renderReport(contract, ledger).trimEnd();
   return `${base}\n\n${renderArchitectureReportSection(root, contract.goal_id).trimEnd()}\n`;
 }
 
-export function renderArchitectureChallengeMarkdown(challenge: JsonObject): string {
+export function renderArchitectureChallengeMarkdown(challenge: ArchitectureChallenge): string {
   return [
     `# ${challenge.id} Architecture Challenge`,
     "",
@@ -804,7 +825,7 @@ export function renderArchitectureChallengeMarkdown(challenge: JsonObject): stri
   ].join("\n");
 }
 
-export function renderBuildVsBuyMarkdown(decision: JsonObject): string {
+export function renderBuildVsBuyMarkdown(decision: BuildVsBuyDecision): string {
   return [
     `# ${decision.id} Build-vs-Buy Decision`,
     "",

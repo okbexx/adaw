@@ -24,18 +24,15 @@ import {
 import { architectureState } from "../../architecture.ts";
 import { refreshManifest } from "../../lifecycle.ts";
 import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
+import type { AcceptanceCriterion, AcceptanceDiscovery, Brainstorm, NoriBrief } from "../../types.ts";
 
-type CliPayload = Record<string, any>;
 type NoriPathPair = {
   jsonPath: string;
   markdownPath: string;
 };
 
-const buildBrainstormForCommand = buildBrainstorm as (idea: string, id?: string) => CliPayload;
-const discoverAcceptanceForCommand = discoverAcceptance as (goal: string, id?: string) => CliPayload;
-const briefFromBrainstormForCommand = briefFromBrainstorm as (brainstorm: CliPayload, candidateId: string) => CliPayload;
-const briefFromGoalForCommand = briefFromGoal as (goal: string, goalId?: string) => CliPayload;
-const validateContractForCommand = validateContract as unknown as (contract: CliPayload, ledger: CliPayload) => CliPayload[];
+const briefFromBrainstormForCommand = briefFromBrainstorm as unknown as (brainstorm: Brainstorm, candidateId: string) => NoriBrief;
+const briefFromGoalForCommand = briefFromGoal as (goal: string, goalId?: string) => NoriBrief;
 
 function brainstormPaths(root: string, brainstormId: string): NoriPathPair {
   const dir = path.join(root, ".opennori", "brainstorms");
@@ -82,7 +79,7 @@ export const brainstormCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     const idea = String(args.idea || "").trim();
     if (!idea) throw new Error("--idea is required");
-    const brainstorm = buildBrainstormForCommand(idea, args.id);
+    const brainstorm = buildBrainstorm(idea, args.id);
     const paths = brainstormPaths(root, brainstorm.id);
     writeJson(paths.jsonPath, brainstorm);
     fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
@@ -145,7 +142,7 @@ export const discoverCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     const goal = String(args.goal || args.idea || "").trim();
     if (!goal) throw new Error("--goal is required");
-    const discovery = discoverAcceptanceForCommand(goal, args.id);
+    const discovery: AcceptanceDiscovery = discoverAcceptance(goal, args.id);
     const paths = discoveryPaths(root, discovery.id);
     writeJson(paths.jsonPath, discovery);
     fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
@@ -157,7 +154,7 @@ export const discoverCommand = defineCommand({
         status: discovery.status,
         goal: discovery.goal,
         gaps: discovery.gaps,
-        questions: discovery.gaps.map((gap: any) => gap.question),
+        questions: discovery.gaps.map((gap) => gap.question),
         discovery_path: paths.jsonPath,
         markdown_path: paths.markdownPath,
         is_acceptance_contract: false
@@ -216,7 +213,7 @@ export const draftCommand = defineCommand({
     if (brainstormId) {
       const candidateId = args.candidate;
       if (!candidateId) throw new Error("--candidate is required with --from-brainstorm");
-      brief = briefFromBrainstormForCommand(readJson(brainstormPaths(root, brainstormId).jsonPath), String(candidateId));
+      brief = briefFromBrainstormForCommand(readJson<Brainstorm>(brainstormPaths(root, brainstormId).jsonPath), String(candidateId));
     } else {
       const goal = String(args.goal || "").trim();
       if (!goal) throw new Error("--goal is required");
@@ -224,7 +221,7 @@ export const draftCommand = defineCommand({
     }
     const contract = buildContractFromBrief(brief);
     const ledger = buildEvidenceLedger(contract);
-    const issues = validateContractForCommand(contract, ledger);
+    const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
       return { ...fail("invalid_acceptance", "Draft does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
     }
@@ -276,10 +273,10 @@ export const initCommand = defineCommand({
   run({ args }) {
     const briefPath = path.resolve(String(args._?.[0] || ""));
     const root = path.resolve(String(args.root || process.cwd()));
-    const brief = readJson(briefPath);
+    const brief = readJson<NoriBrief>(briefPath);
     const contract = buildContractFromBrief(brief);
     const ledger = buildEvidenceLedger(contract);
-    const issues = validateContractForCommand(contract, ledger);
+    const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
       return { ...fail("invalid_acceptance", "Brief does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
     }
@@ -569,7 +566,7 @@ export const criterionUpdateCommand = defineCommand({
     const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
     const criterionId = args.criterion;
     if (!criterionId) throw new Error("--criterion is required");
-    const criterion = contract.criteria.find((item: any) => item.id === criterionId);
+    const criterion = contract.criteria.find((item: AcceptanceCriterion) => item.id === criterionId);
     if (!criterion) throw new Error(`Criterion not found: ${criterionId}`);
 
     const before = {
@@ -602,7 +599,7 @@ export const criterionUpdateCommand = defineCommand({
       summary: args.summary || `User revised ${criterionId}.`,
       approved_at: new Date().toISOString()
     };
-    const issues = validateContractForCommand(contract, ledger);
+    const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
       return {
         ok: false,

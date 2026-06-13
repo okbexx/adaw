@@ -2,6 +2,25 @@ import { defineCommand } from "citty";
 import { addProfileEvidence, addProfileItem, currentGap, ok, profileCompliance, recomputeWorkflowStatus } from "../../core.ts";
 import { autoProfileChecks, recordAutoProfileChecks } from "../../lifecycle.ts";
 import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
+import type { ProfileEvidenceInput, ProfileEvidenceResult, ProfileItemInput, ProfileItemType, ProfileStrength } from "../../types.ts";
+
+function profileItemType(value: unknown): ProfileItemType {
+  const type = String(value || "constraint");
+  if (!["skill", "stack", "constraint"].includes(type)) throw new Error(`Invalid profile item type: ${type}`);
+  return type as ProfileItemType;
+}
+
+function profileStrength(value: unknown): ProfileStrength {
+  const strength = String(value || "prefer");
+  if (!["must", "prefer", "avoid"].includes(strength)) throw new Error(`Invalid profile strength: ${strength}`);
+  return strength as ProfileStrength;
+}
+
+function profileEvidenceResult(value: unknown): ProfileEvidenceResult {
+  const result = String(value || "satisfied");
+  if (!["satisfied", "violated", "waived"].includes(result)) throw new Error(`Invalid profile evidence result: ${result}`);
+  return result as ProfileEvidenceResult;
+}
 
 export const profileAddCommand = defineCommand({
   meta: {
@@ -59,11 +78,11 @@ export const profileAddCommand = defineCommand({
   },
   run({ args, data }) {
     const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
-    const item = {
+    const item: ProfileItemInput = {
       id: args.id,
-      type: args.type || "constraint",
-      name: args.name,
-      strength: args.strength || "prefer",
+      type: profileItemType(args.type),
+      name: String(args.name || ""),
+      strength: profileStrength(args.strength),
       purpose: args.purpose || "",
       scope: args.scope || "",
       install_policy: args.installPolicy || "ask_before_install"
@@ -129,8 +148,8 @@ export const profileEvidenceCommand = defineCommand({
     const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
     const itemId = args.item;
     if (!itemId) throw new Error("--item is required");
-    const evidence = {
-      result: args.result || "satisfied",
+    const evidence: ProfileEvidenceInput = {
+      result: profileEvidenceResult(args.result),
       summary: args.summary || "",
       path: args.path
     };

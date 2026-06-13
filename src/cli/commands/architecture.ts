@@ -22,8 +22,8 @@ import {
 import { fail, ok, readJson, slugify, writeJson } from "../../core.ts";
 import { refreshManifest } from "../../lifecycle.ts";
 import { runJsonCommand } from "../runtime.ts";
+import type { ArchitectureChallenge, ArchitectureProfile, BuildVsBuyDecision } from "../../types.ts";
 
-type CliPayload = Record<string, any>;
 type ParsedOptionToken = {
   kind: "option";
   index: number;
@@ -36,20 +36,6 @@ type ParsedToken = ParsedOptionToken | {
   rawName?: string;
   value?: string;
 };
-
-const normalizeArchitectureProfileForCommand = normalizeArchitectureProfile as (profile: CliPayload, id?: string) => CliPayload;
-const buildArchitectureBaselineForCommand = buildArchitectureBaseline as unknown as (
-  root: string,
-  options: {
-    profileId: string;
-    goal: string;
-    goalId: string;
-    summary?: string;
-    accepted?: boolean;
-  }
-) => CliPayload;
-const architectureStateForCommand = architectureState as (root: string, goalId?: string) => CliPayload;
-const readArchitectureBaselineForCommand = readArchitectureBaseline as (root: string) => CliPayload | null;
 
 const rootArg = {
   type: "string",
@@ -123,7 +109,7 @@ export const architectureProfileCommand = defineCommand({
     const source = args.from || args.path;
     if (!source) throw new Error("--from is required");
     const sourcePath = path.resolve(String(source));
-    const profile = normalizeArchitectureProfileForCommand(readJson(sourcePath), args.id);
+    const profile = normalizeArchitectureProfile(readJson<Partial<ArchitectureProfile>>(sourcePath), args.id);
     const issues = validateArchitectureProfile(profile);
     if (issues.length > 0) {
       return { ...fail("invalid_architecture_profile", "Architecture Profile failed validation", "Add id, title, summary, principles, checks, and build_vs_buy_policy."), issues };
@@ -185,7 +171,7 @@ export const architectureBaselineCommand = defineCommand({
     const goalId = args.goalId || slugify(goal || profileId);
     const confirmed = Boolean(args.confirm);
     if (!goal) throw new Error("--goal is required");
-    const baseline = buildArchitectureBaselineForCommand(root, {
+    const baseline = buildArchitectureBaseline(root, {
       profileId,
       goal,
       goalId,
@@ -202,8 +188,8 @@ export const architectureBaselineCommand = defineCommand({
         root,
         confirmed,
         baseline,
-        architecture: confirmed ? architectureStateForCommand(root, goalId) : {
-          ...architectureStateForCommand(root, goalId),
+        architecture: confirmed ? architectureState(root, goalId) : {
+          ...architectureState(root, goalId),
           preview: {
             baseline_path: relativeTo(root, paths.jsonPath),
             markdown_path: relativeTo(root, paths.markdownPath),
@@ -243,8 +229,8 @@ export const architectureShowCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     return ok({
       root,
-      architecture: architectureStateForCommand(root, args.goal),
-      baseline: readArchitectureBaselineForCommand(root),
+      architecture: architectureState(root, args.goal),
+      baseline: readArchitectureBaseline(root),
       side_effect: "none"
     });
   }
@@ -282,7 +268,7 @@ export const architectureChallengeCommand = defineCommand({
   },
   run({ args, data }) {
     const root = path.resolve(String(args.root || process.cwd()));
-    const baseline = readArchitectureBaselineForCommand(root);
+    const baseline = readArchitectureBaseline(root);
     if (!baseline) throw new Error("No Architecture Baseline found. Create one before challenging it.");
     const summary = String(args.summary || "").trim();
     const evidence = String(args.evidence || "").trim();
@@ -291,7 +277,7 @@ export const architectureChallengeCommand = defineCommand({
     if (!evidence) throw new Error("--evidence is required");
     if (!recommendation) throw new Error("--recommendation is required");
     const id = args.id || slugify(summary.slice(0, 48));
-    const challenge = {
+    const challenge: ArchitectureChallenge = {
       schema_version: ARCHITECTURE_CHALLENGE_SCHEMA_VERSION,
       id,
       status: "open",
@@ -316,7 +302,7 @@ export const architectureChallengeCommand = defineCommand({
       {
         root,
         challenge,
-        architecture: architectureStateForCommand(root, baseline.goal_id),
+        architecture: architectureState(root, baseline.goal_id),
         challenge_path: paths.jsonPath,
         markdown_path: paths.markdownPath
       },
@@ -410,7 +396,7 @@ export const architectureBuildVsBuyCommand = defineCommand({
     if (!recommendation) throw new Error("--recommendation is required");
     if (!summary) throw new Error("--summary is required");
     const id = args.id || slugify(`${area}-${need}`.slice(0, 64));
-    const decision = {
+    const decision: BuildVsBuyDecision = {
       schema_version: BUILD_VS_BUY_SCHEMA_VERSION,
       id,
       created_at: new Date().toISOString(),
@@ -438,7 +424,7 @@ export const architectureBuildVsBuyCommand = defineCommand({
         decision,
         decision_path: paths.jsonPath,
         markdown_path: paths.markdownPath,
-        architecture: architectureStateForCommand(root)
+        architecture: architectureState(root)
       },
       [
         { kind: "build_vs_buy_decision", path: paths.jsonPath },

@@ -1,7 +1,17 @@
 import { slugify } from "./core.ts";
-import type { JsonObject } from "./types.ts";
+import type {
+  AcceptanceCriterion,
+  AcceptanceDiscovery,
+  AcceptanceDiscoveryGap,
+  AcceptanceQualityAudit,
+  AcceptanceQualityFinding,
+  Brainstorm,
+  BrainstormCandidate,
+  NoriBrief,
+  NoriContract
+} from "./types.ts";
 
-const BRAINSTORM_CANDIDATES = [
+const BRAINSTORM_CANDIDATES: BrainstormCandidate[] = [
   {
     id: "A",
     title: "目标澄清型",
@@ -40,7 +50,7 @@ const BRAINSTORM_CANDIDATES = [
   }
 ];
 
-export const DEFAULT_CRITERIA = [
+export const DEFAULT_CRITERIA: AcceptanceCriterion[] = [
   {
     id: "AC-1",
     user_story: "作为用户，我使用目标系统完成核心操作后，能判断目标结果是否已经达成。",
@@ -64,7 +74,7 @@ export const DEFAULT_CRITERIA = [
   }
 ];
 
-const DISCOVERY_GAPS = [
+const DISCOVERY_GAPS: AcceptanceDiscoveryGap[] = [
   {
     id: "missing-field-scope",
     patterns: ["设置", "资料", "个人资料", "profile", "settings", "字段", "field"],
@@ -120,11 +130,11 @@ function sentenceHasSpecifics(text: unknown, terms: string[]): boolean {
   return terms.some((term) => value.includes(term.toLowerCase()));
 }
 
-export function discoverAcceptanceGaps(text: string, { fallback = false, allowedIds = null as Set<string> | null } = {}): JsonObject[] {
+export function discoverAcceptanceGaps(text: string, { fallback = false, allowedIds = null as Set<string> | null } = {}): AcceptanceDiscoveryGap[] {
   const lowered = text.toLowerCase();
   const gaps = DISCOVERY_GAPS
     .filter((gap) => !allowedIds || allowedIds.has(gap.id))
-    .filter((gap) => gap.patterns.some((pattern) => lowered.includes(pattern.toLowerCase())))
+    .filter((gap) => (gap.patterns || []).some((pattern) => lowered.includes(pattern.toLowerCase())))
     .filter((gap) => {
       if (gap.id === "missing-field-scope") return !sentenceHasSpecifics(text, ["昵称", "头像", "简介", "邮箱", "手机号", "字段范围", "field scope", "name", "avatar", "bio", "email", "phone"]);
       if (gap.id === "missing-validation-rule") return !sentenceHasSpecifics(text, ["长度", "必填", "格式", "大小", "类型", "字符", "校验规则", "validation", "required", "format", "length", "size", "type"]);
@@ -147,11 +157,11 @@ export function discoverAcceptanceGaps(text: string, { fallback = false, allowed
   ];
 }
 
-function discoveryGap(gapId: string): JsonObject | undefined {
+function discoveryGap(gapId: string): AcceptanceDiscoveryGap | undefined {
   return DISCOVERY_GAPS.find((gap) => gap.id === gapId);
 }
 
-export function discoverAcceptance(goal: string, explicitId: string | undefined = undefined): JsonObject {
+export function discoverAcceptance(goal: string, explicitId: string | undefined = undefined): AcceptanceDiscovery {
   const text = String(goal || "").trim();
   const selectedGaps = discoverAcceptanceGaps(text, { fallback: true });
 
@@ -171,8 +181,8 @@ export function discoverAcceptance(goal: string, explicitId: string | undefined 
   };
 }
 
-export function auditAcceptanceQuality(contract: JsonObject): JsonObject {
-  const findings: JsonObject[] = [];
+export function auditAcceptanceQuality(contract: NoriContract): AcceptanceQualityAudit {
+  const findings: AcceptanceQualityFinding[] = [];
   for (const [index, criterion] of (contract.criteria || []).entries()) {
     const triggerText = [
       criterion.user_story,
@@ -249,7 +259,7 @@ export function auditAcceptanceQuality(contract: JsonObject): JsonObject {
   };
 }
 
-export function renderDiscoveryMarkdown(discovery: JsonObject): string {
+export function renderDiscoveryMarkdown(discovery: AcceptanceDiscovery): string {
   const lines = [
     `# ${discovery.id} Acceptance Discovery`,
     "",
@@ -282,7 +292,7 @@ export function renderDiscoveryMarkdown(discovery: JsonObject): string {
   return `${lines.join("\n")}\n`;
 }
 
-export function renderBrainstormMarkdown(brainstorm: JsonObject): string {
+export function renderBrainstormMarkdown(brainstorm: Brainstorm): string {
   const lines = [
     `# ${brainstorm.id} Brainstorm`,
     "",
@@ -317,7 +327,7 @@ export function renderBrainstormMarkdown(brainstorm: JsonObject): string {
   return `${lines.join("\n")}\n`;
 }
 
-export function briefFromGoal(goal: string, goalId: string | undefined = undefined): JsonObject {
+export function briefFromGoal(goal: string, goalId: string | undefined = undefined): NoriBrief {
   return {
     goal_id: goalId || undefined,
     goal,
@@ -326,7 +336,7 @@ export function briefFromGoal(goal: string, goalId: string | undefined = undefin
   };
 }
 
-export function buildBrainstorm(idea: string, explicitId: string | undefined = undefined): JsonObject {
+export function buildBrainstorm(idea: string, explicitId: string | undefined = undefined): Brainstorm {
   const id = explicitId || slugify(idea.slice(0, 40));
   return {
     protocol_version: "opennori/brainstorm-v1",
@@ -338,8 +348,8 @@ export function buildBrainstorm(idea: string, explicitId: string | undefined = u
   };
 }
 
-export function briefFromBrainstorm(brainstorm: JsonObject, candidateId: string): JsonObject {
-  const candidate = brainstorm.candidates.find((item: JsonObject) => item.id === candidateId);
+export function briefFromBrainstorm(brainstorm: Brainstorm, candidateId: string): NoriBrief {
+  const candidate = brainstorm.candidates.find((item) => item.id === candidateId);
   if (!candidate) throw new Error(`Brainstorm candidate not found: ${candidateId}`);
   return {
     goal_id: slugify(`${brainstorm.id}-${candidate.id}`),

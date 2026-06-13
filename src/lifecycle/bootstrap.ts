@@ -4,9 +4,9 @@ import { ok } from "../core.ts";
 import { doctor } from "./doctor.ts";
 import { installActions } from "./install.ts";
 import { buildInstallPlan } from "./plans.ts";
-import type { JsonObject } from "../types.ts";
+import type { BootstrapData, NoriResult } from "../types.ts";
 
-export function bootstrap(root: string, { confirmed = false } = {}): JsonObject {
+export function bootstrap(root: string, { confirmed = false } = {}): NoriResult<BootstrapData> {
   const health = doctor(root);
   if (health.status === "ready") {
     return ok({

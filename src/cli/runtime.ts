@@ -4,6 +4,7 @@ import type { CommandDef } from "citty";
 import { runCommand } from "citty";
 import { findActivePairs, readJson, syncAcceptanceMarkdown, writeJson } from "../core.ts";
 import { refreshManifest } from "../lifecycle.ts";
+import type { EvidenceLedger, NoriContract, NoriEvidencePayload } from "../types.ts";
 
 type ParsedOptionToken = {
   kind: "option";
@@ -20,11 +21,9 @@ type ParsedToken = ParsedOptionToken | {
 };
 
 export type CliCommand = CommandDef<any>;
-export type CliPayload = Record<string, any>;
-
 export type ActiveGoalPair = {
-  contract: CliPayload;
-  ledger: CliPayload;
+  contract: NoriContract;
+  ledger: EvidenceLedger;
   acceptancePath: string;
   evidencePath: string;
   root: string;
@@ -65,7 +64,7 @@ export function resolveRoot(args: string[]): string {
   return path.resolve(argValue(args, "--root", process.cwd()));
 }
 
-export function savePair(acceptancePath: string, evidencePath: string, contract: CliPayload, ledger: CliPayload): void {
+export function savePair(acceptancePath: string, evidencePath: string, contract: NoriContract, ledger: EvidenceLedger): void {
   writeJson(evidencePath, { contract, ledger });
   syncAcceptanceMarkdown(acceptancePath, contract, ledger);
 }
@@ -86,7 +85,7 @@ export function loadPair(args: string[]): ActiveGoalPair {
     }
     const acceptancePath = path.resolve(explicitAcceptance);
     const evidencePath = path.resolve(explicitEvidence);
-    const payload = readJson(evidencePath);
+    const payload = readJson<NoriEvidencePayload>(evidencePath);
     return {
       contract: payload.contract,
       ledger: payload.ledger,
@@ -106,7 +105,7 @@ export function loadPair(args: string[]): ActiveGoalPair {
   if (!goal && pairs.length > 1) {
     throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id> or explicit --acceptance/--evidence paths.");
   }
-  const payload = readJson(pair.evidencePath);
+  const payload = readJson<NoriEvidencePayload>(pair.evidencePath);
   return {
     contract: payload.contract,
     ledger: payload.ledger,

@@ -3,9 +3,9 @@ import { parseArgs } from "node:util";
 import { addEvidence, criterionStatusRows, currentGap, ok, syncAcceptanceMarkdown, writeJson } from "../../core.ts";
 import { refreshManifest } from "../../lifecycle.ts";
 import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
+import type { EvidenceBasis, EvidenceInput, EvidenceResult, EvidenceSource } from "../../types.ts";
 
 type CliArgs = Record<string, any>;
-type EvidenceSource = Record<string, any>;
 type ParsedOptionToken = {
   kind: "option";
   index: number;
@@ -59,16 +59,27 @@ function evidenceSourcesFromArgs(args: CliArgs, rawArgs: string[]): EvidenceSour
   const sources: EvidenceSource[] = repeatableArgValues(args, rawArgs, "--source", "source")
     .map((source) => parseEvidenceSource(source))
     .filter((source): source is EvidenceSource => Boolean(source));
-  for (const command of repeatableArgValues(args, rawArgs, "--source-command", "sourceCommand")) {
+  for (const rawCommand of repeatableArgValues(args, rawArgs, "--source-command", "sourceCommand")) {
+    const command = String(rawCommand);
     sources.push({ type: "command", label: command, command });
   }
-  for (const sourcePath of repeatableArgValues(args, rawArgs, "--source-path", "sourcePath")) {
+  for (const rawSourcePath of repeatableArgValues(args, rawArgs, "--source-path", "sourcePath")) {
+    const sourcePath = String(rawSourcePath);
     sources.push({ type: "artifact", label: sourcePath, path: sourcePath });
   }
-  for (const url of repeatableArgValues(args, rawArgs, "--source-url", "sourceUrl")) {
+  for (const rawUrl of repeatableArgValues(args, rawArgs, "--source-url", "sourceUrl")) {
+    const url = String(rawUrl);
     sources.push({ type: "url", label: url, url });
   }
   return sources;
+}
+
+function evidenceResult(value: unknown): EvidenceResult {
+  const result = String(value || "passing");
+  if (!["failing", "passing", "blocked", "waived"].includes(result)) {
+    throw new Error(`Invalid evidence result: ${result}`);
+  }
+  return result as EvidenceResult;
 }
 
 export const evidenceAddCommand = defineCommand({
@@ -152,11 +163,11 @@ export const evidenceAddCommand = defineCommand({
     const criterionId = args.criterion;
     if (!criterionId) throw new Error("--criterion is required");
     const sources = evidenceSourcesFromArgs(args, data.rawArgs || []);
-    const evidence = {
+    const evidence: EvidenceInput = {
       kind: args.kind || "manual",
-      basis: args.basis,
+      basis: args.basis as EvidenceBasis | undefined,
       summary: args.summary || "",
-      result: args.result || "passing",
+      result: evidenceResult(args.result),
       confidence: args.confidence,
       path: args.path,
       sources,
@@ -173,7 +184,7 @@ export const evidenceAddCommand = defineCommand({
       criterion: criterionId,
       criterion_status: ledger.criteria[criterionId].status,
       confidence: ledger.criteria[criterionId].confidence,
-      latest_evidence: criterionStatusRows(contract, ledger).find((row: any) => row.id === criterionId)?.latest_evidence,
+      latest_evidence: criterionStatusRows(contract, ledger).find((row) => row.id === criterionId)?.latest_evidence,
       gate: ledger.criteria[criterionId].evidence.at(-1)?.gate,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger)

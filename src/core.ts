@@ -1,6 +1,40 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { JsonObject, NoriArtifact, NoriResult, NoriWarning, ValidationIssue } from "./types.ts";
+import type {
+  AcceptanceCriterion,
+  AcceptanceStatus,
+  CapabilityProfile,
+  CapabilityProfileEvidence,
+  CapabilityProfileItem,
+  CompletionAnswer,
+  CriterionStatusRow,
+  CurrentGap,
+  EvidenceHealth,
+  EvidenceHealthFinding,
+  EvidenceInput,
+  EvidenceLedger,
+  EvidenceRecord,
+  EvidenceResult,
+  EvidenceSource,
+  EvidenceView,
+  JsonObject,
+  NextRecommendation,
+  NoriArtifact,
+  NoriBrief,
+  NoriContract,
+  NoriResult,
+  NoriWarning,
+  NormalizedEvidence,
+  ParsedAcceptanceMarkdown,
+  ProfileCompliance,
+  ProfileComplianceStatus,
+  ProfileEvidenceInput,
+  ProfileItemInput,
+  RiskGateResult,
+  RiskLevel,
+  UserIntervention,
+  ValidationIssue
+} from "./types.ts";
 
 export const PROTOCOL_VERSION = "opennori/v1";
 
@@ -181,7 +215,7 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function ok<T extends JsonObject = JsonObject>(
+export function ok<T extends object = JsonObject>(
   data: T = {} as T,
   artifacts: NoriArtifact[] = [],
   warnings: NoriWarning[] = [],
@@ -202,9 +236,9 @@ export function fail(type: string, message: string, fix?: string): NoriResult {
   return { ok: false, error };
 }
 
-export function readJson(filePath: string): JsonObject {
+export function readJson<T extends object = JsonObject>(filePath: string): T {
   try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
   } catch (error) {
     const typedError = error as NodeJS.ErrnoException;
     if (typedError?.code === "ENOENT") {
@@ -254,10 +288,10 @@ export function findActivePairs(rootDir: string): Array<{ goalId: string; accept
     .sort((left, right) => left.goalId.localeCompare(right.goalId));
 }
 
-export function buildContractFromBrief(brief: JsonObject): JsonObject {
+export function buildContractFromBrief(brief: NoriBrief): NoriContract {
   const goal = String(brief.goal || "").trim();
   const goalId = slugify(brief.goal_id || goal.slice(0, 60));
-  const criteria = (brief.criteria || []).map((criterion: JsonObject, index: number) => ({
+  const criteria: AcceptanceCriterion[] = (brief.criteria || []).map((criterion, index) => ({
     id: String(criterion.id || `AC-${index + 1}`),
     layer: String(criterion.layer || inferCriterionLayer(criterion.id || `AC-${index + 1}`)),
     user_story: String(criterion.user_story || "").trim(),
@@ -277,8 +311,8 @@ export function buildContractFromBrief(brief: JsonObject): JsonObject {
   };
 }
 
-export function buildEvidenceLedger(contract: JsonObject): JsonObject {
-  const criteria: JsonObject = {};
+export function buildEvidenceLedger(contract: NoriContract): EvidenceLedger {
+  const criteria: EvidenceLedger["criteria"] = {};
   for (const criterion of contract.criteria) {
     criteria[criterion.id] = {
       status: "unknown",
@@ -302,10 +336,13 @@ export function buildEvidenceLedger(contract: JsonObject): JsonObject {
   };
 }
 
-export function addProfileItem(ledger: JsonObject, item: JsonObject): JsonObject {
-  if (!ledger.capability_profile) {
-    ledger.capability_profile = { items: [], evidence: [] };
-  }
+function ensureCapabilityProfile(ledger: EvidenceLedger): CapabilityProfile {
+  if (!ledger.capability_profile) ledger.capability_profile = { items: [], evidence: [] };
+  return ledger.capability_profile;
+}
+
+export function addProfileItem(ledger: EvidenceLedger, item: ProfileItemInput): EvidenceLedger {
+  const profile = ensureCapabilityProfile(ledger);
   const type = item.type || "constraint";
   const strength = item.strength || "prefer";
   if (!VALID_PROFILE_ITEM_TYPES.has(type)) {
@@ -315,8 +352,8 @@ export function addProfileItem(ledger: JsonObject, item: JsonObject): JsonObject
     throw new Error(`Invalid profile strength: ${strength}`);
   }
   const id = item.id || slugify(`${type}-${item.name}`);
-  const existingIndex = ledger.capability_profile.items.findIndex((entry: JsonObject) => entry.id === id);
-  const entry = {
+  const existingIndex = profile.items.findIndex((entry) => entry.id === id);
+  const entry: CapabilityProfileItem = {
     id,
     type,
     name: String(item.name || "").trim(),
@@ -328,27 +365,25 @@ export function addProfileItem(ledger: JsonObject, item: JsonObject): JsonObject
   };
   if (!entry.name) throw new Error("--name is required");
   if (existingIndex === -1) {
-    ledger.capability_profile.items.push(entry);
+    profile.items.push(entry);
   } else {
-    ledger.capability_profile.items[existingIndex] = {
-      ...ledger.capability_profile.items[existingIndex],
+    profile.items[existingIndex] = {
+      ...profile.items[existingIndex],
       ...entry,
-      evidence: ledger.capability_profile.items[existingIndex].evidence || []
+      evidence: profile.items[existingIndex]?.evidence || []
     };
   }
   return ledger;
 }
 
-export function addProfileEvidence(ledger: JsonObject, itemId: string, evidence: JsonObject): JsonObject {
-  if (!ledger.capability_profile) {
-    ledger.capability_profile = { items: [], evidence: [] };
-  }
-  const item = ledger.capability_profile.items.find((entry: JsonObject) => entry.id === itemId);
+export function addProfileEvidence(ledger: EvidenceLedger, itemId: string, evidence: ProfileEvidenceInput): EvidenceLedger {
+  const profile = ensureCapabilityProfile(ledger);
+  const item = profile.items.find((entry) => entry.id === itemId);
   if (!item) throw new Error(`Capability profile item not found: ${itemId}`);
   if (!VALID_PROFILE_RESULTS.has(evidence.result)) {
     throw new Error(`Invalid profile evidence result: ${evidence.result}`);
   }
-  const entry = {
+  const entry: CapabilityProfileEvidence = {
     item_id: itemId,
     result: evidence.result,
     summary: evidence.summary,
@@ -356,12 +391,12 @@ export function addProfileEvidence(ledger: JsonObject, itemId: string, evidence:
     created_at: nowIso()
   };
   item.evidence = [...(item.evidence || []), entry];
-  ledger.capability_profile.evidence.push(entry);
+  profile.evidence.push(entry);
   ledger.updated_at = nowIso();
   return ledger;
 }
 
-function basisForEvidenceKind(kind: string): string {
+function basisForEvidenceKind(kind: string): EvidenceInput["basis"] {
   if (kind === "human-confirmation") return "human-confirmation";
   if (kind === "test-summary" || kind === "review-result") return "tool-observation";
   if (kind === "screenshot" || kind === "artifact") return "artifact-review";
@@ -369,7 +404,7 @@ function basisForEvidenceKind(kind: string): string {
   return "agent-observation";
 }
 
-function normalizeEvidenceSource(source: unknown): JsonObject | null {
+function normalizeEvidenceSource(source: unknown): EvidenceSource | null {
   if (source === null || source === undefined) return null;
   if (typeof source === "string") {
     const label = source.trim();
@@ -377,7 +412,7 @@ function normalizeEvidenceSource(source: unknown): JsonObject | null {
   }
   if (typeof source !== "object" || Array.isArray(source)) return null;
 
-  const entry: JsonObject = {};
+  const entry: EvidenceSource = {};
   for (const [key, value] of Object.entries(source)) {
     if (value !== undefined && value !== null && String(value).trim() !== "") {
       entry[key] = value;
@@ -391,28 +426,30 @@ function normalizeEvidenceSource(source: unknown): JsonObject | null {
   return entry;
 }
 
-function normalizeEvidence(evidence: JsonObject): JsonObject {
+function normalizeEvidence(evidence: EvidenceInput): NormalizedEvidence {
   const sources = (Array.isArray(evidence.sources) ? evidence.sources : [])
     .map((source: unknown) => normalizeEvidenceSource(source))
-    .filter((source): source is JsonObject => Boolean(source));
+    .filter((source): source is EvidenceSource => Boolean(source));
   if (evidence.path && !sources.some((source) => source.path === evidence.path)) {
     sources.push({ type: "artifact", label: evidence.path, path: evidence.path });
   }
+  const kind = evidence.kind || "manual";
+  const basis = evidence.basis || basisForEvidenceKind(kind) || "agent-observation";
   return {
     ...evidence,
-    kind: evidence.kind || "manual",
-    basis: evidence.basis || basisForEvidenceKind(evidence.kind || "manual"),
+    kind,
+    basis,
     sources,
     reviewability: evidence.reviewability || (sources.length > 0 ? "source-provided" : "summary-only"),
     limitations: evidence.limitations || ""
   };
 }
 
-export function profileCompliance(ledger: JsonObject): JsonObject {
+export function profileCompliance(ledger: EvidenceLedger): ProfileCompliance {
   const items = ledger.capability_profile?.items || [];
-  const statuses = items.map((item: JsonObject) => {
+  const statuses = items.map((item) => {
     const latest = item.evidence?.at(-1);
-    let status = "unknown";
+    let status: ProfileComplianceStatus = "unknown";
     if (latest?.result === "satisfied") status = "satisfied";
     if (latest?.result === "waived") status = "waived";
     if (latest?.result === "violated") status = "violated";
@@ -426,8 +463,8 @@ export function profileCompliance(ledger: JsonObject): JsonObject {
       summary: latest?.summary || "<none>"
     };
   });
-  const blocking = statuses.filter((item: JsonObject) => item.strength === "must" && (item.status === "unknown" || item.status === "violated"));
-  const avoidedViolations = statuses.filter((item: JsonObject) => item.strength === "avoid" && item.status === "violated");
+  const blocking = statuses.filter((item) => item.strength === "must" && (item.status === "unknown" || item.status === "violated"));
+  const avoidedViolations = statuses.filter((item) => item.strength === "avoid" && item.status === "violated");
   return {
     required: items.length > 0,
     complete: blocking.length === 0 && avoidedViolations.length === 0,
@@ -436,7 +473,7 @@ export function profileCompliance(ledger: JsonObject): JsonObject {
   };
 }
 
-export function renderAcceptanceMarkdown(contract: JsonObject, ledger: JsonObject): string {
+export function renderAcceptanceMarkdown(contract: NoriContract, ledger: EvidenceLedger): string {
   const lines = [
     `# ${contract.goal_id} Acceptance Contract`,
     "",
@@ -474,25 +511,25 @@ export function renderAcceptanceMarkdown(contract: JsonObject, ledger: JsonObjec
   return `${lines.join("\n")}\n`;
 }
 
-export function syncAcceptanceMarkdown(acceptancePath: string, contract: JsonObject, ledger: JsonObject): void {
+export function syncAcceptanceMarkdown(acceptancePath: string, contract: NoriContract, ledger: EvidenceLedger): void {
   fs.writeFileSync(acceptancePath, renderAcceptanceMarkdown(contract, ledger));
 }
 
-function renderProfileLines(ledger: JsonObject): string[] {
+function renderProfileLines(ledger: EvidenceLedger): string[] {
   const compliance = profileCompliance(ledger);
   if (!compliance.required) return ["<none>"];
   return [
     "| ID | Type | Name | Strength | Compliance | Purpose |",
     "| --- | --- | --- | --- | --- | --- |",
-    ...compliance.statuses.map((item: JsonObject) => `| ${item.id} | ${item.type} | ${item.name} | ${item.strength} | ${item.status} | ${item.purpose || "<none>"} |`)
+    ...compliance.statuses.map((item) => `| ${item.id} | ${item.type} | ${item.name} | ${item.strength} | ${item.status} | ${item.purpose || "<none>"} |`)
   ];
 }
 
-export function parseAcceptanceMarkdown(markdown: string): JsonObject {
+export function parseAcceptanceMarkdown(markdown: string): ParsedAcceptanceMarkdown {
   const goalMatch = markdown.match(/## Goal\s+([\s\S]*?)(?:\n## Acceptance Basis|\n## User Acceptance Criteria)/);
   const tableMatch = markdown.match(/## User Acceptance Criteria\s+([\s\S]*?)(?:\n## |\n$)/);
   const goal = goalMatch?.[1]?.trim() || "";
-  const criteria: JsonObject[] = [];
+  const criteria: ParsedAcceptanceMarkdown["criteria"] = [];
 
   if (tableMatch) {
     for (const line of (tableMatch[1] || "").split("\n")) {
@@ -503,21 +540,21 @@ export function parseAcceptanceMarkdown(markdown: string): JsonObject {
       const cells = trimmed.split("|").slice(1, -1).map((cell: string) => cell.trim());
       if (cells.length >= 6) {
         criteria.push({
-          id: cells[0],
-          layer: cells[1],
-          user_story: cells[2],
-          measurement: cells[3],
-          threshold: cells[4],
-          status: cells[5]
+          id: cells[0] || "",
+          layer: cells[1] || "",
+          user_story: cells[2] || "",
+          measurement: cells[3] || "",
+          threshold: cells[4] || "",
+          status: cells[5] || "unknown"
         });
       } else if (cells.length >= 5) {
         criteria.push({
-          id: cells[0],
-          layer: inferCriterionLayer(cells[0]),
-          user_story: cells[1],
-          measurement: cells[2],
-          threshold: cells[3],
-          status: cells[4]
+          id: cells[0] || "",
+          layer: inferCriterionLayer(cells[0] || ""),
+          user_story: cells[1] || "",
+          measurement: cells[2] || "",
+          threshold: cells[3] || "",
+          status: cells[4] || "unknown"
         });
       }
     }
@@ -526,7 +563,7 @@ export function parseAcceptanceMarkdown(markdown: string): JsonObject {
   return { goal, criteria };
 }
 
-export function validateContract(contract: JsonObject, ledger: JsonObject | null = null): ValidationIssue[] {
+export function validateContract(contract: NoriContract, ledger: EvidenceLedger | null = null): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   if (contract.protocol_version !== PROTOCOL_VERSION) {
@@ -545,8 +582,8 @@ export function validateContract(contract: JsonObject, ledger: JsonObject | null
     return issues;
   }
 
-  const ids = new Set();
-  contract.criteria.forEach((criterion: JsonObject, index: number) => {
+  const ids = new Set<string>();
+  contract.criteria.forEach((criterion, index) => {
     const prefix = `criteria[${index}]`;
     if (!criterion.id) {
       issues.push({ path: `${prefix}.id`, message: "Criterion id is required" });
@@ -613,7 +650,7 @@ export function validateContract(contract: JsonObject, ledger: JsonObject | null
     if (ledger.protocol_version !== PROTOCOL_VERSION) {
       issues.push({ path: "ledger.protocol_version", message: `Must be ${PROTOCOL_VERSION}` });
     }
-    for (const [criterionId, state] of Object.entries(ledger.criteria || {}) as Array<[string, JsonObject]>) {
+    for (const [criterionId, state] of Object.entries(ledger.criteria || {})) {
       if (!ids.has(criterionId)) {
         issues.push({ path: `ledger.criteria.${criterionId}`, message: "Evidence ledger has an unknown criterion" });
       }
@@ -634,8 +671,8 @@ export function validateContract(contract: JsonObject, ledger: JsonObject | null
   return issues;
 }
 
-export function addEvidence(contract: JsonObject, ledger: JsonObject, criterionId: string, evidence: JsonObject): JsonObject {
-  const criterion = contract.criteria.find((item: JsonObject) => item.id === criterionId);
+export function addEvidence(contract: NoriContract, ledger: EvidenceLedger, criterionId: string, evidence: EvidenceInput): EvidenceLedger {
+  const criterion = contract.criteria.find((item) => item.id === criterionId);
   if (!criterion) {
     throw new Error(`Criterion not found: ${criterionId}`);
   }
@@ -644,6 +681,7 @@ export function addEvidence(contract: JsonObject, ledger: JsonObject, criterionI
   }
 
   const state = ledger.criteria[criterionId];
+  if (!state) throw new Error(`Evidence ledger state not found: ${criterionId}`);
   const normalized = normalizeEvidence(evidence);
   const gated = applyRiskGate(criterion, normalized);
   state.evidence.push({
@@ -666,7 +704,7 @@ export function addEvidence(contract: JsonObject, ledger: JsonObject, criterionI
   return ledger;
 }
 
-export function applyRiskGate(criterion: JsonObject, evidence: JsonObject): JsonObject {
+export function applyRiskGate(criterion: AcceptanceCriterion, evidence: NormalizedEvidence): RiskGateResult {
   const requestedResult = evidence.result;
   const confidence = evidence.confidence || confidenceForEvidence(criterion.risk, requestedResult);
   if (requestedResult !== "passing" || criterion.risk !== "high") {
@@ -674,10 +712,10 @@ export function applyRiskGate(criterion: JsonObject, evidence: JsonObject): Json
   }
 
   const hasReviewableSource = Array.isArray(evidence.sources)
-    && evidence.sources.some((source: JsonObject) => REVIEWABLE_SOURCE_TYPES.has(source.type));
+    && evidence.sources.some((source) => REVIEWABLE_SOURCE_TYPES.has(source.type || ""));
   const hasStrongEvidence = STRONG_EVIDENCE_KINDS.has(evidence.kind)
     || STRONG_EVIDENCE_BASIS.has(evidence.basis)
-    || STRONG_CONFIDENCE.has(evidence.confidence)
+    || (evidence.confidence ? STRONG_CONFIDENCE.has(evidence.confidence) : false)
     || hasReviewableSource;
 
   if (hasStrongEvidence) {
@@ -695,7 +733,7 @@ export function applyRiskGate(criterion: JsonObject, evidence: JsonObject): Json
   };
 }
 
-export function confidenceForEvidence(risk: string, result: string): string {
+export function confidenceForEvidence(risk: RiskLevel | undefined, result: EvidenceResult): string {
   if (result !== "passing") return "evidence";
   if (risk === "low") return "agent";
   if (risk === "medium") return "verified";
@@ -703,10 +741,10 @@ export function confidenceForEvidence(risk: string, result: string): string {
   return "human-required";
 }
 
-export function recomputeWorkflowStatus(contract: JsonObject, ledger: JsonObject): JsonObject {
+export function recomputeWorkflowStatus(contract: NoriContract, ledger: EvidenceLedger): EvidenceLedger {
   const requiredStates = contract.criteria
-    .filter((criterion: JsonObject) => criterion.required !== false)
-    .map((criterion: JsonObject) => ledger.criteria[criterion.id]?.status || "unknown");
+    .filter((criterion) => criterion.required !== false)
+    .map((criterion) => ledger.criteria[criterion.id]?.status || "unknown");
   const approved = contract.acceptance_basis?.status === "approved";
   const compliance = profileCompliance(ledger);
 
@@ -714,7 +752,7 @@ export function recomputeWorkflowStatus(contract: JsonObject, ledger: JsonObject
     ledger.status = "blocked";
   } else if (compliance.required && !compliance.complete) {
     ledger.status = "blocked";
-  } else if (approved && requiredStates.length > 0 && requiredStates.every((status: string) => status === "passing" || status === "waived")) {
+  } else if (approved && requiredStates.length > 0 && requiredStates.every((status) => status === "passing" || status === "waived")) {
     ledger.status = "complete";
   } else {
     ledger.status = "active";
@@ -723,7 +761,7 @@ export function recomputeWorkflowStatus(contract: JsonObject, ledger: JsonObject
   return ledger;
 }
 
-export function currentGap(contract: JsonObject, ledger: JsonObject): JsonObject | null {
+export function currentGap(contract: NoriContract, ledger: EvidenceLedger): CurrentGap | null {
   if (contract.acceptance_basis?.status !== "approved") {
     return {
       id: "ACCEPTANCE-BASIS",
@@ -735,7 +773,8 @@ export function currentGap(contract: JsonObject, ledger: JsonObject): JsonObject
 
   const compliance = profileCompliance(ledger);
   if (compliance.required && !compliance.complete) {
-    const item = compliance.blocking[0] || {};
+    const item = compliance.blocking[0];
+    if (!item) return null;
     return {
       id: `PROFILE-${item.id}`,
       user_story: `作为用户，我需要 agent 遵守能力偏好：${item.name}。`,
@@ -744,7 +783,7 @@ export function currentGap(contract: JsonObject, ledger: JsonObject): JsonObject
     };
   }
 
-  const priority = ["failing", "blocked", "unknown"];
+  const priority: AcceptanceStatus[] = ["failing", "blocked", "unknown"];
   for (const status of priority) {
     for (const criterion of contract.criteria) {
       const state = ledger.criteria[criterion.id];
@@ -762,10 +801,16 @@ export function currentGap(contract: JsonObject, ledger: JsonObject): JsonObject
   return null;
 }
 
-export function intervention(contract: JsonObject, ledger: JsonObject): JsonObject {
+export function intervention(contract: NoriContract, ledger: EvidenceLedger): UserIntervention {
   const compliance = profileCompliance(ledger);
   if (compliance.required && !compliance.complete) {
-    const item = compliance.blocking[0] || {};
+    const item = compliance.blocking[0];
+    if (!item) {
+      return {
+        required: true,
+        action: "Capability profile compliance is incomplete; inspect Nori Profile evidence."
+      };
+    }
     return {
       required: true,
       criterion: `PROFILE-${item.id}`,
@@ -795,7 +840,7 @@ export function intervention(contract: JsonObject, ledger: JsonObject): JsonObje
   };
 }
 
-export function completionAnswer(contract: JsonObject, ledger: JsonObject): JsonObject {
+export function completionAnswer(contract: NoriContract, ledger: EvidenceLedger): CompletionAnswer {
   const gap = currentGap(contract, ledger);
   const health = evidenceHealth(contract, ledger);
   if (!gap && ledger.status === "complete" && health.status !== "clear") {
@@ -816,7 +861,7 @@ export function completionAnswer(contract: JsonObject, ledger: JsonObject): Json
   };
 }
 
-export function nextRecommendation(contract: JsonObject, ledger: JsonObject): JsonObject {
+export function nextRecommendation(contract: NoriContract, ledger: EvidenceLedger): NextRecommendation {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
   const health = evidenceHealth(contract, ledger);
@@ -824,8 +869,8 @@ export function nextRecommendation(contract: JsonObject, ledger: JsonObject): Js
   if (needed.required) {
     return {
       status: "user-intervention-required",
-      focus: needed.criterion,
-      summary: `${needed.criterion} needs user input before the agent continues.`,
+      focus: needed.criterion || null,
+      summary: `${needed.criterion || "OpenNori"} needs user input before the agent continues.`,
       actions: [
         needed.action,
         "After the decision or external condition is available, record evidence and rerun OpenNori status."
@@ -896,12 +941,14 @@ export function gapReason(status: string): string {
   return "This user acceptance criterion has no user-understandable evidence yet.";
 }
 
-export function evidenceView(evidence: JsonObject | null | undefined): JsonObject | null {
+export function evidenceView(evidence: EvidenceRecord | null | undefined): EvidenceView | null {
   if (!evidence) return null;
   const sources = Array.isArray(evidence.sources) ? evidence.sources : [];
+  const kind = evidence.kind || "manual";
+  const basis = evidence.basis || basisForEvidenceKind(kind) || "agent-observation";
   return {
-    kind: evidence.kind || "manual",
-    basis: evidence.basis || basisForEvidenceKind(evidence.kind || "manual"),
+    kind,
+    basis,
     summary: evidence.summary || "<none>",
     result: evidence.result || "unknown",
     confidence: evidence.confidence,
@@ -914,49 +961,49 @@ export function evidenceView(evidence: JsonObject | null | undefined): JsonObjec
   };
 }
 
-export function criterionStatusRows(contract: JsonObject, ledger: JsonObject): JsonObject[] {
-  return contract.criteria.map((criterion: JsonObject) => {
-    const state = ledger.criteria[criterion.id] || {};
+export function criterionStatusRows(contract: NoriContract, ledger: EvidenceLedger): CriterionStatusRow[] {
+  return contract.criteria.map((criterion) => {
+    const state = ledger.criteria[criterion.id];
     return {
       id: criterion.id,
       layer: criterion.layer || inferCriterionLayer(criterion.id),
       user_story: criterion.user_story,
-      status: state.status || "unknown",
-      confidence: state.confidence || "none",
-      latest_evidence: evidenceView(state.evidence?.at(-1))
+      status: state?.status || "unknown",
+      confidence: state?.confidence || "none",
+      latest_evidence: evidenceView(state?.evidence?.at(-1))
     };
   });
 }
 
-function evidenceAgeDays(evidence: JsonObject | null | undefined, now = Date.now()): number | null {
+function evidenceAgeDays(evidence: EvidenceRecord | null | undefined, now = Date.now()): number | null {
   if (!evidence?.created_at) return null;
   const timestamp = Date.parse(evidence.created_at);
   if (Number.isNaN(timestamp)) return null;
   return Math.max(0, Math.floor((now - timestamp) / 86400000));
 }
 
-function evidenceHasReviewableSource(evidence: JsonObject | null | undefined): boolean {
+function evidenceHasReviewableSource(evidence: EvidenceRecord | null | undefined): boolean {
   const sources = Array.isArray(evidence?.sources) ? evidence.sources : [];
-  return sources.some((source: JsonObject) => REVIEWABLE_SOURCE_TYPES.has(source.type)) || Boolean(evidence?.path);
+  return sources.some((source) => REVIEWABLE_SOURCE_TYPES.has(source.type || "")) || Boolean(evidence?.path);
 }
 
-function evidenceHasReviewability(evidence: JsonObject | null | undefined): boolean {
+function evidenceHasReviewability(evidence: EvidenceRecord | null | undefined): boolean {
   const value = String(evidence?.reviewability || "").trim();
   return value.length > 0 && value !== "summary-only";
 }
 
-function evidenceSummaryLooksBulk(evidence: JsonObject | null | undefined): boolean {
+function evidenceSummaryLooksBulk(evidence: EvidenceRecord | null | undefined): boolean {
   const summary = String(evidence?.summary || "");
   return BULK_EVIDENCE_PATTERNS.some((pattern) => pattern.test(summary));
 }
 
-export function evidenceHealth(contract: JsonObject, ledger: JsonObject, { now = Date.now(), staleDays = EVIDENCE_HEALTH_STALE_DAYS } = {}): JsonObject {
-  const findings: JsonObject[] = [];
+export function evidenceHealth(contract: NoriContract, ledger: EvidenceLedger, { now = Date.now(), staleDays = EVIDENCE_HEALTH_STALE_DAYS } = {}): EvidenceHealth {
+  const findings: EvidenceHealthFinding[] = [];
   for (const criterion of contract.criteria || []) {
     if (criterion.required === false) continue;
     const state = ledger.criteria?.[criterion.id];
     const latest = state?.evidence?.at(-1);
-    if (!["passing", "waived"].includes(state.status)) continue;
+    if (!state || !["passing", "waived"].includes(state.status)) continue;
     if (!latest) continue;
 
     const ageDays = evidenceAgeDays(latest, now);
@@ -1040,11 +1087,11 @@ function formatEvidenceValue(value: unknown): string {
   return String(value);
 }
 
-function formatEvidenceSource(source: unknown): string {
+function formatEvidenceSource(source: EvidenceSource | string): string {
   if (!source) return "<none>";
   if (typeof source === "string") return source;
   const preferredKeys = ["type", "label", "command", "path", "url", "outcome", "summary"];
-  const sourceRecord = source as JsonObject;
+  const sourceRecord = source as EvidenceSource;
   const parts: string[] = [];
   for (const key of preferredKeys) {
     if (sourceRecord[key]) parts.push(`${key}=${formatEvidenceValue(sourceRecord[key])}`);
@@ -1057,14 +1104,14 @@ function formatEvidenceSource(source: unknown): string {
   return parts.join(", ") || "<none>";
 }
 
-function formatEvidenceSources(evidence: JsonObject | null | undefined): string {
+function formatEvidenceSources(evidence: EvidenceRecord | null | undefined): string {
   const view = evidenceView(evidence);
   if (!view) return "<none>";
   if (view.sources.length === 0) return view.path || "<none>";
-  return view.sources.map((source: unknown) => formatEvidenceSource(source)).join("; ");
+  return view.sources.map((source) => formatEvidenceSource(source)).join("; ");
 }
 
-export function renderReport(contract: JsonObject, ledger: JsonObject): string {
+export function renderReport(contract: NoriContract, ledger: EvidenceLedger): string {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
   const completion = completionAnswer(contract, ledger);
@@ -1100,11 +1147,11 @@ export function renderReport(contract: JsonObject, ledger: JsonObject): string {
   ];
 
   for (const criterion of contract.criteria) {
-    const state = ledger.criteria[criterion.id] || {};
-    const latest = state.evidence?.at(-1);
+    const state = ledger.criteria[criterion.id];
+    const latest = state?.evidence?.at(-1);
     const view = evidenceView(latest);
     const evidence = view ? `${view.kind}: ${view.summary}` : "<none>";
-    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${escapeTableCell(criterion.user_story)} | ${state.status || "unknown"} | ${state.confidence || "none"} | ${escapeTableCell(evidence)} | ${view?.basis || "<none>"} | ${escapeTableCell(formatEvidenceSources(latest))} | ${view?.reviewability || "<none>"} | ${escapeTableCell(view?.limitations || "<none>")} |`);
+    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${escapeTableCell(criterion.user_story)} | ${state?.status || "unknown"} | ${state?.confidence || "none"} | ${escapeTableCell(evidence)} | ${view?.basis || "<none>"} | ${escapeTableCell(formatEvidenceSources(latest))} | ${view?.reviewability || "<none>"} | ${escapeTableCell(view?.limitations || "<none>")} |`);
   }
 
   lines.push("", "## Current Acceptance Gap", "");

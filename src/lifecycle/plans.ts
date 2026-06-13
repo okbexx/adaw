@@ -1,5 +1,12 @@
 import path from "node:path";
-import type { JsonObject, ManagedAction } from "../types.ts";
+import type {
+  InstallPlan,
+  LifecyclePlanAction,
+  LifecyclePlanSummary,
+  ManagedAction,
+  UninstallPlan,
+  UpgradePlan
+} from "../types.ts";
 
 const WRITING_INSTALL_ACTIONS = new Set(["create", "overwrite", "update", "merge"]);
 const WRITING_UNINSTALL_ACTIONS = new Set(["delete", "delete-tree"]);
@@ -19,7 +26,7 @@ function installActionReason(action: string, kind: string): string {
   return `OpenNori ${kind} action: ${action}.`;
 }
 
-function enrichInstallAction(root: string, action: ManagedAction, { dryRun = false } = {}): JsonObject {
+function enrichInstallAction(root: string, action: ManagedAction, { dryRun = false } = {}): LifecyclePlanAction {
   const wouldWrite = WRITING_INSTALL_ACTIONS.has(action.action);
   return {
     path: relativeTo(root, action.path),
@@ -33,7 +40,7 @@ function enrichInstallAction(root: string, action: ManagedAction, { dryRun = fal
   };
 }
 
-function summarizeInstallPlan(actions: JsonObject[]): JsonObject {
+function summarizeInstallPlan(actions: LifecyclePlanAction[]): LifecyclePlanSummary {
   const byAction: Record<string, number> = {};
   for (const action of actions) {
     byAction[action.action] = (byAction[action.action] || 0) + 1;
@@ -48,7 +55,7 @@ function summarizeInstallPlan(actions: JsonObject[]): JsonObject {
   };
 }
 
-export function buildInstallPlan(root: string, actions: ManagedAction[], { dryRun = false, force = false, requestedSkill = false, refreshSkill = false, mergeAgentRoute = false } = {}): JsonObject {
+export function buildInstallPlan(root: string, actions: ManagedAction[], { dryRun = false, force = false, requestedSkill = false, refreshSkill = false, mergeAgentRoute = false } = {}): InstallPlan {
   const enrichedActions = actions.map((action) => enrichInstallAction(root, action, { dryRun }));
   return {
     schema_version: "opennori/install-plan-v1",
@@ -71,7 +78,7 @@ function uninstallActionReason(action: string, kind: string): string {
   return `OpenNori ${kind} action: ${action}.`;
 }
 
-function enrichUninstallAction(root: string, action: ManagedAction, { dryRun = false } = {}): JsonObject {
+function enrichUninstallAction(root: string, action: ManagedAction, { dryRun = false } = {}): LifecyclePlanAction {
   const wouldWrite = WRITING_UNINSTALL_ACTIONS.has(action.action);
   return {
     path: relativeTo(root, action.path),
@@ -86,7 +93,7 @@ function enrichUninstallAction(root: string, action: ManagedAction, { dryRun = f
   };
 }
 
-function summarizeUninstallPlan(actions: JsonObject[]): JsonObject {
+function summarizeUninstallPlan(actions: LifecyclePlanAction[]): LifecyclePlanSummary {
   const byAction: Record<string, number> = {};
   for (const action of actions) {
     byAction[action.action] = (byAction[action.action] || 0) + 1;
@@ -102,7 +109,7 @@ function summarizeUninstallPlan(actions: JsonObject[]): JsonObject {
   };
 }
 
-export function buildUninstallPlan(root: string, actions: ManagedAction[], { dryRun = false, includeState = false } = {}): JsonObject {
+export function buildUninstallPlan(root: string, actions: ManagedAction[], { dryRun = false, includeState = false } = {}): UninstallPlan {
   const enrichedActions = actions.map((action) => enrichUninstallAction(root, action, { dryRun }));
   return {
     schema_version: "opennori/uninstall-plan-v1",
@@ -123,7 +130,7 @@ function upgradeActionReason(action: string, kind: string): string {
   return `OpenNori ${kind} action: ${action}.`;
 }
 
-function enrichUpgradeAction(root: string, action: ManagedAction, { dryRun = false } = {}): JsonObject {
+function enrichUpgradeAction(root: string, action: ManagedAction, { dryRun = false } = {}): LifecyclePlanAction {
   const wouldWrite = WRITING_UPGRADE_ACTIONS.has(action.action);
   return {
     path: relativeTo(root, action.path),
@@ -139,7 +146,7 @@ function enrichUpgradeAction(root: string, action: ManagedAction, { dryRun = fal
   };
 }
 
-function summarizeUpgradePlan(actions: JsonObject[]): JsonObject {
+function summarizeUpgradePlan(actions: LifecyclePlanAction[]): LifecyclePlanSummary {
   const byAction: Record<string, number> = {};
   for (const action of actions) {
     byAction[action.action] = (byAction[action.action] || 0) + 1;
@@ -154,7 +161,7 @@ function summarizeUpgradePlan(actions: JsonObject[]): JsonObject {
   };
 }
 
-export function buildUpgradePlan(root: string, actions: ManagedAction[], { dryRun = false, requestedSkill = false, mergeAgentRoute = false } = {}): JsonObject {
+export function buildUpgradePlan(root: string, actions: ManagedAction[], { dryRun = false, requestedSkill = false, mergeAgentRoute = false } = {}): UpgradePlan {
   const enrichedActions = actions.map((action) => enrichUpgradeAction(root, action, { dryRun }));
   return {
     schema_version: "opennori/upgrade-plan-v1",
