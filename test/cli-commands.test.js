@@ -8,7 +8,7 @@ import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, run
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand, runUninstallCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
@@ -96,6 +96,33 @@ test("install command module preserves preview and confirm safety", async () => 
   assert.equal(unconfirmed.ok, false);
   assert.equal(unconfirmed.error.type, "confirm_required");
   assert.match(unconfirmed.error.fix, /--dry-run --force --skill --json/);
+});
+
+test("uninstall command module preserves state unless include-state is confirmed", async () => {
+  const root = tempRoot();
+  await runInstallCommand(["--root", root, "--skill", "--json"]);
+
+  const dryRun = await runUninstallCommand(["--root", root, "--dry-run", "--json"]);
+  assert.equal(dryRun.ok, true);
+  assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
+  assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".opennori/active").action, "preserve");
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), true);
+
+  const unconfirmed = await runUninstallCommand(["--root", root, "--json"]);
+  assert.equal(unconfirmed.ok, false);
+  assert.equal(unconfirmed.error.type, "confirm_required");
+
+  const removed = await runUninstallCommand(["--root", root, "--confirm", "--json"]);
+  assert.equal(removed.ok, true);
+  assert.equal(removed.data.include_state, false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "active")), true);
+
+  const stateRemovedRoot = tempRoot();
+  await runInstallCommand(["--root", stateRemovedRoot, "--skill", "--json"]);
+  const stateRemoved = await runUninstallCommand(["--root", stateRemovedRoot, "--include-state", "--confirm", "--json"]);
+  assert.equal(stateRemoved.data.include_state, true);
+  assert.equal(fs.existsSync(path.join(stateRemovedRoot, ".opennori")), false);
 });
 
 test("list command module reports active goal gaps without CLI dispatch", async () => {
