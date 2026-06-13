@@ -11,7 +11,7 @@ import { runChangesCommand } from "../src/cli/commands/changes.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand } from "../src/cli/commands/doctor.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runBootstrapCommand } from "../src/cli/commands/health.js";
+import { runBootstrapCommand } from "../src/cli/commands/bootstrap.js";
 import { runInstallCommand } from "../src/cli/commands/install.js";
 import { runListCommand } from "../src/cli/commands/list.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";

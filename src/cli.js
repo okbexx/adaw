@@ -7,7 +7,7 @@ import { runChangesCommand } from "./cli/commands/changes.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand } from "./cli/commands/doctor.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
-import { bootstrapResult, runBootstrapCommand } from "./cli/commands/health.js";
+import { bootstrapResult, runBootstrapCommand } from "./cli/commands/bootstrap.js";
 import { runInstallCommand } from "./cli/commands/install.js";
 import { runListCommand } from "./cli/commands/list.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
