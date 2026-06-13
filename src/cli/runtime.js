@@ -2,6 +2,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { runCommand } from "citty";
 import { findActivePairs, readJson, syncAcceptanceMarkdown, writeJson } from "../core.js";
+import { refreshManifest } from "../lifecycle.js";
 
 export async function runJsonCommand(command, rawArgs, data) {
   const { result } = await runCommand(command, { rawArgs, data });
@@ -73,5 +74,13 @@ export function loadPair(args) {
     acceptancePath: pair.acceptancePath,
     evidencePath: pair.evidencePath,
     root
+  };
+}
+
+export function activeGoalRuntime(args) {
+  return {
+    loadPair: () => loadPair(args),
+    savePair,
+    refreshManifest
   };
 }

@@ -1,5 +1,4 @@
 import { parseArgs } from "node:util";
-import { refreshManifest } from "./lifecycle.js";
 import { fail, ok } from "./core.js";
 import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runInitCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
@@ -8,7 +7,7 @@ import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { bootstrapResult, runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand, runUninstallCommand, runUpgradeCommand } from "./cli/commands/health.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
-import { argValue, loadPair, resolveRoot, savePair } from "./cli/runtime.js";
+import { activeGoalRuntime, argValue, resolveRoot } from "./cli/runtime.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 function printJson(payload) {
@@ -264,79 +263,67 @@ export async function main(args) {
   }
 
   if (command === "check") {
-    printCommandResult(await runCheckCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printCommandResult(await runCheckCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "approve") {
-    printJson(await runApproveCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runApproveCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "criterion" && args[1] === "update") {
-    printCommandResult(await runCriterionUpdateCommand(args.slice(2), { loadPair: () => loadPair(args) }));
+    printCommandResult(await runCriterionUpdateCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "profile" && args[1] === "add") {
-    printJson(await runProfileAddCommand(args.slice(2), {
-      loadPair: () => loadPair(args),
-      savePair,
-      refreshManifest
-    }));
+    printJson(await runProfileAddCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "profile" && args[1] === "evidence") {
-    printJson(await runProfileEvidenceCommand(args.slice(2), {
-      loadPair: () => loadPair(args),
-      savePair,
-      refreshManifest
-    }));
+    printJson(await runProfileEvidenceCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "profile" && args[1] === "show") {
-    printJson(await runProfileShowCommand(args.slice(2), { loadPair: () => loadPair(args) }));
+    printJson(await runProfileShowCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "profile" && args[1] === "check") {
-    printJson(await runProfileCheckCommand(args.slice(2), {
-      loadPair: () => loadPair(args),
-      savePair,
-      refreshManifest
-    }));
+    printJson(await runProfileCheckCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "resume") {
-    printJson(await runResumeCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runResumeCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "next") {
-    printJson(await runNextCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runNextCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "evidence" && args[1] === "add") {
-    printJson(await runEvidenceAddCommand(args.slice(2), { loadPair: () => loadPair(args) }));
+    printJson(await runEvidenceAddCommand(args.slice(2), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "evaluate") {
-    printJson(await runEvaluateCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runEvaluateCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "status") {
-    printJson(await runStatusCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runStatusCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
   if (command === "report") {
-    printJson(await runReportCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printJson(await runReportCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
@@ -351,7 +338,7 @@ export async function main(args) {
   }
 
   if (command === "archive") {
-    printCommandResult(await runArchiveCommand(args.slice(1), { loadPair: () => loadPair(args) }));
+    printCommandResult(await runArchiveCommand(args.slice(1), activeGoalRuntime(args)));
     return;
   }
 
