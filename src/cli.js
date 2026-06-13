@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { applyUninstallActions, applyUpgradeActions, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
+import { applyUninstallActions, applyUpgradeActions, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
 import { auditAcceptanceQuality } from "./acceptance.js";
 import {
   addEvidence,
@@ -34,7 +34,7 @@ import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, run
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
-import { bootstrapResult, runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
+import { bootstrapResult, runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand } from "./cli/commands/health.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
@@ -351,43 +351,9 @@ export async function main(args) {
   }
 
   if (command === "install") {
-    const root = resolveRoot(args);
-    const dryRun = hasFlag(args, "--dry-run");
-    const force = hasFlag(args, "--force");
-    const confirmed = hasFlag(args, "--confirm");
-    const requestedSkill = hasFlag(args, "--skill");
-    const refreshSkill = hasFlag(args, "--refresh-skill");
-    const mergeAgentRoute = hasFlag(args, "--merge-agent-route");
-    if ((force || refreshSkill || mergeAgentRoute) && !dryRun && !confirmed) {
-      const previewFlags = [
-        "--dry-run",
-        force ? "--force" : null,
-        requestedSkill ? "--skill" : null,
-        refreshSkill ? "--refresh-skill" : null,
-        mergeAgentRoute ? "--merge-agent-route" : null,
-        "--json"
-      ].filter(Boolean).join(" ");
-      printJson(fail(
-        "confirm_required",
-        "Install may update existing OpenNori-managed project assets.",
-        `Run opennori install --root <project> ${previewFlags} first, then rerun with --confirm if the planned updates are acceptable.`
-      ));
-      process.exitCode = 1;
-      return;
-    }
-    const actions = installActions(root, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
-    const manifestAction = actions.find((action) => action.kind === "manifest");
-    const installPlan = buildInstallPlan(root, actions, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
-
-    printJson(ok({
-      root,
-      dry_run: dryRun,
-      force,
-      confirmed,
-      install_plan: installPlan,
-      actions: installPlan.actions,
-      manifest: manifestAction.manifest
-    }));
+    const result = await runInstallCommand(args.slice(1));
+    printJson(result);
+    if (!result.ok) process.exitCode = 1;
     return;
   }
 

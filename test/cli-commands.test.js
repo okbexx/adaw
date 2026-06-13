@@ -8,7 +8,7 @@ import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, run
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
@@ -75,6 +75,27 @@ test("bootstrap command module previews before confirmed setup", async () => {
   assert.equal(confirmed.data.install_plan.dry_run, false);
   assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+});
+
+test("install command module preserves preview and confirm safety", async () => {
+  const root = tempRoot();
+  const dryRun = await runInstallCommand(["--root", root, "--skill", "--dry-run", "--json"]);
+  assert.equal(dryRun.ok, true);
+  assert.equal(dryRun.data.dry_run, true);
+  assert.equal(dryRun.data.install_plan.dry_run, true);
+  assert.equal(dryRun.data.install_plan.summary.will_write, 0);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), false);
+
+  const installed = await runInstallCommand(["--root", root, "--skill", "--json"]);
+  assert.equal(installed.ok, true);
+  assert.equal(installed.data.confirmed, false);
+  assert.equal(installed.data.install_plan.summary.will_write > 0, true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+
+  const unconfirmed = await runInstallCommand(["--root", root, "--skill", "--force", "--json"]);
+  assert.equal(unconfirmed.ok, false);
+  assert.equal(unconfirmed.error.type, "confirm_required");
+  assert.match(unconfirmed.error.fix, /--dry-run --force --skill --json/);
 });
 
 test("list command module reports active goal gaps without CLI dispatch", async () => {
