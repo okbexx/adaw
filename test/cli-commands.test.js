@@ -8,7 +8,7 @@ import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, run
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
+import { runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "../src/cli/commands/health.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
@@ -56,6 +56,25 @@ test("citty command modules preserve agent-readable JSON payloads", async () => 
   assert.equal(doctor.ok, true);
   assert.equal(doctor.data.name, "opennori");
   assert.equal(doctor.data.side_effect, "none");
+});
+
+test("bootstrap command module previews before confirmed setup", async () => {
+  const root = tempRoot();
+  const preview = await runBootstrapCommand(["--root", root, "--json"]);
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.status, "needs_confirm");
+  assert.equal(preview.data.confirmed, false);
+  assert.equal(preview.data.install_plan.dry_run, true);
+  assert.equal(preview.data.install_plan.summary.will_write, 0);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+
+  const confirmed = await runBootstrapCommand(["--root", root, "--confirm", "--json"]);
+  assert.equal(confirmed.ok, true);
+  assert.equal(confirmed.data.status, "installed");
+  assert.equal(confirmed.data.confirmed, true);
+  assert.equal(confirmed.data.install_plan.dry_run, false);
+  assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
 });
 
 test("list command module reports active goal gaps without CLI dispatch", async () => {

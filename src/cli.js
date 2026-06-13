@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { applyUninstallActions, applyUpgradeActions, bootstrap, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
+import { applyUninstallActions, applyUpgradeActions, buildInstallPlan, buildManifest, buildUninstallActions, buildUninstallPlan, buildUpgradePlan, installActions, refreshManifest, safeReadManifest, upgradeActions, writeManifest } from "./lifecycle.js";
 import { auditAcceptanceQuality } from "./acceptance.js";
 import {
   addEvidence,
@@ -34,7 +34,7 @@ import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, run
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
-import { runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
+import { bootstrapResult, runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runListCommand } from "./cli/commands/health.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
@@ -181,16 +181,16 @@ async function runBootstrap(args) {
   const confirmed = hasFlag(args, "--confirm");
 
   if (!isInteractive(args)) {
-    printJson(bootstrap(root, { confirmed }));
+    printJson(await runBootstrapCommand(args.slice(1)));
     return;
   }
 
   if (confirmed) {
-    printBootstrapResult(bootstrap(root, { confirmed: true }));
+    printBootstrapResult(bootstrapResult({ root, confirmed }));
     return;
   }
 
-  const preview = bootstrap(root, { confirmed: false });
+  const preview = bootstrapResult({ root, confirmed: false });
   printBootstrapPreview(preview);
   if (preview.data.status === "ready") return;
 
@@ -201,7 +201,7 @@ async function runBootstrap(args) {
     return;
   }
 
-  printBootstrapResult(bootstrap(root, { confirmed: true }));
+  printBootstrapResult(bootstrapResult({ root, confirmed: true }));
 }
 
 function argValues(args, name) {
