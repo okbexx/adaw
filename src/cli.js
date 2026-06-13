@@ -19,6 +19,12 @@ function printCommandResult(payload) {
   if (!payload.ok) process.exitCode = 1;
 }
 
+async function runAndPrint(runner, rawArgs, options = {}) {
+  const payload = options.runtime ? await runner(rawArgs, options.runtime) : await runner(rawArgs);
+  if (options.commandResult) printCommandResult(payload);
+  else printJson(payload);
+}
+
 function printText(line = "") {
   process.stdout.write(`${line}\n`);
 }
@@ -188,162 +194,162 @@ export async function main(args) {
   }
 
   if (command === "doctor") {
-    printJson(await runDoctorCommand(args.slice(1)));
+    await runAndPrint(runDoctorCommand, args.slice(1));
     return;
   }
 
   if (command === "architecture" && args[1] === "profiles") {
-    printJson(await runArchitectureProfilesCommand(args.slice(2)));
+    await runAndPrint(runArchitectureProfilesCommand, args.slice(2));
     return;
   }
 
   if (command === "architecture" && args[1] === "profile") {
-    printCommandResult(await runArchitectureProfileCommand(args.slice(2)));
+    await runAndPrint(runArchitectureProfileCommand, args.slice(2), { commandResult: true });
     return;
   }
 
   if (command === "architecture" && args[1] === "baseline") {
-    printJson(await runArchitectureBaselineCommand(args.slice(2)));
+    await runAndPrint(runArchitectureBaselineCommand, args.slice(2));
     return;
   }
 
   if (command === "architecture" && args[1] === "show") {
-    printJson(await runArchitectureShowCommand(args.slice(2)));
+    await runAndPrint(runArchitectureShowCommand, args.slice(2));
     return;
   }
 
   if (command === "architecture" && args[1] === "challenge") {
-    printJson(await runArchitectureChallengeCommand(args.slice(2)));
+    await runAndPrint(runArchitectureChallengeCommand, args.slice(2));
     return;
   }
 
   if (command === "architecture" && args[1] === "build-vs-buy") {
-    printJson(await runArchitectureBuildVsBuyCommand(args.slice(2)));
+    await runAndPrint(runArchitectureBuildVsBuyCommand, args.slice(2));
     return;
   }
 
   if (command === "list") {
-    printJson(await runListCommand(args.slice(1)));
+    await runAndPrint(runListCommand, args.slice(1));
     return;
   }
 
   if (command === "install") {
-    printCommandResult(await runInstallCommand(args.slice(1)));
+    await runAndPrint(runInstallCommand, args.slice(1), { commandResult: true });
     return;
   }
 
   if (command === "uninstall") {
-    printCommandResult(await runUninstallCommand(args.slice(1)));
+    await runAndPrint(runUninstallCommand, args.slice(1), { commandResult: true });
     return;
   }
 
   if (command === "upgrade") {
-    printCommandResult(await runUpgradeCommand(args.slice(1)));
+    await runAndPrint(runUpgradeCommand, args.slice(1), { commandResult: true });
     return;
   }
 
   if (command === "brainstorm") {
-    printJson(await runBrainstormCommand(args.slice(1)));
+    await runAndPrint(runBrainstormCommand, args.slice(1));
     return;
   }
 
   if (command === "discover") {
-    printJson(await runDiscoverCommand(args.slice(1)));
+    await runAndPrint(runDiscoverCommand, args.slice(1));
     return;
   }
 
   if (command === "draft") {
-    printCommandResult(await runDraftCommand(args.slice(1)));
+    await runAndPrint(runDraftCommand, args.slice(1), { commandResult: true });
     return;
   }
 
   if (command === "init") {
-    printCommandResult(await runInitCommand(args.slice(1)));
+    await runAndPrint(runInitCommand, args.slice(1), { commandResult: true });
     return;
   }
 
   if (command === "check") {
-    printCommandResult(await runCheckCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runCheckCommand, args.slice(1), { runtime: activeGoalRuntime(args), commandResult: true });
     return;
   }
 
   if (command === "approve") {
-    printJson(await runApproveCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runApproveCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "criterion" && args[1] === "update") {
-    printCommandResult(await runCriterionUpdateCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runCriterionUpdateCommand, args.slice(2), { runtime: activeGoalRuntime(args), commandResult: true });
     return;
   }
 
   if (command === "profile" && args[1] === "add") {
-    printJson(await runProfileAddCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runProfileAddCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "profile" && args[1] === "evidence") {
-    printJson(await runProfileEvidenceCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runProfileEvidenceCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "profile" && args[1] === "show") {
-    printJson(await runProfileShowCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runProfileShowCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "profile" && args[1] === "check") {
-    printJson(await runProfileCheckCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runProfileCheckCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "resume") {
-    printJson(await runResumeCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runResumeCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "next") {
-    printJson(await runNextCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runNextCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "evidence" && args[1] === "add") {
-    printJson(await runEvidenceAddCommand(args.slice(2), activeGoalRuntime(args)));
+    await runAndPrint(runEvidenceAddCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "evaluate") {
-    printJson(await runEvaluateCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runEvaluateCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "status") {
-    printJson(await runStatusCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runStatusCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "report") {
-    printJson(await runReportCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runReportCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
     return;
   }
 
   if (command === "context" && args[1] === "export") {
-    printJson(await runContextExportCommand(args.slice(2)));
+    await runAndPrint(runContextExportCommand, args.slice(2));
     return;
   }
 
   if (command === "changes") {
-    printJson(await runChangesCommand(args.slice(1)));
+    await runAndPrint(runChangesCommand, args.slice(1));
     return;
   }
 
   if (command === "archive") {
-    printCommandResult(await runArchiveCommand(args.slice(1), activeGoalRuntime(args)));
+    await runAndPrint(runArchiveCommand, args.slice(1), { runtime: activeGoalRuntime(args), commandResult: true });
     return;
   }
 
   if (command === "skill" && args[1] === "export") {
-    printCommandResult(await runSkillExportCommand(args.slice(2)));
+    await runAndPrint(runSkillExportCommand, args.slice(2), { commandResult: true });
     return;
   }
 
