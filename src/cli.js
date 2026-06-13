@@ -1,14 +1,6 @@
-import path from "node:path";
 import { parseArgs } from "node:util";
 import { refreshManifest } from "./lifecycle.js";
-import {
-  fail,
-  findActivePairs,
-  ok,
-  readJson,
-  syncAcceptanceMarkdown,
-  writeJson
-} from "./core.js";
+import { fail, ok } from "./core.js";
 import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runInitCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
@@ -16,6 +8,7 @@ import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
 import { bootstrapResult, runBootstrapCommand, runChangesCommand, runCheckCommand, runDoctorCommand, runInstallCommand, runListCommand, runUninstallCommand, runUpgradeCommand } from "./cli/commands/health.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
+import { argValue, loadPair, resolveRoot, savePair } from "./cli/runtime.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
 function printJson(payload) {
@@ -28,15 +21,6 @@ function printText(line = "") {
 
 function parsedArgTokens(args) {
   return parseArgs({ args, allowPositionals: true, strict: false, tokens: true }).tokens;
-}
-
-function argValue(args, name, fallback = undefined) {
-  const rawName = name.startsWith("--") ? name : `--${name}`;
-  const token = parsedArgTokens(args).findLast((item) => item.kind === "option" && item.rawName === rawName);
-  if (!token) return fallback;
-  if (token.value !== undefined) return token.value;
-  const next = args[token.index + 1];
-  return next && !next.startsWith("-") ? next : fallback;
 }
 
 function hasFlag(args, name) {
@@ -180,61 +164,6 @@ async function runBootstrap(args) {
   }
 
   printBootstrapResult(bootstrapResult({ root, confirmed: true }));
-}
-
-function resolveRoot(args) {
-  return path.resolve(argValue(args, "--root", process.cwd()));
-}
-
-function savePair(acceptancePath, evidencePath, contract, ledger) {
-  writeJson(evidencePath, { contract, ledger });
-  syncAcceptanceMarkdown(acceptancePath, contract, ledger);
-}
-
-function inferRootFromAcceptancePath(acceptancePath) {
-  const parts = path.resolve(acceptancePath).split(path.sep);
-  const noriIndex = parts.lastIndexOf(".opennori");
-  if (noriIndex <= 0) return process.cwd();
-  return parts.slice(0, noriIndex).join(path.sep) || path.sep;
-}
-
-function loadPair(args) {
-  const explicitAcceptance = argValue(args, "--acceptance");
-  const explicitEvidence = argValue(args, "--evidence");
-  if (explicitAcceptance || explicitEvidence) {
-    if (!explicitAcceptance || !explicitEvidence) {
-      throw new Error("Both --acceptance and --evidence are required");
-    }
-    const acceptancePath = path.resolve(explicitAcceptance);
-    const evidencePath = path.resolve(explicitEvidence);
-    const payload = readJson(evidencePath);
-    return {
-      contract: payload.contract,
-      ledger: payload.ledger,
-      acceptancePath,
-      evidencePath,
-      root: inferRootFromAcceptancePath(acceptancePath)
-    };
-  }
-
-  const root = resolveRoot(args);
-  const goal = argValue(args, "--goal");
-  const pairs = findActivePairs(root);
-  const pair = goal ? pairs.find((item) => item.goalId === goal) : pairs[0];
-  if (!pair) {
-    throw new Error(`No active OpenNori goal found under ${root}`);
-  }
-  if (!goal && pairs.length > 1) {
-    throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id> or explicit --acceptance/--evidence paths.");
-  }
-  const payload = readJson(pair.evidencePath);
-  return {
-    contract: payload.contract,
-    ledger: payload.ledger,
-    acceptancePath: pair.acceptancePath,
-    evidencePath: pair.evidencePath,
-    root
-  };
 }
 
 export async function main(args) {
