@@ -15,6 +15,11 @@ function printJson(payload) {
   console.log(JSON.stringify(payload, null, 2));
 }
 
+function printCommandResult(payload) {
+  printJson(payload);
+  if (!payload.ok) process.exitCode = 1;
+}
+
 function printText(line = "") {
   process.stdout.write(`${line}\n`);
 }
@@ -194,9 +199,7 @@ export async function main(args) {
   }
 
   if (command === "architecture" && args[1] === "profile") {
-    const result = await runArchitectureProfileCommand(args.slice(2));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runArchitectureProfileCommand(args.slice(2)));
     return;
   }
 
@@ -226,23 +229,17 @@ export async function main(args) {
   }
 
   if (command === "install") {
-    const result = await runInstallCommand(args.slice(1));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runInstallCommand(args.slice(1)));
     return;
   }
 
   if (command === "uninstall") {
-    const result = await runUninstallCommand(args.slice(1));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runUninstallCommand(args.slice(1)));
     return;
   }
 
   if (command === "upgrade") {
-    const result = await runUpgradeCommand(args.slice(1));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runUpgradeCommand(args.slice(1)));
     return;
   }
 
@@ -257,23 +254,17 @@ export async function main(args) {
   }
 
   if (command === "draft") {
-    const result = await runDraftCommand(args.slice(1));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runDraftCommand(args.slice(1)));
     return;
   }
 
   if (command === "init") {
-    const result = await runInitCommand(args.slice(1));
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runInitCommand(args.slice(1)));
     return;
   }
 
   if (command === "check") {
-    const result = await runCheckCommand(args.slice(1), { loadPair: () => loadPair(args) });
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runCheckCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 
@@ -283,9 +274,7 @@ export async function main(args) {
   }
 
   if (command === "criterion" && args[1] === "update") {
-    const result = await runCriterionUpdateCommand(args.slice(2), { loadPair: () => loadPair(args) });
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runCriterionUpdateCommand(args.slice(2), { loadPair: () => loadPair(args) }));
     return;
   }
 
@@ -362,16 +351,12 @@ export async function main(args) {
   }
 
   if (command === "archive") {
-    const result = await runArchiveCommand(args.slice(1), { loadPair: () => loadPair(args) });
-    printJson(result);
-    if (!result.ok) process.exitCode = 1;
+    printCommandResult(await runArchiveCommand(args.slice(1), { loadPair: () => loadPair(args) }));
     return;
   }
 
   if (command === "skill" && args[1] === "export") {
-    const payload = await runSkillExportCommand(args.slice(2));
-    printJson(payload);
-    if (!payload.ok) process.exitCode = 1;
+    printCommandResult(await runSkillExportCommand(args.slice(2)));
     return;
   }
 
