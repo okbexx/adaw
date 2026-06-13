@@ -11,11 +11,12 @@ import { runChangesCommand } from "../src/cli/commands/changes.js";
 import { runContextExportCommand } from "../src/cli/commands/context.js";
 import { runDoctorCommand } from "../src/cli/commands/doctor.js";
 import { runEvidenceAddCommand } from "../src/cli/commands/evidence.js";
-import { runBootstrapCommand, runInstallCommand, runUninstallCommand, runUpgradeCommand } from "../src/cli/commands/health.js";
+import { runBootstrapCommand, runInstallCommand, runUpgradeCommand } from "../src/cli/commands/health.js";
 import { runListCommand } from "../src/cli/commands/list.js";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.js";
 import { runSkillExportCommand } from "../src/cli/commands/skill.js";
+import { runUninstallCommand } from "../src/cli/commands/uninstall.js";
 import { buildArchitectureBaseline, writeArchitectureBaseline } from "../src/architecture.js";
 import { addEvidence, buildEvidenceLedger, writeJson } from "../src/core.js";
 
