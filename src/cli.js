@@ -7,13 +7,14 @@ import { runChangesCommand } from "./cli/commands/changes.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
 import { runDoctorCommand } from "./cli/commands/doctor.js";
 import { runEvidenceAddCommand } from "./cli/commands/evidence.js";
-import { bootstrapResult, runBootstrapCommand, runInstallCommand, runUpgradeCommand } from "./cli/commands/health.js";
+import { bootstrapResult, runBootstrapCommand, runInstallCommand } from "./cli/commands/health.js";
 import { runListCommand } from "./cli/commands/list.js";
 import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand, runProfileShowCommand } from "./cli/commands/profile.js";
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
 import { activeGoalRuntime, argValue, resolveRoot } from "./cli/runtime.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 import { runUninstallCommand } from "./cli/commands/uninstall.js";
+import { runUpgradeCommand } from "./cli/commands/upgrade.js";
 
 function printJson(payload) {
   console.log(JSON.stringify(payload, null, 2));
