@@ -10,7 +10,7 @@ Reuse OpenNori's existing architecture profile state and CLI JSON surface to exp
 
 ## Candidates Checked
 
-- Current project: src/architecture.js already owns built-in and project Architecture Profiles; src/cli.js already exposes opennori architecture profiles.
+- Current project: src/architecture/profile.ts owns built-in and project Architecture Profiles; src/cli/commands/architecture/profile.ts and profiles.ts expose opennori architecture profile review.
 - Standard library: Node fs/path are sufficient for reading project-local profile JSON.
 - Official SDK: No official SDK applies to OpenNori product-state semantics.
 - Open source: Registry/schema libraries would be heavier than needed for this deterministic profile review surface; schema validation can be reconsidered if profile schemas grow.

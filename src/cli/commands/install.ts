@@ -9,8 +9,6 @@ type InstallResultOptions = {
   dryRun?: boolean;
   force?: boolean;
   confirmed?: boolean;
-  requestedSkill?: boolean;
-  refreshSkill?: boolean;
   mergeAgentRoute?: boolean;
 };
 
@@ -24,17 +22,13 @@ export function installResult({
   dryRun = false,
   force = false,
   confirmed = false,
-  requestedSkill = false,
-  refreshSkill = false,
   mergeAgentRoute = false
 }: InstallResultOptions) {
   const projectRoot = path.resolve(String(root || process.cwd()));
-  if ((force || refreshSkill || mergeAgentRoute) && !dryRun && !confirmed) {
+  if ((force || mergeAgentRoute) && !dryRun && !confirmed) {
     const previewFlags = [
       "--dry-run",
       force ? "--force" : null,
-      requestedSkill ? "--skill" : null,
-      refreshSkill ? "--refresh-skill" : null,
       mergeAgentRoute ? "--merge-agent-route" : null,
       "--json"
     ].filter(Boolean).join(" ");
@@ -45,9 +39,9 @@ export function installResult({
     );
   }
 
-  const actions = installActions(projectRoot, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
+  const actions = installActions(projectRoot, { dryRun, force, mergeAgentRoute });
   const manifestAction = actions.find((action) => action.kind === "manifest") as ManifestAction | undefined;
-  const installPlan = buildInstallPlan(projectRoot, actions, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
+  const installPlan = buildInstallPlan(projectRoot, actions, { dryRun, force, mergeAgentRoute });
   return ok({
     root: projectRoot,
     dry_run: dryRun,
@@ -69,16 +63,6 @@ export const installCommand = defineCommand({
       type: "string",
       description: "Project root.",
       default: process.cwd()
-    },
-    skill: {
-      type: "boolean",
-      description: "Install the OpenNori Skill Pack.",
-      default: false
-    },
-    refreshSkill: {
-      type: "boolean",
-      description: "Refresh installed OpenNori Skills.",
-      default: false
     },
     mergeAgentRoute: {
       type: "boolean",
@@ -112,8 +96,6 @@ export const installCommand = defineCommand({
       dryRun: Boolean(args.dryRun),
       force: Boolean(args.force),
       confirmed: Boolean(args.confirm),
-      requestedSkill: Boolean(args.skill),
-      refreshSkill: Boolean(args.refreshSkill),
       mergeAgentRoute: Boolean(args.mergeAgentRoute)
     });
   }

@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import { REQUIRED_ARCHITECTURE_DIRS, architectureState } from "../architecture.ts";
 import {
   PROTOCOL_VERSION,
@@ -9,16 +8,13 @@ import {
   readJson,
   writeJson
 } from "../core.ts";
-import { SKILL_PACK, exportedSkillMarkdown, skillPackMarkdowns } from "../skills.ts";
-import { fileHash } from "./managed-files.ts";
+import { pluginState } from "../plugin.ts";
 import type {
   ActiveGoalSummary,
   Manifest,
   ManifestManagedFile,
   ManifestWriteAction,
-  NoriEvidencePayload,
-  ProjectSkillPackState,
-  ProjectSkillState
+  NoriEvidencePayload
 } from "../types.ts";
 import {
   MANIFEST_SCHEMA_VERSION,
@@ -26,48 +22,8 @@ import {
   PACKAGE_JSON,
   REQUIRED_NORI_DIRS,
   manifestPath,
-  relativeTo,
-  skillPackPath
+  relativeTo
 } from "./shared.ts";
-
-export function projectSkillState(root: string): ProjectSkillState {
-  const noriSkillPath = skillPackPath(root, "nori");
-  const exists = fs.existsSync(noriSkillPath);
-  const expectedHash = createHash("sha256").update(exportedSkillMarkdown()).digest("hex");
-  const actualHash = fileHash(noriSkillPath);
-  return {
-    installed: exists,
-    path: relativeTo(root, noriSkillPath),
-    in_sync: exists ? actualHash === expectedHash : false,
-    expected_sha256: expectedHash,
-    actual_sha256: actualHash
-  };
-}
-
-export function projectSkillPackState(root: string): ProjectSkillPackState {
-  const markdowns = skillPackMarkdowns();
-  const skills = SKILL_PACK.map((skill) => {
-    const noriSkillPath = skillPackPath(root, skill.name);
-    const exists = fs.existsSync(noriSkillPath);
-    const expectedHash = createHash("sha256").update(markdowns[skill.name] || "").digest("hex");
-    const actualHash = fileHash(noriSkillPath);
-    return {
-      name: skill.name,
-      path: relativeTo(root, noriSkillPath),
-      installed: exists,
-      in_sync: exists ? actualHash === expectedHash : false,
-      expected_sha256: expectedHash,
-      actual_sha256: actualHash
-    };
-  });
-  return {
-    schema_version: "opennori/skill-pack-v1",
-    installed: skills.every((skill) => skill.installed),
-    in_sync: skills.every((skill) => skill.installed && skill.in_sync),
-    count: skills.length,
-    skills
-  };
-}
 
 function activeGoalSummaries(root: string): ActiveGoalSummary[] {
   return findActivePairs(root).map((pair) => {
@@ -95,7 +51,7 @@ function activeGoalSummaries(root: string): ActiveGoalSummary[] {
   });
 }
 
-export function managedFiles(root: string, skill = projectSkillState(root), { assumeManifestExists = false } = {}): ManifestManagedFile[] {
+export function managedFiles(root: string, { assumeManifestExists = false } = {}): ManifestManagedFile[] {
   const entries = [
     { path: ".opennori/manifest.json", kind: "manifest", required: true },
     { path: ".opennori/protocol.md", kind: "protocol", required: true },
@@ -108,9 +64,6 @@ export function managedFiles(root: string, skill = projectSkillState(root), { as
     { path: ".opennori/architecture/baseline.json", kind: "architecture-baseline", required: false },
     { path: ".opennori/architecture/baseline.md", kind: "architecture-baseline", required: false }
   ];
-  for (const packSkill of projectSkillPackState(root).skills.filter((entry) => entry.installed)) {
-    entries.push({ path: packSkill.path, kind: "skill", required: false });
-  }
   return entries.map((entry) => ({
     ...entry,
     exists: entry.path === ".opennori/manifest.json" && assumeManifestExists
@@ -129,8 +82,6 @@ export function safeReadManifest(root: string): Manifest | null {
 
 export function buildManifest(root: string, options: { assumeManifestExists?: boolean } = {}): Manifest {
   const existing = safeReadManifest(root);
-  const skill = projectSkillState(root);
-  const skillPack = projectSkillPackState(root);
   const activeGoals = activeGoalSummaries(root);
   const architectureGoalId = activeGoals.length === 1 ? activeGoals[0]?.goal_id : undefined;
   const architecture = architectureState(root, architectureGoalId);
@@ -142,10 +93,9 @@ export function buildManifest(root: string, options: { assumeManifestExists?: bo
     created_at: existing?.created_at || now,
     updated_at: now,
     capabilities: NORI_CAPABILITIES,
-    managed_files: managedFiles(root, skill, options),
+    managed_files: managedFiles(root, options),
     active_goals: activeGoals,
-    skill,
-    skill_pack: skillPack,
+    plugin: pluginState(),
     architecture
   };
 }

@@ -6,14 +6,12 @@ import {
   profileCompliance,
   recomputeWorkflowStatus
 } from "../../../core.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import type { ProfileItemInput } from "../../../types.ts";
 import {
   jsonArg,
   profileItemType,
   profileStrength,
-  rootArg,
-  updateGoalArg
 } from "./shared.ts";
 
 export const profileAddCommand = defineCommand({
@@ -22,8 +20,7 @@ export const profileAddCommand = defineCommand({
     description: "Add an execution preference to the Nori Profile for the active goal."
   },
   args: {
-    root: rootArg,
-    goal: updateGoalArg,
+    ...activeGoalArgs,
     id: {
       type: "string",
       description: "Optional stable profile item id."
@@ -60,7 +57,7 @@ export const profileAddCommand = defineCommand({
     json: jsonArg
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const item: ProfileItemInput = {
       id: args.id,
       type: profileItemType(args.type),

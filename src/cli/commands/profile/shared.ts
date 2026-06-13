@@ -10,16 +10,6 @@ export const rootArg = {
   default: process.cwd()
 } as const;
 
-export const goalArg = {
-  type: "string",
-  description: "Active goal id to inspect."
-} as const;
-
-export const updateGoalArg = {
-  type: "string",
-  description: "Active goal id to update."
-} as const;
-
 export const jsonArg = {
   type: "boolean",
   description: "Keep deterministic JSON output for agents.",

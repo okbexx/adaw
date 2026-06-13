@@ -7,7 +7,7 @@ import {
   writeJson
 } from "../../../core.ts";
 import { refreshManifest } from "../../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import { jsonArg, rootArg } from "./shared.ts";
 
 export const approveCommand = defineCommand({
@@ -16,11 +16,7 @@ export const approveCommand = defineCommand({
     description: "Mark the current OpenNori acceptance criteria as user-approved."
   },
   args: {
-    root: rootArg,
-    goal: {
-      type: "string",
-      description: "Active goal id to approve."
-    },
+    ...activeGoalArgs,
     summary: {
       type: "string",
       description: "Human approval summary.",
@@ -29,7 +25,7 @@ export const approveCommand = defineCommand({
     json: jsonArg
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     contract.acceptance_basis = {
       status: "approved",
       summary: args.summary || "User approved acceptance criteria.",

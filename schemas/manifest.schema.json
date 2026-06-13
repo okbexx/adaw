@@ -12,8 +12,7 @@
     "capabilities",
     "managed_files",
     "active_goals",
-    "skill",
-    "skill_pack",
+    "plugin",
     "architecture"
   ],
   "additionalProperties": true,
@@ -42,26 +41,32 @@
       }
     },
     "active_goals": { "type": "array" },
-    "skill": {
+    "plugin": {
       "type": "object",
-      "required": ["installed", "path", "in_sync"],
+      "required": ["schema_version", "name", "version", "manifest_path", "skills_path", "packaged", "skill_count", "skills"],
       "additionalProperties": true,
       "properties": {
-        "installed": { "type": "boolean" },
-        "path": { "type": "string" },
-        "in_sync": { "type": "boolean" }
-      }
-    },
-    "skill_pack": {
-      "type": "object",
-      "required": ["schema_version", "installed", "in_sync", "count", "skills"],
-      "additionalProperties": true,
-      "properties": {
-        "schema_version": { "const": "opennori/skill-pack-v1" },
-        "installed": { "type": "boolean" },
-        "in_sync": { "type": "boolean" },
-        "count": { "type": "integer", "minimum": 0 },
-        "skills": { "type": "array" }
+        "schema_version": { "const": "opennori/plugin-v1" },
+        "name": { "const": "opennori" },
+        "version": { "type": "string" },
+        "manifest_path": { "type": "string", "minLength": 1 },
+        "skills_path": { "type": "string", "minLength": 1 },
+        "packaged": { "type": "boolean" },
+        "skill_count": { "type": "integer", "minimum": 0 },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "path", "source"],
+            "additionalProperties": true,
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "description": { "type": "string", "minLength": 1 },
+              "path": { "type": "string", "minLength": 1 },
+              "source": { "const": "package" }
+            }
+          }
+        }
       }
     },
     "architecture": { "type": "object" }

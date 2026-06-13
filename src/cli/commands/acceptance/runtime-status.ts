@@ -13,7 +13,7 @@ import {
   writeJson
 } from "../../../core.ts";
 import { refreshManifest } from "../../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import { jsonArg, rootArg } from "./shared.ts";
 
 export const nextCommand = defineCommand({
@@ -22,15 +22,11 @@ export const nextCommand = defineCommand({
     description: "Show the next OpenNori acceptance gap or loop recommendation."
   },
   args: {
-    root: rootArg,
-    goal: {
-      type: "string",
-      description: "Active goal id to inspect."
-    },
+    ...activeGoalArgs,
     json: jsonArg
   },
-  run({ data }) {
-    const { contract, ledger } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger } = data.loadPair(args);
     const gap = currentGap(contract, ledger);
     const recommendation = nextRecommendation(contract, ledger);
     return ok({
@@ -52,15 +48,11 @@ export const resumeCommand = defineCommand({
     description: "Resume the active OpenNori goal with completion state and next actions."
   },
   args: {
-    root: rootArg,
-    goal: {
-      type: "string",
-      description: "Active goal id to inspect."
-    },
+    ...activeGoalArgs,
     json: jsonArg
   },
-  run({ data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const recommendation = nextRecommendation(contract, ledger);
     return ok({
       goal_id: contract.goal_id,
@@ -87,15 +79,11 @@ export const statusCommand = defineCommand({
     description: "Show the current OpenNori goal, acceptance status, evidence health, and completion decision."
   },
   args: {
-    root: rootArg,
-    goal: {
-      type: "string",
-      description: "Active goal id to inspect."
-    },
+    ...activeGoalArgs,
     json: jsonArg
   },
-  run({ data }) {
-    const { contract, ledger, root } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger, root } = data.loadPair(args);
     const recommendation = nextRecommendation(contract, ledger);
     return ok({
       goal_id: contract.goal_id,
@@ -121,15 +109,11 @@ export const evaluateCommand = defineCommand({
     description: "Recompute the current OpenNori workflow status from recorded acceptance evidence."
   },
   args: {
-    root: rootArg,
-    goal: {
-      type: "string",
-      description: "Active goal id to evaluate."
-    },
+    ...activeGoalArgs,
     json: jsonArg
   },
-  run({ data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     recomputeWorkflowStatus(contract, ledger);
     writeJson(evidencePath, { contract, ledger });
     syncAcceptanceMarkdown(acceptancePath, contract, ledger);

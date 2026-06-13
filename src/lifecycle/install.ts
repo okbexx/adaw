@@ -8,36 +8,21 @@ import {
   renderAgentRouteMarkdown,
   renderAgentRouteSectionMarkdown
 } from "../architecture.ts";
-import { SKILL_PACK, skillPackMarkdowns } from "../skills.ts";
 import {
   ensureDir,
   writeAgentRoute,
-  writeGeneratedFile,
   writeIfSafe
 } from "./managed-files.ts";
 import { writeManifest } from "./manifest.ts";
-import { protocolTemplate, skillPackPath } from "./shared.ts";
+import { protocolTemplate } from "./shared.ts";
 
 type InstallOptions = {
   dryRun?: boolean;
   force?: boolean;
-  requestedSkill?: boolean;
-  refreshSkill?: boolean;
   mergeAgentRoute?: boolean;
-  refresh?: boolean;
 };
 
-function skillPackInstallActions(root: string, { dryRun = false, force = false, refresh = false }: InstallOptions = {}): ManagedAction[] {
-  const markdowns = skillPackMarkdowns();
-  return SKILL_PACK.map((skill) => writeGeneratedFile(
-    skillPackPath(root, skill.name),
-    markdowns[skill.name] || "",
-    { dryRun, force, refresh, kind: "skill" }
-  ));
-}
-
-export function installActions(root: string, { dryRun = false, force = false, requestedSkill = false, refreshSkill = false, mergeAgentRoute = false }: InstallOptions = {}): ManagedAction[] {
-  const agentRouteSection = renderAgentRouteSectionMarkdown();
+export function installActions(root: string, { dryRun = false, force = false, mergeAgentRoute = false }: InstallOptions = {}): ManagedAction[] {
   const actions: ManagedAction[] = [
     ensureDir(path.join(root, ".opennori", "active"), { dryRun }),
     ensureDir(path.join(root, ".opennori", "completed"), { dryRun }),
@@ -50,14 +35,17 @@ export function installActions(root: string, { dryRun = false, force = false, re
     ensureDir(path.join(root, ".opennori", "architecture", "decisions"), { dryRun }),
     ensureDir(path.join(root, ".opennori", "architecture", "evidence"), { dryRun }),
     writeIfSafe(path.join(root, ".opennori", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" }),
-    writeIfSafe(agentGuidePath(root), renderAgentGuideMarkdown(), { dryRun, force, kind: "agent-guide" }),
-    writeAgentRoute(path.join(root, "AGENTS.md"), renderAgentRouteMarkdown("AGENTS"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END }),
-    writeAgentRoute(path.join(root, "CLAUDE.md"), renderAgentRouteMarkdown("CLAUDE"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END })
+    writeIfSafe(agentGuidePath(root), renderAgentGuideMarkdown(), { dryRun, force, kind: "agent-guide" })
   ];
 
-  if (requestedSkill) {
-    actions.push(...skillPackInstallActions(root, { dryRun, force, refresh: refreshSkill }));
+  if (mergeAgentRoute) {
+    const agentRouteSection = renderAgentRouteSectionMarkdown();
+    actions.push(
+      writeAgentRoute(path.join(root, "AGENTS.md"), renderAgentRouteMarkdown("AGENTS"), agentRouteSection, { dryRun, force, merge: true, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END }),
+      writeAgentRoute(path.join(root, "CLAUDE.md"), renderAgentRouteMarkdown("CLAUDE"), agentRouteSection, { dryRun, force, merge: true, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END })
+    );
   }
+
   actions.push(writeManifest(root, { dryRun }));
   return actions;
 }

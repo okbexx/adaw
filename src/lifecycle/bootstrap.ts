@@ -24,16 +24,12 @@ export function bootstrap(root: string, { confirmed = false } = {}): NoriResult<
   const actions = installActions(root, {
     dryRun: needsConfirm,
     force: false,
-    requestedSkill: true,
-    refreshSkill: true,
-    mergeAgentRoute: true
+    mergeAgentRoute: false
   });
   const installPlan = buildInstallPlan(root, actions, {
     dryRun: needsConfirm,
     force: false,
-    requestedSkill: true,
-    refreshSkill: true,
-    mergeAgentRoute: true
+    mergeAgentRoute: false
   });
   const next = needsConfirm
     ? "Show this preview to the user and ask for confirmation before writing OpenNori project assets."

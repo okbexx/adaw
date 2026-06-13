@@ -8,7 +8,7 @@ import {
   writeJson
 } from "../../../core.ts";
 import { refreshManifest } from "../../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import type { EvidenceBasis, EvidenceInput } from "../../../types.ts";
 import { evidenceResult, evidenceSourcesFromArgs } from "./source-parsing.ts";
 
@@ -18,15 +18,7 @@ export const evidenceAddCommand = defineCommand({
     description: "Record reviewable evidence for an OpenNori acceptance criterion."
   },
   args: {
-    root: {
-      type: "string",
-      description: "Project root.",
-      default: process.cwd()
-    },
-    goal: {
-      type: "string",
-      description: "Active goal id to update."
-    },
+    ...activeGoalArgs,
     criterion: {
       type: "string",
       description: "Criterion id."
@@ -89,7 +81,7 @@ export const evidenceAddCommand = defineCommand({
     }
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const criterionId = args.criterion;
     if (!criterionId) throw new Error("--criterion is required");
     const sources = evidenceSourcesFromArgs(args, data.rawArgs || []);

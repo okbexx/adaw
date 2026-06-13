@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { SKILL_PACK } from "../skills.ts";
 import type { ManagedAction } from "../types.ts";
 
 function plannedDelete(root: string, relativePath: string, kind: string, { recursive = false, reason = undefined as string | undefined } = {}): ManagedAction {
@@ -28,7 +27,7 @@ function plannedPreserve(root: string, relativePath: string, kind: string, reaso
 }
 
 export function buildUninstallActions(root: string, { includeState = false } = {}): ManagedAction[] {
-  const actions: ManagedAction[] = SKILL_PACK.map((skill) => plannedDelete(root, `.agents/skills/${skill.name}/SKILL.md`, "skill"));
+  const actions: ManagedAction[] = [];
 
   if (includeState) {
     actions.push(plannedDelete(root, ".opennori", "state-directory", {

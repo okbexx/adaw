@@ -11,11 +11,11 @@ Use when the user mentions OpenNori, asks to use OpenNori for a task, continue O
 - Verification, evidence sufficiency, human confirmation, waiver, or why an AC is passing -> use `nori-evidence`.
 - Required Skills, preferred stacks, avoided tools, or install policy -> use `nori-capability-profile`.
 - Architecture baseline, architecture profile selection, applying baseline before implementation, architecture challenge, or build-vs-buy -> use `nori-architecture-brainstorm`, `nori-architecture-apply`, `nori-architecture-challenge`, or `nori-build-vs-buy`.
-- Install, uninstall, doctor, manifest, Skill sync, or project recoverability -> use `nori-project-health`.
+- Install, upgrade, uninstall, doctor, manifest, Plugin health, or project recoverability -> use `nori-project-health`.
 - Status, report, current gap, completion answer, user intervention, or change summary -> use `nori-reporting`.
 
 ## Baseline
-At the start of each OpenNori turn, run `opennori bootstrap --root <repo> --json` if project readiness is unknown; otherwise run `opennori resume --root <repo> --json` or `opennori status --root <repo> --json`.
+At the start of each OpenNori turn, run `opennori bootstrap --root <repo> --json` if project readiness is unknown; otherwise run `opennori list --root <repo> --json`, then use `opennori resume --root <repo> --goal <goal-id> --json` or `opennori status --root <repo> --goal <goal-id> --json` when multiple active goals exist.
 If bootstrap returns `needs_confirm`, show the preview briefly and ask the user before rerunning with `--confirm`.
 For non-trivial goals, make sure an Architecture Baseline exists before implementation. Use `nori-architecture-brainstorm` to establish it and `nori-architecture-apply` before each implementation loop.
 Use `next_recommendation` and top-level `next_actions` to continue the OpenNori loop; do not make the user repeatedly ask what the next step is.
@@ -26,3 +26,4 @@ Progress is determined by acceptance evidence, not implementation steps.
 Architecture Baseline is sticky after user confirmation. Challenge it with evidence; do not silently replace it.
 Do not make the user remember CLI syntax or internal Skill names.
 Do not answer confidently complete while the acceptance basis is draft, required AC/profile evidence is missing, `architecture_check` has warnings, or `evidence_health` needs review.
+Do not suggest project-local OpenNori Skill installation or sync. OpenNori Skills come from the package Plugin; CLI commands only manage `.opennori` state.

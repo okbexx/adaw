@@ -55,7 +55,8 @@ export function buildArchitectureBaseline(root: string, {
       ".opennori/agent-guide.md",
       "AGENTS.md",
       "CLAUDE.md",
-      ".agents/skills/nori-architecture-apply/SKILL.md"
+      ".codex-plugin/plugin.json",
+      "skills/nori-architecture-apply/SKILL.md"
     ]
   };
 }

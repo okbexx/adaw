@@ -12,10 +12,9 @@ import { installCommand } from "./commands/install.ts";
 import { listCommand } from "./commands/list.ts";
 import { profileAddCommand, profileCheckCommand, profileEvidenceCommand, profileShowCommand } from "./commands/profile.ts";
 import { archiveCommand, reportCommand } from "./commands/reporting.ts";
-import { skillExportCommand } from "./commands/skill.ts";
 import { uninstallCommand } from "./commands/uninstall.ts";
 import { upgradeCommand } from "./commands/upgrade.ts";
-import { activeGoalRuntime } from "./runtime.ts";
+import { activeGoalRuntime, withActiveGoalWriteLock } from "./runtime.ts";
 
 type Resolvable<T> = T | Promise<T> | (() => T | Promise<T>);
 type AnyCommand = CommandDef<any>;
@@ -27,6 +26,7 @@ type UsageArgDefinition = {
 
 type CommandPolicy = {
   activeGoal?: boolean;
+  activeGoalWrite?: boolean;
   commandResult?: boolean;
 };
 
@@ -73,26 +73,22 @@ const architectureCommand = groupCommand("architecture", "Review and manage Open
 });
 
 const criterionCommand = groupCommand("criterion", "Revise human-centered acceptance criteria.", {
-  update: withPolicy(asCommand(criterionUpdateCommand), { activeGoal: true, commandResult: true })
+  update: withPolicy(asCommand(criterionUpdateCommand), { activeGoal: true, activeGoalWrite: true, commandResult: true })
 });
 
 const profileCommand = groupCommand("profile", "Manage Nori Profile execution preferences.", {
-  add: withPolicy(asCommand(profileAddCommand), { activeGoal: true }),
-  evidence: withPolicy(asCommand(profileEvidenceCommand), { activeGoal: true }),
+  add: withPolicy(asCommand(profileAddCommand), { activeGoal: true, activeGoalWrite: true }),
+  evidence: withPolicy(asCommand(profileEvidenceCommand), { activeGoal: true, activeGoalWrite: true }),
   show: withPolicy(asCommand(profileShowCommand), { activeGoal: true }),
-  check: withPolicy(asCommand(profileCheckCommand), { activeGoal: true })
+  check: withPolicy(asCommand(profileCheckCommand), { activeGoal: true, activeGoalWrite: true })
 });
 
 const evidenceCommand = groupCommand("evidence", "Record OpenNori acceptance evidence.", {
-  add: withPolicy(asCommand(evidenceAddCommand), { activeGoal: true })
+  add: withPolicy(asCommand(evidenceAddCommand), { activeGoal: true, activeGoalWrite: true })
 });
 
 const contextCommand = groupCommand("context", "Export OpenNori context for review tools.", {
   export: asCommand(contextExportCommand)
-});
-
-const skillCommand = groupCommand("skill", "Export OpenNori Skills for agents.", {
-  export: withPolicy(asCommand(skillExportCommand), { commandResult: true })
 });
 
 export const rootCommand = defineCommand({
@@ -112,20 +108,19 @@ export const rootCommand = defineCommand({
     draft: withPolicy(asCommand(draftCommand), { commandResult: true }),
     init: withPolicy(asCommand(initCommand), { commandResult: true }),
     check: withPolicy(asCommand(checkCommand), { activeGoal: true, commandResult: true }),
-    approve: withPolicy(asCommand(approveCommand), { activeGoal: true }),
+    approve: withPolicy(asCommand(approveCommand), { activeGoal: true, activeGoalWrite: true }),
     resume: withPolicy(asCommand(resumeCommand), { activeGoal: true }),
     next: withPolicy(asCommand(nextCommand), { activeGoal: true }),
-    evaluate: withPolicy(asCommand(evaluateCommand), { activeGoal: true }),
+    evaluate: withPolicy(asCommand(evaluateCommand), { activeGoal: true, activeGoalWrite: true }),
     status: withPolicy(asCommand(statusCommand), { activeGoal: true }),
     report: withPolicy(asCommand(reportCommand), { activeGoal: true }),
     changes: asCommand(changesCommand),
-    archive: withPolicy(asCommand(archiveCommand), { activeGoal: true, commandResult: true }),
+    archive: withPolicy(asCommand(archiveCommand), { activeGoal: true, activeGoalWrite: true, commandResult: true }),
     architecture: architectureCommand,
     criterion: criterionCommand,
     profile: profileCommand,
     evidence: evidenceCommand,
-    context: contextCommand,
-    skill: skillCommand
+    context: contextCommand
   }
 }) as AnyCommand;
 
@@ -258,13 +253,18 @@ export async function commandLabelFor(rawArgs: string[]): Promise<string> {
 }
 
 export async function runCliCommand(resolved: Extract<ResolvedCliCommand, { ok: true }>): Promise<unknown> {
-  const runtime = resolved.policy.activeGoal ? activeGoalRuntime(resolved.rawArgs) : {};
-  const { result } = await runCommand(resolved.command, {
-    rawArgs: resolved.rawArgs,
-    data: {
-      ...runtime,
-      rawArgs: resolved.rawArgs
-    }
-  });
-  return result;
+  const runtime = resolved.policy.activeGoal ? activeGoalRuntime() : {};
+  const execute = async () => {
+    const { result } = await runCommand(resolved.command, {
+      rawArgs: resolved.rawArgs,
+      data: {
+        ...runtime,
+        rawArgs: resolved.rawArgs
+      }
+    });
+    return result;
+  };
+  return resolved.policy.activeGoalWrite
+    ? withActiveGoalWriteLock(resolved.rawArgs, execute)
+    : execute();
 }

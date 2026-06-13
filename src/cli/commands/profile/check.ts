@@ -6,11 +6,9 @@ import {
   recomputeWorkflowStatus
 } from "../../../core.ts";
 import { autoProfileChecks, recordAutoProfileChecks } from "../../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import {
-  goalArg,
-  jsonArg,
-  rootArg
+  jsonArg
 } from "./shared.ts";
 
 export const profileCheckCommand = defineCommand({
@@ -19,8 +17,7 @@ export const profileCheckCommand = defineCommand({
     description: "Check Nori Profile preferences against local project state."
   },
   args: {
-    root: rootArg,
-    goal: goalArg,
+    ...activeGoalArgs,
     record: {
       type: "boolean",
       description: "Record automatic profile checks into the evidence ledger.",
@@ -29,7 +26,7 @@ export const profileCheckCommand = defineCommand({
     json: jsonArg
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const checks = autoProfileChecks(root, ledger);
     if (args.record) {
       recordAutoProfileChecks(ledger, checks);

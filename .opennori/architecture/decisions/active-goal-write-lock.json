@@ -1,0 +1,17 @@
+{
+  "schema_version": "opennori/build-vs-buy-v1",
+  "id": "active-goal-write-lock",
+  "created_at": "2026-06-13T11:25:36.232Z",
+  "area": "active-goal-state-consistency",
+  "need": "Prevent concurrent agent or tool writes from losing OpenNori active-goal evidence ledger updates.",
+  "recommendation": "self-build",
+  "status": "active",
+  "summary": "Use a small project-local write lock around active-goal mutating CLI commands so read-modify-write operations on .opennori/active are serialized.",
+  "current_project": "src/cli/command-tree.ts already centralizes command execution policy, and src/cli/runtime.ts already owns active-goal loading and saving; the lock belongs at this CLI runtime boundary.",
+  "standard_library": "Node fs.mkdirSync provides atomic directory creation that works as a local filesystem lock for this single-host project-state use case.",
+  "official_sdk": "No official SDK applies to OpenNori local state consistency.",
+  "open_source": "proper-lockfile and lockfile-style libraries were considered, but this need is a narrow local single-writer guard around one project-state directory; adding a dependency would increase product surface without improving the acceptance loop.",
+  "self_build_reason": "The implementation is small and uses atomic mkdir plus stale-lock cleanup; it protects the user-visible evidence ledger without introducing a general locking framework.",
+  "superseded_by": "",
+  "superseded_reason": ""
+}

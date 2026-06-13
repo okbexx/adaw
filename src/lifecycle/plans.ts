@@ -55,15 +55,13 @@ function summarizeInstallPlan(actions: LifecyclePlanAction[]): LifecyclePlanSumm
   };
 }
 
-export function buildInstallPlan(root: string, actions: ManagedAction[], { dryRun = false, force = false, requestedSkill = false, refreshSkill = false, mergeAgentRoute = false } = {}): InstallPlan {
+export function buildInstallPlan(root: string, actions: ManagedAction[], { dryRun = false, force = false, mergeAgentRoute = false } = {}): InstallPlan {
   const enrichedActions = actions.map((action) => enrichInstallAction(root, action, { dryRun }));
   return {
     schema_version: "opennori/install-plan-v1",
     root,
     dry_run: dryRun,
     force,
-    requested_skill: requestedSkill,
-    refresh_skill: refreshSkill,
     merge_agent_route: mergeAgentRoute,
     summary: summarizeInstallPlan(enrichedActions),
     actions: enrichedActions
@@ -161,13 +159,12 @@ function summarizeUpgradePlan(actions: LifecyclePlanAction[]): LifecyclePlanSumm
   };
 }
 
-export function buildUpgradePlan(root: string, actions: ManagedAction[], { dryRun = false, requestedSkill = false, mergeAgentRoute = false } = {}): UpgradePlan {
+export function buildUpgradePlan(root: string, actions: ManagedAction[], { dryRun = false, mergeAgentRoute = false } = {}): UpgradePlan {
   const enrichedActions = actions.map((action) => enrichUpgradeAction(root, action, { dryRun }));
   return {
     schema_version: "opennori/upgrade-plan-v1",
     root,
     dry_run: dryRun,
-    requested_skill: requestedSkill,
     merge_agent_route: mergeAgentRoute,
     summary: summarizeUpgradePlan(enrichedActions),
     actions: enrichedActions

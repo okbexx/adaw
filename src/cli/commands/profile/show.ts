@@ -4,11 +4,9 @@ import {
   ok,
   profileCompliance
 } from "../../../core.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import {
-  goalArg,
-  jsonArg,
-  rootArg
+  jsonArg
 } from "./shared.ts";
 
 export const profileShowCommand = defineCommand({
@@ -17,12 +15,11 @@ export const profileShowCommand = defineCommand({
     description: "Show the Nori Profile attached to the active goal."
   },
   args: {
-    root: rootArg,
-    goal: goalArg,
+    ...activeGoalArgs,
     json: jsonArg
   },
-  run({ data }) {
-    const { contract, ledger } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger } = data.loadPair(args);
     return ok({
       goal_id: contract.goal_id,
       profile: ledger.capability_profile || { items: [], evidence: [] },

@@ -594,8 +594,6 @@ export type InstallPlan = {
   root: string;
   dry_run: boolean;
   force: boolean;
-  requested_skill: boolean;
-  refresh_skill: boolean;
   merge_agent_route: boolean;
   summary: LifecyclePlanSummary;
   actions: LifecyclePlanAction[];
@@ -614,26 +612,27 @@ export type UpgradePlan = {
   schema_version: "opennori/upgrade-plan-v1";
   root: string;
   dry_run: boolean;
-  requested_skill: boolean;
   merge_agent_route: boolean;
   summary: LifecyclePlanSummary;
   actions: LifecyclePlanAction[];
 };
 
-export type ProjectSkillState = {
-  installed: boolean;
+export type PluginSkillState = {
+  name: string;
+  description: string;
   path: string;
-  in_sync: boolean;
-  expected_sha256: string;
-  actual_sha256: string | null;
+  source: "package";
 };
 
-export type ProjectSkillPackState = {
-  schema_version: "opennori/skill-pack-v1";
-  installed: boolean;
-  in_sync: boolean;
-  count: number;
-  skills: Array<ProjectSkillState & { name: string }>;
+export type PluginState = {
+  schema_version: "opennori/plugin-v1";
+  name: string;
+  version: string;
+  manifest_path: string;
+  skills_path: string;
+  packaged: boolean;
+  skill_count: number;
+  skills: PluginSkillState[];
 };
 
 export type ManifestManagedFile = {
@@ -663,8 +662,7 @@ export type Manifest = {
   capabilities: string[];
   managed_files: ManifestManagedFile[];
   active_goals: ActiveGoalSummary[];
-  skill: ProjectSkillState;
-  skill_pack: ProjectSkillPackState;
+  plugin: PluginState;
   architecture: ArchitectureState;
   [key: string]: unknown;
 };
@@ -702,8 +700,7 @@ export type DoctorState = {
   active_goals: ActiveGoalSummary[];
   active_goal_issues: DoctorIssue[];
   manifest_path: string;
-  skill: ProjectSkillState;
-  skill_pack: ProjectSkillPackState;
+  plugin: PluginState;
   architecture: ArchitectureState;
 };
 

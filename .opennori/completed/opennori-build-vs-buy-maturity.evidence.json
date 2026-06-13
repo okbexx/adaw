@@ -43,7 +43,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-build-vs-buy-maturity",
     "status": "complete",
-    "updated_at": "2026-06-12T08:00:57.469Z",
+    "updated_at": "2026-06-13T10:41:22.827Z",
     "criteria": {
       "AC-1": {
         "status": "passing",

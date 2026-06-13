@@ -1,0 +1,17 @@
+{
+  "schema_version": "opennori/build-vs-buy-v1",
+  "id": "evidence-repeatable-source-flags",
+  "created_at": "2026-06-13T11:13:50.812Z",
+  "area": "evidence-cli-ergonomics",
+  "need": "Preserve multiple reviewable evidence sources on evidence add while using citty command definitions.",
+  "recommendation": "self-build",
+  "status": "active",
+  "summary": "Keep citty as the command framework and use a narrow command-local repeated-source collector for evidence source flags because citty does not expose repeatable string args.",
+  "current_project": "src/cli/commands/evidence/add.ts already uses citty command definitions; src/cli/commands/evidence/source-parsing.ts is limited to translating evidence source flags into EvidenceSource objects.",
+  "standard_library": "Node util.parseArgs can expose duplicate tokens, but using it directly here would keep a second command parser path after the citty migration.",
+  "official_sdk": "No official SDK applies to OpenNori evidence CLI ergonomics.",
+  "open_source": "citty 0.2.2 supports string, boolean, enum, and positional args but not repeatable array args; commander/yargs could support variadic/repeatable options but would replace the confirmed citty baseline rather than solve this local gap.",
+  "self_build_reason": "The local collector is less than a parser framework: it scans exact evidence source flags and preserves multi-source evidence without changing the CLI architecture or adding a second dependency.",
+  "superseded_by": "",
+  "superseded_reason": ""
+}

@@ -65,18 +65,4 @@ function skillAssetNames(): string[] {
     });
 }
 
-export const SKILL_PACK = skillAssetNames().map(readSkillAsset);
-
-export function skillMarkdown(skill: SkillAsset): string {
-  return skill.markdown;
-}
-
-export function exportedSkillMarkdown(): string {
-  const nori = SKILL_PACK.find((skill) => skill.name === "nori");
-  if (!nori) throw new Error("OpenNori Skill Pack is missing the nori entrypoint Skill");
-  return skillMarkdown(nori);
-}
-
-export function skillPackMarkdowns(): Record<string, string> {
-  return Object.fromEntries(SKILL_PACK.map((skill) => [skill.name, skillMarkdown(skill)]));
-}
+export const OPENNORI_SKILLS = skillAssetNames().map(readSkillAsset);

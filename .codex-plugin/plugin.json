@@ -1,0 +1,39 @@
+{
+  "name": "opennori",
+  "version": "0.1.7",
+  "description": "OpenNori helps coding agents turn natural-language goals into human-reviewable acceptance contracts, evidence, and reports.",
+  "author": {
+    "name": "okbexx",
+    "email": "okbexx@gmail.com",
+    "url": "https://github.com/okbexx"
+  },
+  "homepage": "https://opennori.dev",
+  "repository": "https://github.com/okbexx/opennori",
+  "license": "GPL-3.0-only",
+  "keywords": [
+    "agent",
+    "acceptance",
+    "workflow",
+    "codex",
+    "evidence"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "OpenNori",
+    "shortDescription": "Acceptance contracts and evidence for coding agents.",
+    "longDescription": "OpenNori gives Codex Skills for drafting human-centered acceptance criteria, tracking evidence, checking project health, and reporting whether a goal is complete.",
+    "developerName": "okbexx",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://opennori.dev/",
+    "defaultPrompt": [
+      "Use OpenNori to turn this goal into acceptance criteria.",
+      "Continue the current OpenNori goal.",
+      "Is this OpenNori goal complete yet?"
+    ],
+    "brandColor": "#19A974"
+  }
+}

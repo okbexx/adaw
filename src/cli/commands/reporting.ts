@@ -4,7 +4,7 @@ import { defineCommand } from "citty";
 import { completionAnswer, currentGap, evidenceHealth, fail, intervention, nextRecommendation, ok, pathsForGoal, recomputeWorkflowStatus, syncAcceptanceMarkdown, writeJson } from "../../core.ts";
 import { architectureState, renderReportWithArchitecture } from "../../architecture.ts";
 import { refreshManifest } from "../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
 export const reportCommand = defineCommand({
   meta: {
@@ -12,15 +12,7 @@ export const reportCommand = defineCommand({
     description: "Render a human-readable OpenNori acceptance report for the current goal."
   },
   args: {
-    root: {
-      type: "string",
-      description: "Project root.",
-      default: process.cwd()
-    },
-    goal: {
-      type: "string",
-      description: "Active goal id to inspect."
-    },
+    ...activeGoalArgs,
     output: {
       type: "string",
       description: "Report output path."
@@ -32,7 +24,7 @@ export const reportCommand = defineCommand({
     }
   },
   run({ args, data }) {
-    const { contract, ledger, root } = data.loadPair();
+    const { contract, ledger, root } = data.loadPair(args);
     const output = path.resolve(args.output || pathsForGoal(root, contract.goal_id).reportPath);
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, renderReportWithArchitecture(root, contract, ledger));
@@ -67,15 +59,7 @@ export const archiveCommand = defineCommand({
     description: "Move a complete or blocked OpenNori goal out of active work and preserve its report."
   },
   args: {
-    root: {
-      type: "string",
-      description: "Project root.",
-      default: process.cwd()
-    },
-    goal: {
-      type: "string",
-      description: "Active goal id to archive."
-    },
+    ...activeGoalArgs,
     force: {
       type: "boolean",
       description: "Allow overwriting an existing archive target.",
@@ -89,7 +73,7 @@ export const archiveCommand = defineCommand({
   },
   run({ args, data }) {
     const root = path.resolve(String(args.root || process.cwd()));
-    const { contract, ledger, acceptancePath, evidencePath } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath } = data.loadPair(args);
     recomputeWorkflowStatus(contract, ledger);
     if (ledger.status !== "complete" && ledger.status !== "blocked") {
       return fail("not_archivable", `Goal ${contract.goal_id} is ${ledger.status}`, "Only complete or blocked OpenNori goals can be archived.");

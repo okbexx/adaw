@@ -9,7 +9,6 @@ import {
   renderAgentRouteMarkdown,
   renderAgentRouteSectionMarkdown
 } from "../architecture.ts";
-import { SKILL_PACK, skillPackMarkdowns } from "../skills.ts";
 import { fileHash, managedSectionBounds, upsertManagedSection } from "./managed-files.ts";
 import { safeReadManifest, writeManifest } from "./manifest.ts";
 import { isWritingUpgradeAction } from "./plans.ts";
@@ -18,8 +17,7 @@ import {
   PACKAGE_JSON,
   manifestPath,
   protocolTemplate,
-  sameStringSet,
-  skillPackPath
+  sameStringSet
 } from "./shared.ts";
 import type { ManagedAction } from "../types.ts";
 
@@ -32,7 +30,6 @@ export function applyUpgradeActions(actions: ManagedAction[]): void {
 export function upgradeActions(
   root: string,
   {
-    requestedSkill = false,
     mergeAgentRoute = false
   } = {}
 ): ManagedAction[] {
@@ -143,29 +140,6 @@ export function upgradeActions(
             return;
           }
           fs.writeFileSync(routePath, upsertManagedSection(fs.readFileSync(routePath, "utf8"), routeSection, AGENT_ROUTE_START, AGENT_ROUTE_END));
-        }
-      });
-    }
-  }
-
-  if (requestedSkill) {
-    const markdowns = skillPackMarkdowns();
-    for (const skill of SKILL_PACK) {
-      const target = skillPackPath(root, skill.name);
-      if (!fs.existsSync(target)) {
-        actions.push({ path: target, action: "missing", kind: "skill", managed: true });
-        continue;
-      }
-      const expectedHash = createHash("sha256").update(markdowns[skill.name] || "").digest("hex");
-      const currentHash = fileHash(target);
-      actions.push({
-        path: target,
-        action: currentHash === expectedHash ? "current" : "overwrite",
-        kind: "skill",
-        managed: true,
-        write: () => {
-          fs.mkdirSync(path.dirname(target), { recursive: true });
-          fs.writeFileSync(target, markdowns[skill.name] || "");
         }
       });
     }

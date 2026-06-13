@@ -1,30 +1,23 @@
-import { parseArgs } from "node:util";
 import type { EvidenceResult, EvidenceSource } from "../../../types.ts";
 
 type CliArgs = Record<string, any>;
-type ParsedOptionToken = {
-  kind: "option";
-  index: number;
-  rawName: string;
-  value?: string;
-};
-type ParsedToken = ParsedOptionToken | {
-  kind: string;
-  index: number;
-  rawName?: string;
-  value?: string;
-};
 
 function argValues(rawArgs: string[], name: string): string[] {
   const rawName = name.startsWith("--") ? name : `--${name}`;
-  return (parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens as ParsedToken[])
-    .filter((item) => item.kind === "option" && item.rawName === rawName)
-    .map((item) => {
-      if (item.value !== undefined) return item.value;
-      const next = rawArgs[item.index + 1];
-      return next && !next.startsWith("-") ? next : undefined;
-    })
-    .filter((value): value is string => value !== undefined);
+  const values: string[] = [];
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const item = rawArgs[index];
+    if (item === undefined) continue;
+    if (item === rawName) {
+      const next = rawArgs[index + 1];
+      if (next && !next.startsWith("-")) values.push(next);
+      continue;
+    }
+    if (item.startsWith(`${rawName}=`)) {
+      values.push(item.slice(rawName.length + 1));
+    }
+  }
+  return values;
 }
 
 function parseEvidenceSource(value: unknown): EvidenceSource | null {

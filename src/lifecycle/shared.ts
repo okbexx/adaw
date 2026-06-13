@@ -10,7 +10,8 @@ export const NORI_CAPABILITIES = [
   "acceptance-contract",
   "evidence-ledger",
   "reviewable-evidence",
-  "skill-pack",
+  "codex-plugin",
+  "opennori-skills",
   "brainstorm",
   "acceptance-discovery",
   "acceptance-quality-audit",
@@ -43,10 +44,6 @@ export function relativeTo(root: string, filePath: string): string {
 
 export function manifestPath(root: string): string {
   return path.join(root, ".opennori", "manifest.json");
-}
-
-export function skillPackPath(root: string, skillName: string): string {
-  return path.join(root, ".agents", "skills", skillName, "SKILL.md");
 }
 
 export function protocolTemplate(): string {

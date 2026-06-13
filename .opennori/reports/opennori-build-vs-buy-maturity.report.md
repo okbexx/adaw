@@ -51,7 +51,7 @@ Current status: complete
 Architecture decision: valid
 Baseline: typescript-agent-state-cli (active)
 Challenge: none
-Build-vs-buy: clear (12 decisions)
+Build-vs-buy: clear (9 decisions)
 Agent guide: installed
 
 Paths:

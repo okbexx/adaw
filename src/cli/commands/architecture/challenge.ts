@@ -12,7 +12,7 @@ import { ok, slugify, writeJson } from "../../../core.ts";
 import { refreshManifest } from "../../../lifecycle.ts";
 import { runJsonCommand } from "../../runtime.ts";
 import type { ArchitectureChallenge } from "../../../types.ts";
-import { hasRawFlag, jsonArg, resolveRoot, rootArg } from "./shared.ts";
+import { jsonArg, resolveRoot, rootArg } from "./shared.ts";
 
 export const architectureChallengeCommand = defineCommand({
   meta: {
@@ -37,14 +37,14 @@ export const architectureChallengeCommand = defineCommand({
       type: "string",
       description: "Recommended user decision."
     },
-    noUser: {
+    user: {
       type: "boolean",
-      description: "Mark the challenge as not requiring user input.",
-      default: false
+      description: "Whether the challenge requires user input. Use --no-user when it does not.",
+      default: true
     },
     json: jsonArg
   },
-  run({ args, data }) {
+  run({ args }) {
     const root = resolveRoot(args.root);
     const baseline = readArchitectureBaseline(root);
     if (!baseline) throw new Error("No Architecture Baseline found. Create one before challenging it.");
@@ -68,7 +68,7 @@ export const architectureChallengeCommand = defineCommand({
       summary,
       evidence,
       recommendation,
-      needs_user: !hasRawFlag(data?.rawArgs || [], "--no-user"),
+      needs_user: args.user !== false,
       rule: "Agent may challenge the Architecture Baseline with evidence, but must not silently replace it."
     };
     const paths = architectureChallengePath(root, id);

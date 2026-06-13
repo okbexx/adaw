@@ -6,7 +6,7 @@
   "need": "让 opennori check 同时暴露 active goal 的 Architecture Baseline 健康和恢复建议",
   "recommendation": "self-build",
   "summary": "architecture_check 是 OpenNori 自有验收状态语义：它复用现有 architectureState、agent surface 和 active goal 恢复逻辑，把 baseline missing/draft/invalid/challenged/stale surface 作为 check warnings 暴露给 agent 和用户。",
-  "current_project": "已有 src/architecture.js 的 architectureState、src/lifecycle.js 的 doctor/manifest、src/acceptance.js 的 acceptance_quality audit；check 命令已在 src/cli.js 聚合 active contract 状态。",
+  "current_project": "已有 src/architecture/state.ts 的 architectureState、src/lifecycle/doctor.ts 与 manifest health、src/acceptance.ts 的 acceptance_quality audit；src/cli/commands/check.ts 聚合 active contract 状态。",
   "standard_library": "Node.js 标准库足够读取本地 .opennori/ 与 agent route 文件；不需要额外 runtime。",
   "official_sdk": "无官方 SDK；这是 OpenNori 产品状态语义。",
   "open_source": "通用 schema/validator 库能校验 JSON 形状，但不能表达 OpenNori 的 Product AC 与 Architecture Baseline 分离、challenge、agent surface 恢复建议。",

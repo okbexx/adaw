@@ -6,16 +6,16 @@
   "profile_origin": "builtin",
   "goal_id": "opennori-self",
   "goal": "Migrate OpenNori toward the TypeScript agent state CLI architecture while preserving its acceptance-driven product boundary",
-  "summary": "Confirmed long-term architecture: strict TypeScript source, citty command layer, tsc no-bundle build, public JSON Schema with Ajv, yaml for lightweight frontmatter, Vitest and Biome gates, Clack quickstart, directory-based Skill Pack assets, manifest-driven lifecycle, flexible evidence, Nori Profile, generic context export, and build-vs-buy before custom infrastructure.",
-  "created_at": "2026-06-12T07:03:30.960Z",
-  "updated_at": "2026-06-12T07:03:30.960Z",
-  "accepted_at": "2026-06-12T07:03:30.960Z",
+  "summary": "Use strict TypeScript, a citty command layer, public JSON Schema with Ajv validation, tsc builds without bundling, Vitest and Biome quality gates, manifest-managed lifecycle actions, directory-based Skills, and build-vs-buy checks before custom infrastructure.",
+  "created_at": "2026-06-13T10:11:37.679Z",
+  "updated_at": "2026-06-13T10:11:37.679Z",
+  "accepted_at": "2026-06-13T10:11:37.679Z",
   "sticky": true,
   "requires_challenge_to_change": true,
   "applies_to": [
     "project-local protocol and state tools",
     "agent-facing deterministic CLI products",
-    "Skill Pack and manifest managed tools"
+    "Codex Plugin-packaged Skills and manifest managed state"
   ],
   "sources": [
     {
@@ -48,7 +48,7 @@
     "ajv-runtime-validation",
     "tsc-build-no-bundle-by-default",
     "vitest-and-biome-quality-gates",
-    "directory-based-skill-pack",
+    "plugin-packaged-skills",
     "manifest-managed-install-upgrade-uninstall",
     "skill-driven-natural-language-usage",
     "generic-context-export-for-external-review",
@@ -70,8 +70,8 @@
     {
       "id": "ARCH-3",
       "audience": "maintainer",
-      "statement": "Skill Pack content lives in skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings.",
-      "review": "Inspect skills/ assets, package files, Skill Pack manifest hashes, and doctor sync output."
+      "statement": "OpenNori Skill content lives in plugin-packaged skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings or project-local copies.",
+      "review": "Inspect .codex-plugin/plugin.json, skills/ assets, package files, and doctor plugin output."
     },
     {
       "id": "ARCH-4",
@@ -127,7 +127,7 @@
     },
     {
       "area": "skills",
-      "policy": "Ship directory-based Skills as package assets and install/sync them through manifest-managed lifecycle actions."
+      "policy": "Ship directory-based Skills as Codex Plugin package assets; project lifecycle commands manage .opennori state, not project-local Skill copies."
     }
   ],
   "avoid": [
@@ -157,7 +157,7 @@
       "installer lifecycle",
       "state storage",
       "test harness",
-      "Skill Pack asset management",
+      "Plugin Skill asset management",
       "frontend components"
     ]
   },
@@ -172,6 +172,7 @@
     ".opennori/agent-guide.md",
     "AGENTS.md",
     "CLAUDE.md",
-    ".agents/skills/nori-architecture-apply/SKILL.md"
+    ".codex-plugin/plugin.json",
+    "skills/nori-architecture-apply/SKILL.md"
   ]
 }

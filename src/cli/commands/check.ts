@@ -3,7 +3,7 @@ import { auditAcceptanceQuality } from "../../acceptance.ts";
 import { architectureState } from "../../architecture.ts";
 import { currentGap, evidenceHealth, fail, ok, validateContract } from "../../core.ts";
 import type { JsonObject } from "../../types.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
 export const checkCommand = defineCommand({
   meta: {
@@ -11,23 +11,15 @@ export const checkCommand = defineCommand({
     description: "Validate active OpenNori contract quality, architecture health, and evidence health."
   },
   args: {
-    root: {
-      type: "string",
-      description: "Project root.",
-      default: process.cwd()
-    },
-    goal: {
-      type: "string",
-      description: "Active goal id to inspect."
-    },
+    ...activeGoalArgs,
     json: {
       type: "boolean",
       description: "Keep deterministic JSON output for agents.",
       default: false
     }
   },
-  run({ data }) {
-    const { contract, ledger, root } = data.loadPair();
+  run({ args, data }) {
+    const { contract, ledger, root } = data.loadPair(args);
     const issues = validateContract(contract, ledger);
     if (issues.length > 0) {
       return { ...fail("invalid_acceptance", "Acceptance contract failed validation", "Fix reported issues before continuing"), issues };
@@ -77,13 +69,6 @@ export const checkCommand = defineCommand({
         type: "architecture",
         message: ".opennori/agent-guide.md is missing or stale.",
         recovery: "Preview opennori install --root <project> --merge-agent-route --dry-run --json, then confirm the refresh if acceptable."
-      });
-    }
-    if (!architecture.agent_surface.agents.references_baseline && !architecture.agent_surface.claude.references_baseline) {
-      architectureWarnings.push({
-        type: "architecture",
-        message: "No project agent route references the Architecture Baseline.",
-        recovery: "Preview opennori install --root <project> --merge-agent-route --dry-run --json, then confirm the non-destructive merge if acceptable."
       });
     }
     const architectureStatus = architectureWarnings.length > 0 ? "needs-action" : "clear";

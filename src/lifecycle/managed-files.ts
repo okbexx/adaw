@@ -6,7 +6,6 @@ import type { ManagedAction } from "../types.ts";
 export type WriteOptions = {
   dryRun?: boolean;
   force?: boolean;
-  refresh?: boolean;
   merge?: boolean;
   kind?: string;
   managed?: boolean;
@@ -84,27 +83,6 @@ export function writeAgentRoute(
     managed,
     reason: action === "exists"
       ? "Existing project agent route already references the OpenNori Architecture Baseline."
-      : undefined
-  };
-}
-
-export function writeGeneratedFile(filePath: string, content: string, { dryRun = false, force = false, refresh = false, kind = "file", managed = true }: WriteOptions = {}): ManagedAction {
-  const exists = fs.existsSync(filePath);
-  if (!exists || force) return writeIfSafe(filePath, content, { dryRun, force, kind, managed });
-  const currentHash = fileHash(filePath);
-  const expectedHash = createHash("sha256").update(content).digest("hex");
-  const action = currentHash === expectedHash ? "exists" : (refresh ? "update" : "skip");
-  if (!dryRun && action === "update") {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, content);
-  }
-  return {
-    path: filePath,
-    action,
-    kind,
-    managed,
-    reason: action === "update"
-      ? `Existing OpenNori ${kind} will be refreshed without requiring --force.`
       : undefined
   };
 }

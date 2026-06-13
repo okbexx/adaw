@@ -16,7 +16,6 @@ import { runInstallCommand } from "../src/cli/commands/install.ts";
 import { runListCommand } from "../src/cli/commands/list.ts";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.ts";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.ts";
-import { runSkillExportCommand } from "../src/cli/commands/skill.ts";
 import { runUninstallCommand } from "../src/cli/commands/uninstall.ts";
 import { runUpgradeCommand } from "../src/cli/commands/upgrade.ts";
 import { buildArchitectureBaseline, writeArchitectureBaseline } from "../src/architecture.ts";
@@ -50,10 +49,6 @@ function writeActiveGoal(root) {
 }
 
 test("citty command modules preserve agent-readable JSON payloads", async () => {
-  const skill = await runSkillExportCommand(["--name=nori-evidence", "--json"]);
-  assert.equal(skill.ok, true);
-  assert.equal(skill.data.skill_name, "nori-evidence");
-
   const profiles = await runArchitectureProfilesCommand(["--root", ROOT, "--json"]);
   assert.equal(profiles.ok, true);
   assert.equal(profiles.data.side_effect, "none");
@@ -82,38 +77,39 @@ test("bootstrap command module previews before confirmed setup", async () => {
   assert.equal(confirmed.data.install_plan.dry_run, false);
   assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
 });
 
 test("install command module preserves preview and confirm safety", async () => {
   const root = tempRoot();
-  const dryRun = await runInstallCommand(["--root", root, "--skill", "--dry-run", "--json"]);
+  const dryRun = await runInstallCommand(["--root", root, "--dry-run", "--json"]);
   assert.equal(dryRun.ok, true);
   assert.equal(dryRun.data.dry_run, true);
   assert.equal(dryRun.data.install_plan.dry_run, true);
   assert.equal(dryRun.data.install_plan.summary.will_write, 0);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), false);
 
-  const installed = await runInstallCommand(["--root", root, "--skill", "--json"]);
+  const installed = await runInstallCommand(["--root", root, "--json"]);
   assert.equal(installed.ok, true);
   assert.equal(installed.data.confirmed, false);
   assert.equal(installed.data.install_plan.summary.will_write > 0, true);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
 
-  const unconfirmed = await runInstallCommand(["--root", root, "--skill", "--force", "--json"]);
+  const unconfirmed = await runInstallCommand(["--root", root, "--force", "--json"]);
   assert.equal(unconfirmed.ok, false);
   assert.equal(unconfirmed.error.type, "confirm_required");
-  assert.match(unconfirmed.error.fix, /--dry-run --force --skill --json/);
+  assert.match(unconfirmed.error.fix, /--dry-run --force --json/);
 });
 
 test("uninstall command module preserves state unless include-state is confirmed", async () => {
   const root = tempRoot();
-  await runInstallCommand(["--root", root, "--skill", "--json"]);
+  await runInstallCommand(["--root", root, "--json"]);
 
   const dryRun = await runUninstallCommand(["--root", root, "--dry-run", "--json"]);
   assert.equal(dryRun.ok, true);
   assert.equal(dryRun.data.uninstall_plan.summary.will_write, 0);
   assert.equal(dryRun.data.uninstall_plan.actions.find((action) => action.path === ".opennori/active").action, "preserve");
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
 
   const unconfirmed = await runUninstallCommand(["--root", root, "--json"]);
   assert.equal(unconfirmed.ok, false);
@@ -122,11 +118,10 @@ test("uninstall command module preserves state unless include-state is confirmed
   const removed = await runUninstallCommand(["--root", root, "--confirm", "--json"]);
   assert.equal(removed.ok, true);
   assert.equal(removed.data.include_state, false);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "active")), true);
 
   const stateRemovedRoot = tempRoot();
-  await runInstallCommand(["--root", stateRemovedRoot, "--skill", "--json"]);
+  await runInstallCommand(["--root", stateRemovedRoot, "--json"]);
   const stateRemoved = await runUninstallCommand(["--root", stateRemovedRoot, "--include-state", "--confirm", "--json"]);
   assert.equal(stateRemoved.data.include_state, true);
   assert.equal(fs.existsSync(path.join(stateRemovedRoot, ".opennori")), false);
@@ -134,22 +129,21 @@ test("uninstall command module preserves state unless include-state is confirmed
 
 test("upgrade command module preserves preview and install-required safety", async () => {
   const root = tempRoot();
-  await runInstallCommand(["--root", root, "--skill", "--json"]);
+  await runInstallCommand(["--root", root, "--json"]);
   fs.writeFileSync(path.join(root, ".opennori", "protocol.md"), "old protocol\n");
-  fs.writeFileSync(path.join(root, ".agents", "skills", "nori", "SKILL.md"), "old nori skill\n");
 
-  const dryRun = await runUpgradeCommand(["--root", root, "--skill", "--dry-run", "--json"]);
+  const dryRun = await runUpgradeCommand(["--root", root, "--dry-run", "--json"]);
   assert.equal(dryRun.ok, true);
   assert.equal(dryRun.data.upgrade_plan.schema_version, "opennori/upgrade-plan-v1");
   assert.equal(dryRun.data.upgrade_plan.summary.will_write, 0);
   assert.equal(dryRun.data.upgrade_plan.actions.find((action) => action.path === ".opennori/protocol.md").action, "overwrite");
   assert.equal(fs.readFileSync(path.join(root, ".opennori", "protocol.md"), "utf8"), "old protocol\n");
 
-  const unconfirmed = await runUpgradeCommand(["--root", root, "--skill", "--json"]);
+  const unconfirmed = await runUpgradeCommand(["--root", root, "--json"]);
   assert.equal(unconfirmed.ok, false);
   assert.equal(unconfirmed.error.type, "confirm_required");
 
-  const upgraded = await runUpgradeCommand(["--root", root, "--skill", "--confirm", "--json"]);
+  const upgraded = await runUpgradeCommand(["--root", root, "--confirm", "--json"]);
   assert.equal(upgraded.ok, true);
   assert.equal(upgraded.data.confirmed, true);
   assert.match(fs.readFileSync(path.join(root, ".opennori", "protocol.md"), "utf8"), /OpenNori Protocol/);
@@ -310,9 +304,9 @@ test("architecture build-vs-buy command module records reviewable decisions", as
     "--area", "cli",
     "--need", "Parse OpenNori subcommands",
     "--recommendation", "self-build",
-    "--summary", "Keep a small parser only when framework migration is blocked.",
-    "--current-project", "Current project has a legacy dispatcher.",
-    "--standard-library", "node:util parseArgs does not provide nested commands.",
+    "--summary", "Use citty command modules and keep repeated-source parsing as narrow command-local glue.",
+    "--current-project", "Current project uses src/cli/command-tree.ts and src/cli/commands/** citty modules.",
+    "--standard-library", "Node exposes argv tokens but not a full nested command definition model.",
     "--official-sdk", "No official SDK applies.",
     "--json"
   ]);
@@ -321,8 +315,8 @@ test("architecture build-vs-buy command module records reviewable decisions", as
   assert.equal(decision.data.decision.schema_version, "opennori/build-vs-buy-v1");
   assert.equal(decision.data.decision.id, "module-parser-choice");
   assert.equal(decision.data.decision.recommendation, "self-build");
-  assert.equal(decision.data.decision.current_project, "Current project has a legacy dispatcher.");
-  assert.equal(decision.data.decision.standard_library, "node:util parseArgs does not provide nested commands.");
+  assert.equal(decision.data.decision.current_project, "Current project uses src/cli/command-tree.ts and src/cli/commands/** citty modules.");
+  assert.equal(decision.data.decision.standard_library, "Node exposes argv tokens but not a full nested command definition model.");
   assert.equal(decision.data.decision.official_sdk, "No official SDK applies.");
   assert.equal(decision.data.decision_path, path.join(root, ".opennori", "architecture", "decisions", "module-parser-choice.json"));
   assert.equal(fs.existsSync(decision.data.decision_path), true);

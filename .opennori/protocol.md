@@ -77,18 +77,18 @@ a durable workflow asset.
 
 | ID | Tool / entrypoint | User operation | User acceptance criterion | Passing threshold |
 | --- | --- | --- | --- | --- |
-| AC-Z-1 | CLI | Run `opennori skill export` | The user gets a usable Codex Skill draft for OpenNori. | The Skill tells agents to drive work through resume, next, evidence, evaluate, status, and report. |
+| AC-Z-1 | Codex Plugin / package assets | Install or inspect the OpenNori package | The user's agent can discover focused OpenNori Skills without the user memorizing CLI flags. | `.codex-plugin/plugin.json` points to package-local `skills/`; the `nori` Skill routes natural-language work through acceptance, evidence, profile, architecture, health, and reporting. |
 | AC-Z-2 | CLI | Run `opennori install` | The user can install OpenNori into a project without unexpected overwrites. | Install shows created/skipped assets; existing user content is not overwritten by default. |
 | AC-Z-3 | Git / PR diff | Review the agent's changes | The user can separate acceptance evidence changes from implementation noise. | Summary defaults to AC status changes, evidence changes, and user impact. |
 | AC-Z-4 | CLI | Run `opennori list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
 | AC-Z-5 | CLI | Archive a completed or blocked goal | The user removes it from active work while preserving evidence and report. | Active no longer lists the goal; contract, ledger, and report remain recoverable. |
 | AC-Z-6 | Project file browser | Inspect the project after running OpenNori | The user sees OpenNori-owned state under `.opennori/` instead of a generic project `process/` directory. | Install, draft, brainstorm, report, and archive write OpenNori state under `.opennori/` by default. |
-| AC-Z-7 | CLI / project file browser | Run `opennori install` | The user can inspect project OpenNori registration and judge version, managed entries, active goals, Skill status, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.opennori/manifest.json` records version, managed files, active goals, Skill state, and capabilities. |
-| AC-Z-8 | CLI | Run `opennori doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.opennori` structure, manifest consistency, active goal recoverability, Skill sync, CLI runtime, and recovery suggestions. |
+| AC-Z-7 | CLI / project file browser | Run `opennori install` | The user can inspect project OpenNori registration and judge version, managed entries, active goals, Plugin Skill availability, and protocol capabilities. | Install output uses create, skip, overwrite, or update semantics; `.opennori/manifest.json` records version, managed files, active goals, Plugin state, architecture state, and capabilities. |
+| AC-Z-8 | CLI | Run `opennori doctor` | The user can judge whether the project is `ready`, `needs-action`, or `broken`, and see the next recovery action. | Doctor checks `.opennori` structure, manifest consistency, active goal recoverability, packaged Plugin Skills, CLI runtime, and recovery suggestions. |
 | AC-Z-9 | CLI | Preview install with `opennori install --dry-run` | The user can judge what OpenNori would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
 | AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `opennori install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 | AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall OpenNori entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.opennori` state is deleted only with `--include-state --confirm`. |
-| AC-Z-12 | CLI / Codex Skills | Install OpenNori Skill Pack | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, project health, and reporting while the user keeps using natural language. | `opennori skill export --pack` exposes the pack; `opennori install --skill` writes it; manifest records `skill_pack`; doctor detects missing or stale pack Skills. |
+| AC-Z-12 | Codex Plugin / Codex Skills | Use OpenNori Plugin Skills | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, architecture, project health, and reporting while the user keeps using natural language. | The npm package ships `.codex-plugin/plugin.json` and package-local `skills/nori*/SKILL.md`; install does not copy Skills into the project; manifest records `plugin`; doctor detects missing packaged Plugin Skills. |
 | AC-Z-13 | CLI / project file browser | Establish an Architecture Baseline | The user can see what architecture the agent must follow while implementing Product AC. | `.opennori/architecture/baseline.json`, `.opennori/architecture/baseline.md`, and `.opennori/agent-guide.md` expose the baseline to agents and reviewers. |
 | AC-Z-14 | CLI / project file browser | Add a project Architecture Profile | The user can extend built-in profiles with a reviewed project profile. | `opennori architecture profile --from <profile.json>` writes `.opennori/architecture/profiles/<id>.json`; `architecture profiles` lists it before built-ins. |
 | AC-Z-15 | CLI / report | Challenge a baseline | The user can review evidence before an agent changes architecture. | `opennori architecture challenge` records current baseline, conflict evidence, recommendation, and user confirmation requirement. |
@@ -130,8 +130,7 @@ Each active goal has:
 - OpenNori package version
 - managed `.opennori` files and directories
 - active goals recoverable from `.opennori/active`
-- optional repo-local OpenNori Skill state
-- optional repo-local OpenNori Skill Pack state
+- OpenNori Plugin and package Skill asset state
 - Architecture Baseline, profile, challenge, build-vs-buy, and agent-readable surface state
 - protocol capabilities exposed by this CLI
 
@@ -153,15 +152,15 @@ Real `opennori install --force` can overwrite OpenNori-managed files, so it requ
 Run `opennori install --dry-run --force` first to inspect destructive actions, then rerun with
 `--confirm` only if those writes are acceptable.
 
-`opennori uninstall --dry-run` returns an uninstall plan. By default it removes entry assets such as the
-repo-local OpenNori Skill and manifest, while preserving Nori Contracts, evidence records,
-reports, archives, and brainstorms. Real uninstall requires `--confirm`. Deleting the whole `.opennori`
-state directory requires both `--include-state` and `--confirm`.
+`opennori uninstall --dry-run` returns an uninstall plan. By default it removes the manifest while
+preserving Nori Contracts, evidence records, reports, archives, brainstorms, protocol, guide, and
+architecture state. Real uninstall requires `--confirm`. Deleting the whole `.opennori` state
+directory requires both `--include-state` and `--confirm`.
 
-## Skill Pack
+## OpenNori Plugin Skills
 
-OpenNori exposes a Skill Pack for agent use. The user should not need to remember these Skill names;
-the root `nori` Skill routes natural-language requests to focused Skills:
+OpenNori exposes Codex Skills through its Plugin and package assets. The user should not need to
+remember these Skill names; the root `nori` Skill routes natural-language requests to focused Skills:
 
 - `nori`: root router for OpenNori turns
 - `nori-acceptance`: discover AC gaps, brainstorm, draft, approve, and revise human-facing ACs
@@ -171,11 +170,13 @@ the root `nori` Skill routes natural-language requests to focused Skills:
 - `nori-architecture-apply`: read and apply the confirmed baseline before implementation
 - `nori-architecture-challenge`: raise evidence-backed requests to revise a baseline
 - `nori-build-vs-buy`: record dependency/library/self-build decisions before infrastructure work
-- `nori-project-health`: install, uninstall, doctor, manifest, and Skill Pack sync
+- `nori-project-health`: install, upgrade, uninstall, doctor, manifest, Plugin health, and project recoverability
 - `nori-reporting`: status, report, current gap, user intervention, and changes
 
-`opennori install --skill` installs the pack under `.agents/skills/`. The manifest records `skill_pack`
-state, and `opennori doctor` checks whether the pack is installed and in sync.
+The package ships `.codex-plugin/plugin.json` with `skills: "./skills/"`. `opennori install` writes
+project state under `.opennori/`; it does not copy OpenNori Skills into the user's project. The
+manifest records `plugin` state, and `opennori doctor` checks whether packaged Plugin Skills are
+present and whether the manifest Plugin state is stale.
 
 When upgrading an existing OpenNori project, upgrade entry assets first, then run `opennori check`.
 `check` validates active Nori Contracts, reports `acceptance_quality` warnings for vague ACs
@@ -348,7 +349,7 @@ On every turn:
 13. Before self-building infrastructure, record a build-vs-buy decision.
 14. If project evidence conflicts with the baseline, run `opennori architecture challenge`; do not silently replace the baseline.
 15. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-16. If the user asks to update an existing OpenNori project, run `opennori doctor`, preview and confirm the safe refresh path `opennori install --skill --refresh-skill --merge-agent-route` when Skills or agent routes are stale, use `opennori upgrade --dry-run/--confirm` for manifest/protocol entry upgrades, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_quality`.
+16. If the user asks to update an existing OpenNori project, run `opennori doctor`, use `opennori upgrade --dry-run/--confirm` for manifest/protocol/guide refreshes, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_quality`. If packaged Plugin Skills are missing, reinstall or update the OpenNori package instead of copying Skills into the project.
 17. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
 18. Work only to produce evidence for that gap under the confirmed Architecture Baseline.
 19. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `opennori profile evidence` when profile items exist.

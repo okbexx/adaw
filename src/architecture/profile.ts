@@ -17,7 +17,7 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
     applies_to: [
       "project-local protocol and state tools",
       "agent-facing deterministic CLI products",
-      "Skill Pack and manifest managed tools"
+      "Codex Plugin-packaged Skills and manifest managed state"
     ],
     summary: "Use strict TypeScript, a citty command layer, public JSON Schema with Ajv validation, tsc builds without bundling, Vitest and Biome quality gates, manifest-managed lifecycle actions, directory-based Skills, and build-vs-buy checks before custom infrastructure.",
     sources: [
@@ -51,7 +51,7 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
       "ajv-runtime-validation",
       "tsc-build-no-bundle-by-default",
       "vitest-and-biome-quality-gates",
-      "directory-based-skill-pack",
+      "plugin-packaged-skills",
       "manifest-managed-install-upgrade-uninstall",
       "skill-driven-natural-language-usage",
       "generic-context-export-for-external-review",
@@ -73,8 +73,8 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
       {
         id: "ARCH-3",
         audience: "maintainer",
-        statement: "Skill Pack content lives in skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings.",
-        review: "Inspect skills/ assets, package files, Skill Pack manifest hashes, and doctor sync output."
+        statement: "OpenNori Skill content lives in plugin-packaged skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings or project-local copies.",
+        review: "Inspect .codex-plugin/plugin.json, skills/ assets, package files, and doctor plugin output."
       },
       {
         id: "ARCH-4",
@@ -130,7 +130,7 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
       },
       {
         area: "skills",
-        policy: "Ship directory-based Skills as package assets and install/sync them through manifest-managed lifecycle actions."
+        policy: "Ship directory-based Skills as Codex Plugin package assets; project lifecycle commands manage .opennori state, not project-local Skill copies."
       }
     ],
     avoid: [
@@ -160,7 +160,7 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
         "installer lifecycle",
         "state storage",
         "test harness",
-        "Skill Pack asset management",
+        "Plugin Skill asset management",
         "frontend components"
       ]
     }

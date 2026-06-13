@@ -11,7 +11,7 @@ Migrate OpenNori toward the TypeScript agent state CLI architecture while preser
 
 ## Summary
 
-Confirmed long-term architecture: strict TypeScript source, citty command layer, tsc no-bundle build, public JSON Schema with Ajv, yaml for lightweight frontmatter, Vitest and Biome gates, Clack quickstart, directory-based Skill Pack assets, manifest-driven lifecycle, flexible evidence, Nori Profile, generic context export, and build-vs-buy before custom infrastructure.
+Use strict TypeScript, a citty command layer, public JSON Schema with Ajv validation, tsc builds without bundling, Vitest and Biome quality gates, manifest-managed lifecycle actions, directory-based Skills, and build-vs-buy checks before custom infrastructure.
 
 ## Principles
 
@@ -23,7 +23,7 @@ Confirmed long-term architecture: strict TypeScript source, citty command layer,
 - ajv-runtime-validation
 - tsc-build-no-bundle-by-default
 - vitest-and-biome-quality-gates
-- directory-based-skill-pack
+- plugin-packaged-skills
 - manifest-managed-install-upgrade-uninstall
 - skill-driven-natural-language-usage
 - generic-context-export-for-external-review
@@ -33,7 +33,7 @@ Confirmed long-term architecture: strict TypeScript source, citty command layer,
 
 - ARCH-1 (maintainer): CLI command definitions are thin citty command modules that delegate product decisions to domain modules.
 - ARCH-2 (maintainer): Persisted OpenNori state has public JSON Schema and Ajv runtime validation; OpenNori semantic rules stay separate from structural schema validation.
-- ARCH-3 (maintainer): Skill Pack content lives in skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings.
+- ARCH-3 (maintainer): OpenNori Skill content lives in plugin-packaged skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings or project-local copies.
 - ARCH-4 (maintainer): Install, upgrade, uninstall, managed files, and doctor recovery are lifecycle concerns with deterministic plans, dry-run preview, and explicit confirmation boundaries.
 - ARCH-5 (agent): Before custom infrastructure work, check current project dependencies, standard libraries, official SDKs, mature open-source libraries, and documented reference projects.
 - ARCH-6 (agent): Do not replace this baseline silently. Raise an Architecture Challenge when project evidence conflicts with it.
@@ -56,7 +56,7 @@ Confirmed long-term architecture: strict TypeScript source, citty command layer,
 - markdown-frontmatter: Use yaml for frontmatter when needed; keep JSON authoritative and avoid micromark/unified unless Markdown import requires it.
 - test: Use Vitest plus tsc --noEmit; CLI integration tests should spawn the real bin against temporary projects.
 - quality: Use Biome for lint and format; agents must not weaken quality config to pass checks.
-- skills: Ship directory-based Skills as package assets and install/sync them through manifest-managed lifecycle actions.
+- skills: Ship directory-based Skills as Codex Plugin package assets; project lifecycle commands manage .opennori state, not project-local Skill copies.
 
 ## Avoid
 

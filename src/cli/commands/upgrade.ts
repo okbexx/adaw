@@ -15,7 +15,6 @@ type UpgradeResultOptions = {
   root?: unknown;
   dryRun?: boolean;
   confirmed?: boolean;
-  requestedSkill?: boolean;
   mergeAgentRoute?: boolean;
 };
 
@@ -23,17 +22,16 @@ export function upgradeResult({
   root,
   dryRun = false,
   confirmed = false,
-  requestedSkill = false,
   mergeAgentRoute = false
 }: UpgradeResultOptions) {
   const projectRoot = path.resolve(String(root || process.cwd()));
-  const actions = upgradeActions(projectRoot, { requestedSkill, mergeAgentRoute });
-  const upgradePlan = buildUpgradePlan(projectRoot, actions, { dryRun, requestedSkill, mergeAgentRoute });
+  const actions = upgradeActions(projectRoot, { mergeAgentRoute });
+  const upgradePlan = buildUpgradePlan(projectRoot, actions, { dryRun, mergeAgentRoute });
 
   if (!dryRun && !confirmed) {
     return fail(
       "confirm_required",
-      "Upgrade refreshes OpenNori manifest, protocol, and optionally Skill Pack assets.",
+      "Upgrade refreshes OpenNori manifest, protocol, and generated project guidance.",
       "Run opennori upgrade --root <project> --dry-run --json first, then rerun with --confirm if the planned updates are acceptable."
     );
   }
@@ -68,23 +66,13 @@ export function upgradeResult({
 export const upgradeCommand = defineCommand({
   meta: {
     name: "upgrade",
-    description: "Refresh OpenNori manifest, protocol, and optional Skill Pack assets."
+    description: "Refresh OpenNori manifest, protocol, and generated project guidance."
   },
   args: {
     root: {
       type: "string",
       description: "Project root.",
       default: process.cwd()
-    },
-    skill: {
-      type: "boolean",
-      description: "Refresh installed OpenNori Skills.",
-      default: false
-    },
-    refreshSkill: {
-      type: "boolean",
-      description: "Alias for --skill.",
-      default: false
     },
     mergeAgentRoute: {
       type: "boolean",
@@ -112,7 +100,6 @@ export const upgradeCommand = defineCommand({
       root: args.root,
       dryRun: Boolean(args.dryRun),
       confirmed: Boolean(args.confirm),
-      requestedSkill: Boolean(args.skill || args.refreshSkill),
       mergeAgentRoute: Boolean(args.mergeAgentRoute)
     });
   }

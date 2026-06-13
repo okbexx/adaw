@@ -6,13 +6,11 @@ import {
   profileCompliance,
   recomputeWorkflowStatus
 } from "../../../core.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import type { ProfileEvidenceInput } from "../../../types.ts";
 import {
   jsonArg,
-  profileEvidenceResult,
-  rootArg,
-  updateGoalArg
+  profileEvidenceResult
 } from "./shared.ts";
 
 export const profileEvidenceCommand = defineCommand({
@@ -21,8 +19,7 @@ export const profileEvidenceCommand = defineCommand({
     description: "Record evidence for a Nori Profile item."
   },
   args: {
-    root: rootArg,
-    goal: updateGoalArg,
+    ...activeGoalArgs,
     item: {
       type: "string",
       description: "Profile item id."
@@ -44,7 +41,7 @@ export const profileEvidenceCommand = defineCommand({
     json: jsonArg
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const itemId = args.item;
     if (!itemId) throw new Error("--item is required");
     const evidence: ProfileEvidenceInput = {

@@ -10,7 +10,7 @@ Reuse OpenNori's existing evidence ledger fields to audit evidence health withou
 
 ## Candidates Checked
 
-- Current project: src/core.js already normalizes evidence and renderReport/check already expose evidence metadata.
+- Current project: src/core/evidence.ts normalizes evidence and evidence health; src/core/report.ts plus src/cli/commands/check.ts expose evidence metadata in report/check surfaces.
 - Standard library: Node built-ins are sufficient; no parser or database is needed.
 - Official SDK: No official SDK applies to OpenNori's evidence semantics.
 - Open source: Generic validation libraries would not understand OpenNori's human acceptance evidence semantics; schema libraries can be revisited if evidence schemas grow.

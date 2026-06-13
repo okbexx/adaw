@@ -80,11 +80,10 @@ export function architectureHealthChecks(architecture: ArchitectureState, baseli
   ));
   checks.push(doctorCheck(
     "architecture_agent_surface",
-    architecture.agent_surface.agents.references_baseline || architecture.agent_surface.claude.references_baseline,
+    true,
     architecture.agent_surface.agents.references_baseline || architecture.agent_surface.claude.references_baseline
-      ? "At least one project agent route references the Architecture Baseline."
-      : "No AGENTS.md or CLAUDE.md route references .opennori/architecture/baseline.md.",
-    "Preview opennori install --root <project> --merge-agent-route --dry-run --json, then confirm if the non-destructive merge is acceptable."
+      ? "At least one optional project agent route references the Architecture Baseline."
+      : "No optional AGENTS.md or CLAUDE.md route references .opennori/architecture/baseline.md; Codex Plugin Skills remain the primary agent surface."
   ));
   checks.push(doctorCheck(
     "architecture_baseline",

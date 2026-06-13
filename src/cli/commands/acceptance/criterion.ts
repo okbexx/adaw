@@ -8,7 +8,7 @@ import {
   writeJson
 } from "../../../core.ts";
 import { refreshManifest } from "../../../lifecycle.ts";
-import { type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
+import { activeGoalArgs, type ActiveGoalRuntime, runJsonCommand } from "../../runtime.ts";
 import type { AcceptanceCriterion } from "../../../types.ts";
 import { jsonArg, rootArg } from "./shared.ts";
 
@@ -18,7 +18,7 @@ export const criterionUpdateCommand = defineCommand({
     description: "Update a user acceptance criterion and clear stale evidence when the criterion changes."
   },
   args: {
-    root: rootArg,
+    ...activeGoalArgs,
     criterion: {
       type: "string",
       description: "Criterion id to update."
@@ -46,7 +46,7 @@ export const criterionUpdateCommand = defineCommand({
     json: jsonArg
   },
   run({ args, data }) {
-    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
+    const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair(args);
     const criterionId = args.criterion;
     if (!criterionId) throw new Error("--criterion is required");
     const criterion = contract.criteria.find((item: AcceptanceCriterion) => item.id === criterionId);
