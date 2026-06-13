@@ -10,7 +10,7 @@ import { validateSchema } from "../src/validation.js";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const CLI = path.join(ROOT, "bin", "opennori.js");
-const CLI_MODULE = pathToFileURL(path.join(ROOT, "src", "cli.js")).href;
+const CLI_MODULE = pathToFileURL(path.join(ROOT, "dist", "src", "cli.js")).href;
 const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
 function run(args, options = {}) {
@@ -55,8 +55,26 @@ test("command help is side-effect free", () => {
 test("published package uses built dist bin while local source bin remains available", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
   assert.equal(packageJson.bin.opennori, "dist/bin/opennori.js");
+  assert.equal(packageJson.files.includes("bin/opennori.js"), true);
+  assert.equal(packageJson.files.includes("bin/"), false);
   assert.equal(fs.existsSync(path.join(ROOT, "bin", "opennori.js")), true);
-  assert.equal(fs.readFileSync(path.join(ROOT, "bin", "opennori.js"), "utf8").includes("../src/cli.js"), true);
+  assert.equal(fs.existsSync(path.join(ROOT, "bin", "opennori.ts")), true);
+  assert.equal(fs.readFileSync(path.join(ROOT, "bin", "opennori.js"), "utf8").includes("process.features?.typescript"), true);
+  assert.equal(fs.readFileSync(path.join(ROOT, "bin", "opennori.ts"), "utf8").includes("../src/cli.ts"), true);
+});
+
+test("CLI entrypoint delegates command dispatch to the citty command tree", () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const cliSource = fs.readFileSync(path.join(ROOT, "src", "cli.ts"), "utf8");
+  const commandTree = fs.readFileSync(path.join(ROOT, "src", "cli", "command-tree.ts"), "utf8");
+
+  assert.equal(packageJson.dependencies.citty.startsWith("^"), true);
+  assert.equal(fs.existsSync(path.join(ROOT, "src", "cli", "routes.ts")), false);
+  assert.match(cliSource, /from "\.\/cli\/command-tree\.ts"/);
+  assert.match(cliSource, /runCliCommand\(resolved\)/);
+  assert.match(commandTree, /defineCommand/);
+  assert.match(commandTree, /runCommand/);
+  assert.match(commandTree, /subCommands/);
 });
 
 test("built dist bin can read package-root Skill assets", () => {
@@ -71,6 +89,30 @@ test("built dist bin can read package-root Skill assets", () => {
   });
   assert.equal(payload.data.skills.length, 10);
   assert.match(payload.data.skills.find((skill) => skill.name === "nori").skill_md, /OpenNori/);
+});
+
+test("built dist bin runs when invoked through a package-manager symlink", () => {
+  const build = spawnSync("npm", ["run", "build"], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(build.status, 0, build.stderr || build.stdout);
+
+  const root = tempRoot();
+  const binDir = path.join(root, "node_modules", ".bin");
+  fs.mkdirSync(binDir, { recursive: true });
+  const linkedBin = path.join(binDir, "opennori");
+  fs.symlinkSync(path.join(ROOT, "dist", "bin", "opennori.js"), linkedBin);
+
+  const result = spawnSync(process.execPath, [linkedBin, "--help"], {
+    cwd: root,
+    encoding: "utf8"
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true);
+  assert.match(payload.data.usage, /opennori/);
 });
 
 test("opennori quickstart previews bootstrap without requiring install flags", () => {

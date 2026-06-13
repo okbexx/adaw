@@ -3,7 +3,7 @@
   "protocol_version": "opennori/v1",
   "opennori_version": "0.1.7",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-12T09:18:35.974Z",
+  "updated_at": "2026-06-13T04:50:55.652Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -538,13 +538,31 @@
         "superseded_by": "skill-pack-directory-assets",
         "superseded_reason": "The confirmed Skill Pack architecture now uses package-local skills/*/SKILL.md directory assets instead of JS string bodies.",
         "path": ".opennori/architecture/decisions/skill-pack-将-opennori-skill-pack-从-cli-入口拆到独立产品面模块.json"
+      },
+      {
+        "id": "ts-source-runtime-use-node-native-strip",
+        "schema_valid": true,
+        "schema_errors": [],
+        "area": "ts-source-runtime",
+        "need": "Run TypeScript source entrypoints during local development without making the published OpenNori CLI depend on a development loader",
+        "recommendation": "reuse",
+        "status": "active",
+        "summary": "Use Node 22 native TypeScript stripping for the repository-local source wrapper and TypeScript rewriteRelativeImportExtensions for emitted JavaScript, while the published opennori binary remains tsc-emitted JavaScript under dist.",
+        "current_project": "package.json already uses TypeScript, tsc no-bundle builds, NodeNext ESM, and a local bin wrapper; package bin points at dist for npm users.",
+        "standard_library": "Node 22 exposes native TypeScript stripping for erasable syntax, which can execute OpenNori source entrypoints during development without a third-party loader; standard Node still runs emitted JavaScript in published packages.",
+        "official_sdk": "The relevant official runtime capability is Node native TypeScript stripping plus tsc emit with rewriteRelativeImportExtensions; no custom loader or package runtime SDK is needed.",
+        "open_source": "tsx 4.22.4 was evaluated but rejected because its esbuild 0.28.0 dependency produced npm audit high-severity findings in this project; use no additional open-source loader for this boundary.",
+        "self_build_reason": "",
+        "superseded_by": "",
+        "superseded_reason": "",
+        "path": ".opennori/architecture/decisions/ts-source-runtime-use-node-native-strip.json"
       }
     ],
     "build_vs_buy": {
       "status": "clear",
       "summary": "Every recorded build-vs-buy decision includes reviewable reuse candidates and any self-build reason.",
-      "decision_count": 10,
-      "total_decision_count": 13,
+      "decision_count": 11,
+      "total_decision_count": 14,
       "superseded_decision_count": 3,
       "findings": []
     },

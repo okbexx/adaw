@@ -1,11 +1,40 @@
 import { bootstrapResult, runBootstrapCommand } from "./commands/bootstrap.js";
-import { hasFlag, resolveRoot } from "./runtime.js";
+import { hasFlag, resolveRoot } from "./runtime.ts";
 
-function printText(stdout, line = "") {
+type JsonPrinter = (payload: unknown) => void;
+
+type BootstrapAction = {
+  action: string;
+  path: string;
+  would_write?: boolean;
+};
+
+type BootstrapPayload = {
+  data: {
+    root: string;
+    status: string;
+    next?: string;
+    install_plan: {
+      actions: BootstrapAction[];
+      summary: {
+        would_write: number;
+        will_write: number;
+      };
+    };
+  };
+};
+
+type BootstrapOptions = {
+  stdin?: NodeJS.ReadStream;
+  stdout?: NodeJS.WriteStream;
+  printJson?: JsonPrinter;
+};
+
+function printText(stdout: NodeJS.WriteStream, line = ""): void {
   stdout.write(`${line}\n`);
 }
 
-function describeBootstrapAction(action) {
+function describeBootstrapAction(action: BootstrapAction): string {
   if (action.action === "create") return `create ${action.path}`;
   if (action.action === "skip") return `keep existing ${action.path}`;
   if (action.action === "exists") return `already exists ${action.path}`;
@@ -14,7 +43,7 @@ function describeBootstrapAction(action) {
   return `${action.action} ${action.path}`;
 }
 
-function printBootstrapPreview(stdout, payload) {
+function printBootstrapPreview(stdout: NodeJS.WriteStream, payload: BootstrapPayload): void {
   const data = payload.data;
   printText(stdout, "");
   printText(stdout, "OpenNori project setup");
@@ -37,7 +66,7 @@ function printBootstrapPreview(stdout, payload) {
   printText(stdout, "No files have been written yet.");
 }
 
-function printBootstrapResult(stdout, payload) {
+function printBootstrapResult(stdout: NodeJS.WriteStream, payload: BootstrapPayload): void {
   const data = payload.data;
   printText(stdout, "");
   if (data.status === "installed") {
@@ -54,7 +83,7 @@ function printBootstrapResult(stdout, payload) {
   printText(stdout, data.next || "OpenNori bootstrap finished.");
 }
 
-async function promptConfirm(stdin, stdout, message) {
+async function promptConfirm(stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream, message: string): Promise<boolean> {
   stdout.write(`${message} [y/N] `);
   return new Promise((resolve) => {
     stdin.setEncoding("utf8");
@@ -65,11 +94,15 @@ async function promptConfirm(stdin, stdout, message) {
   });
 }
 
-function isInteractive(args, stdin, stdout) {
+function isInteractive(args: string[], stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream): boolean {
   return !hasFlag(args, "--json") && stdin.isTTY && stdout.isTTY;
 }
 
-export async function runBootstrap(args, { stdin = process.stdin, stdout = process.stdout, printJson } = {}) {
+function asBootstrapPayload(payload: unknown): BootstrapPayload {
+  return payload as BootstrapPayload;
+}
+
+export async function runBootstrap(args: string[], { stdin = process.stdin, stdout = process.stdout, printJson }: BootstrapOptions = {}): Promise<void> {
   const writeJson = printJson || ((payload) => stdout.write(`${JSON.stringify(payload, null, 2)}\n`));
   const root = resolveRoot(args);
   const confirmed = hasFlag(args, "--confirm");
@@ -80,11 +113,11 @@ export async function runBootstrap(args, { stdin = process.stdin, stdout = proce
   }
 
   if (confirmed) {
-    printBootstrapResult(stdout, bootstrapResult({ root, confirmed }));
+    printBootstrapResult(stdout, asBootstrapPayload(bootstrapResult({ root, confirmed })));
     return;
   }
 
-  const preview = bootstrapResult({ root, confirmed: false });
+  const preview = asBootstrapPayload(bootstrapResult({ root, confirmed: false }));
   printBootstrapPreview(stdout, preview);
   if (preview.data.status === "ready") return;
 
@@ -95,5 +128,5 @@ export async function runBootstrap(args, { stdin = process.stdin, stdout = proce
     return;
   }
 
-  printBootstrapResult(stdout, bootstrapResult({ root, confirmed: true }));
+  printBootstrapResult(stdout, asBootstrapPayload(bootstrapResult({ root, confirmed: true })));
 }

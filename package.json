@@ -8,7 +8,7 @@
   },
   "files": [
     ".opennori/protocol.md",
-    "bin/",
+    "bin/opennori.js",
     "dist/",
     "skills/",
     "src/",
@@ -18,13 +18,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write package.json tsconfig.json tsconfig.build.json vitest.config.ts",
     "lint": "biome lint .",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "test:node": "node --test",
-    "check": "biome lint . && tsc --noEmit && vitest run && npm run build && node ./bin/opennori.js doctor --json"
+    "check": "biome lint . && tsc --noEmit && npm run build && vitest run && node ./bin/opennori.js doctor --json"
   },
   "dependencies": {
     "@clack/prompts": "^1.5.1",

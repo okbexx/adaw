@@ -3,6 +3,6 @@
   "compilerOptions": {
     "noEmit": false
   },
-  "include": ["src/**/*.js", "src/**/*.ts", "bin/**/*.js"],
+  "include": ["src/**/*.js", "src/**/*.ts", "bin/**/*.ts"],
   "exclude": ["dist", "node_modules", "test"]
 }

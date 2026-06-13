@@ -1,0 +1,17 @@
+{
+  "schema_version": "opennori/build-vs-buy-v1",
+  "id": "ts-source-runtime-use-node-native-strip",
+  "created_at": "2026-06-13T04:50:55.604Z",
+  "area": "ts-source-runtime",
+  "need": "Run TypeScript source entrypoints during local development without making the published OpenNori CLI depend on a development loader",
+  "recommendation": "reuse",
+  "status": "active",
+  "summary": "Use Node 22 native TypeScript stripping for the repository-local source wrapper and TypeScript rewriteRelativeImportExtensions for emitted JavaScript, while the published opennori binary remains tsc-emitted JavaScript under dist.",
+  "current_project": "package.json already uses TypeScript, tsc no-bundle builds, NodeNext ESM, and a local bin wrapper; package bin points at dist for npm users.",
+  "standard_library": "Node 22 exposes native TypeScript stripping for erasable syntax, which can execute OpenNori source entrypoints during development without a third-party loader; standard Node still runs emitted JavaScript in published packages.",
+  "official_sdk": "The relevant official runtime capability is Node native TypeScript stripping plus tsc emit with rewriteRelativeImportExtensions; no custom loader or package runtime SDK is needed.",
+  "open_source": "tsx 4.22.4 was evaluated but rejected because its esbuild 0.28.0 dependency produced npm audit high-severity findings in this project; use no additional open-source loader for this boundary.",
+  "self_build_reason": "",
+  "superseded_by": "",
+  "superseded_reason": ""
+}
