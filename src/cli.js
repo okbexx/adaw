@@ -25,6 +25,13 @@ async function runAndPrint(runner, rawArgs, options = {}) {
   else printJson(payload);
 }
 
+async function runConfiguredCommand(route, args, rawArgs) {
+  await runAndPrint(route.runner, rawArgs, {
+    commandResult: route.commandResult,
+    runtime: route.activeGoal ? activeGoalRuntime(args) : undefined
+  });
+}
+
 function printText(line = "") {
   process.stdout.write(`${line}\n`);
 }
@@ -176,6 +183,27 @@ async function runBootstrap(args) {
   printBootstrapResult(bootstrapResult({ root, confirmed: true }));
 }
 
+const TOP_LEVEL_COMMANDS = {
+  doctor: { runner: runDoctorCommand },
+  list: { runner: runListCommand },
+  install: { runner: runInstallCommand, commandResult: true },
+  uninstall: { runner: runUninstallCommand, commandResult: true },
+  upgrade: { runner: runUpgradeCommand, commandResult: true },
+  brainstorm: { runner: runBrainstormCommand },
+  discover: { runner: runDiscoverCommand },
+  draft: { runner: runDraftCommand, commandResult: true },
+  init: { runner: runInitCommand, commandResult: true },
+  check: { runner: runCheckCommand, activeGoal: true, commandResult: true },
+  approve: { runner: runApproveCommand, activeGoal: true },
+  resume: { runner: runResumeCommand, activeGoal: true },
+  next: { runner: runNextCommand, activeGoal: true },
+  evaluate: { runner: runEvaluateCommand, activeGoal: true },
+  status: { runner: runStatusCommand, activeGoal: true },
+  report: { runner: runReportCommand, activeGoal: true },
+  changes: { runner: runChangesCommand },
+  archive: { runner: runArchiveCommand, activeGoal: true, commandResult: true }
+};
+
 export async function main(args) {
   const command = args[0];
   if (!command || command === "--help" || command === "-h") {
@@ -190,11 +218,6 @@ export async function main(args) {
 
   if (command === "bootstrap") {
     await runBootstrap(args);
-    return;
-  }
-
-  if (command === "doctor") {
-    await runAndPrint(runDoctorCommand, args.slice(1));
     return;
   }
 
@@ -228,53 +251,9 @@ export async function main(args) {
     return;
   }
 
-  if (command === "list") {
-    await runAndPrint(runListCommand, args.slice(1));
-    return;
-  }
-
-  if (command === "install") {
-    await runAndPrint(runInstallCommand, args.slice(1), { commandResult: true });
-    return;
-  }
-
-  if (command === "uninstall") {
-    await runAndPrint(runUninstallCommand, args.slice(1), { commandResult: true });
-    return;
-  }
-
-  if (command === "upgrade") {
-    await runAndPrint(runUpgradeCommand, args.slice(1), { commandResult: true });
-    return;
-  }
-
-  if (command === "brainstorm") {
-    await runAndPrint(runBrainstormCommand, args.slice(1));
-    return;
-  }
-
-  if (command === "discover") {
-    await runAndPrint(runDiscoverCommand, args.slice(1));
-    return;
-  }
-
-  if (command === "draft") {
-    await runAndPrint(runDraftCommand, args.slice(1), { commandResult: true });
-    return;
-  }
-
-  if (command === "init") {
-    await runAndPrint(runInitCommand, args.slice(1), { commandResult: true });
-    return;
-  }
-
-  if (command === "check") {
-    await runAndPrint(runCheckCommand, args.slice(1), { runtime: activeGoalRuntime(args), commandResult: true });
-    return;
-  }
-
-  if (command === "approve") {
-    await runAndPrint(runApproveCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
+  const topLevelRoute = TOP_LEVEL_COMMANDS[command];
+  if (topLevelRoute) {
+    await runConfiguredCommand(topLevelRoute, args, args.slice(1));
     return;
   }
 
@@ -303,48 +282,13 @@ export async function main(args) {
     return;
   }
 
-  if (command === "resume") {
-    await runAndPrint(runResumeCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
-    return;
-  }
-
-  if (command === "next") {
-    await runAndPrint(runNextCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
-    return;
-  }
-
   if (command === "evidence" && args[1] === "add") {
     await runAndPrint(runEvidenceAddCommand, args.slice(2), { runtime: activeGoalRuntime(args) });
     return;
   }
 
-  if (command === "evaluate") {
-    await runAndPrint(runEvaluateCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
-    return;
-  }
-
-  if (command === "status") {
-    await runAndPrint(runStatusCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
-    return;
-  }
-
-  if (command === "report") {
-    await runAndPrint(runReportCommand, args.slice(1), { runtime: activeGoalRuntime(args) });
-    return;
-  }
-
   if (command === "context" && args[1] === "export") {
     await runAndPrint(runContextExportCommand, args.slice(2));
-    return;
-  }
-
-  if (command === "changes") {
-    await runAndPrint(runChangesCommand, args.slice(1));
-    return;
-  }
-
-  if (command === "archive") {
-    await runAndPrint(runArchiveCommand, args.slice(1), { runtime: activeGoalRuntime(args), commandResult: true });
     return;
   }
 
