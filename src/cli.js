@@ -1,35 +1,14 @@
-import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { refreshManifest } from "./lifecycle.js";
-import { auditAcceptanceQuality } from "./acceptance.js";
 import {
-  addEvidence,
-  addProfileEvidence,
-  addProfileItem,
-  buildContractFromBrief,
-  buildEvidenceLedger,
-  completionAnswer,
-  criterionStatusRows,
-  currentGap,
-  evidenceHealth,
   fail,
   findActivePairs,
-  intervention,
-  nextRecommendation,
   ok,
-  pathsForGoal,
-  profileCompliance,
   readJson,
-  recomputeWorkflowStatus,
-  renderAcceptanceMarkdown,
-  slugify,
   syncAcceptanceMarkdown,
-  validateContract,
   writeJson
 } from "./core.js";
-import { readArchitectureBaseline, renderReportWithArchitecture } from "./architecture.js";
-import { packagePath } from "./package-root.js";
 import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runInitCommand, runNextCommand, runResumeCommand, runStatusCommand } from "./cli/commands/acceptance.js";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand, runArchitectureShowCommand } from "./cli/commands/architecture.js";
 import { runContextExportCommand } from "./cli/commands/context.js";
@@ -39,7 +18,6 @@ import { runProfileAddCommand, runProfileCheckCommand, runProfileEvidenceCommand
 import { runArchiveCommand, runReportCommand } from "./cli/commands/reporting.js";
 import { runSkillExportCommand } from "./cli/commands/skill.js";
 
-const PACKAGE_JSON = JSON.parse(fs.readFileSync(packagePath("package.json"), "utf8"));
 function printJson(payload) {
   console.log(JSON.stringify(payload, null, 2));
 }
@@ -204,40 +182,8 @@ async function runBootstrap(args) {
   printBootstrapResult(bootstrapResult({ root, confirmed: true }));
 }
 
-function argValues(args, name) {
-  const rawName = name.startsWith("--") ? name : `--${name}`;
-  return parsedArgTokens(args)
-    .filter((item) => item.kind === "option" && item.rawName === rawName)
-    .map((item) => {
-      if (item.value !== undefined) return item.value;
-      const next = args[item.index + 1];
-      return next && !next.startsWith("-") ? next : undefined;
-    })
-    .filter((value) => value !== undefined);
-}
-
 function resolveRoot(args) {
   return path.resolve(argValue(args, "--root", process.cwd()));
-}
-
-function relativeTo(root, filePath) {
-  return path.relative(root, filePath) || ".";
-}
-
-function brainstormPaths(root, brainstormId) {
-  const dir = path.join(root, ".opennori", "brainstorms");
-  return {
-    jsonPath: path.join(dir, `${brainstormId}.json`),
-    markdownPath: path.join(dir, `${brainstormId}.md`)
-  };
-}
-
-function discoveryPaths(root, discoveryId) {
-  const dir = path.join(root, ".opennori", "brainstorms");
-  return {
-    jsonPath: path.join(dir, `${discoveryId}.discovery.json`),
-    markdownPath: path.join(dir, `${discoveryId}.discovery.md`)
-  };
 }
 
 function savePair(acceptancePath, evidencePath, contract, ledger) {
