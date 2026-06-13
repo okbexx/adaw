@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import {
   completionAnswer,
   criterionStatusRows,
@@ -12,22 +11,8 @@ import {
   readJson
 } from "../core.js";
 import { architectureState } from "../architecture.js";
-
-function relativeTo(root, filePath) {
-  return path.relative(root, filePath) || ".";
-}
-
-function manifestPath(root) {
-  return path.join(root, ".opennori", "manifest.json");
-}
-
-function safeReadManifest(root) {
-  try {
-    return readJson(manifestPath(root));
-  } catch {
-    return null;
-  }
-}
+import { safeReadManifest } from "./manifest.js";
+import { manifestPath, relativeTo } from "./shared.js";
 
 export function buildContextExport(root, pair) {
   const payload = readJson(pair.evidencePath);

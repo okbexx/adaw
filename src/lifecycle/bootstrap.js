@@ -1,0 +1,58 @@
+import fs from "node:fs";
+import path from "node:path";
+import { ok } from "../core.js";
+import { doctor } from "./doctor.js";
+import { installActions } from "./install.js";
+import { buildInstallPlan } from "./plans.js";
+
+export function bootstrap(root, { confirmed = false } = {}) {
+  const health = doctor(root);
+  if (health.status === "ready") {
+    return ok({
+      root,
+      status: "ready",
+      confirmed,
+      side_effect: "none",
+      doctor: health,
+      next: "OpenNori is ready. Continue from opennori resume/status, brainstorm, or draft based on the user's goal."
+    });
+  }
+
+  const hasState = fs.existsSync(path.join(root, ".opennori"));
+  const needsConfirm = !confirmed;
+  const actions = installActions(root, {
+    dryRun: needsConfirm,
+    force: false,
+    requestedSkill: true,
+    refreshSkill: true,
+    mergeAgentRoute: true
+  });
+  const installPlan = buildInstallPlan(root, actions, {
+    dryRun: needsConfirm,
+    force: false,
+    requestedSkill: true,
+    refreshSkill: true,
+    mergeAgentRoute: true
+  });
+  const next = needsConfirm
+    ? "Show this preview to the user and ask for confirmation before writing OpenNori project assets."
+    : "OpenNori project assets are installed. Continue with the user's goal.";
+
+  return ok(
+    {
+      root,
+      status: needsConfirm ? "needs_confirm" : "installed",
+      confirmed,
+      existing_state: hasState,
+      install_plan: installPlan,
+      actions: installPlan.actions,
+      doctor: needsConfirm ? health : doctor(root),
+      next
+    },
+    [],
+    hasState && health.status === "broken"
+      ? ["Existing OpenNori state was not ready before bootstrap; review doctor output after install."]
+      : [],
+    [next]
+  );
+}
