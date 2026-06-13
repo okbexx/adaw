@@ -13,6 +13,11 @@ function parsedArgTokens(args) {
   return parseArgs({ args, allowPositionals: true, strict: false, tokens: true }).tokens;
 }
 
+export function hasFlag(args, name) {
+  const rawName = name.startsWith("--") ? name : `--${name}`;
+  return parsedArgTokens(args).some((item) => item.kind === "option" && item.rawName === rawName);
+}
+
 export function argValue(args, name, fallback = undefined) {
   const rawName = name.startsWith("--") ? name : `--${name}`;
   const token = parsedArgTokens(args).findLast((item) => item.kind === "option" && item.rawName === rawName);
