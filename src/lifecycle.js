@@ -25,6 +25,15 @@ import {
 import { packagePath } from "./package-root.js";
 import { schemaErrorSummary, validateSchema } from "./validation.js";
 import {
+  ensureDir,
+  fileHash,
+  managedSectionBounds,
+  upsertManagedSection,
+  writeAgentRoute,
+  writeGeneratedFile,
+  writeIfSafe
+} from "./lifecycle/managed-files.js";
+import {
   buildInstallPlan,
   buildUninstallPlan,
   buildUpgradePlan,
@@ -243,99 +252,6 @@ export function upgradeActions(root, { requestedSkill = false, mergeAgentRoute =
   return actions;
 }
 
-function writeIfSafe(filePath, content, { dryRun = false, force = false, kind = "file", managed = true } = {}) {
-  const exists = fs.existsSync(filePath);
-  const action = exists ? (force ? "overwrite" : "skip") : "create";
-  if (!dryRun && (!exists || force)) {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, content);
-  }
-  return { path: filePath, action, kind, managed };
-}
-
-function managedSectionBounds(content, startMarker, endMarker) {
-  const start = content.indexOf(startMarker);
-  const end = content.indexOf(endMarker);
-  if (start === -1 || end === -1 || end < start) return null;
-  return { start, end: end + endMarker.length };
-}
-
-function upsertManagedSection(content, section, startMarker, endMarker) {
-  const normalizedSection = section.endsWith("\n") ? section : `${section}\n`;
-  const bounds = managedSectionBounds(content, startMarker, endMarker);
-  if (bounds) {
-    return `${content.slice(0, bounds.start)}${normalizedSection}${content.slice(bounds.end).replace(/^\n/, "")}`;
-  }
-  const trimmed = content.trimEnd();
-  return `${trimmed}${trimmed ? "\n\n" : ""}${normalizedSection}`;
-}
-
-function writeAgentRoute(filePath, content, section, { dryRun = false, force = false, merge = false, kind = "agent-route", managed = true } = {}) {
-  if (!merge) return writeIfSafe(filePath, content, { dryRun, force, kind, managed });
-  const exists = fs.existsSync(filePath);
-  if (!exists) {
-    if (!dryRun) {
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, content);
-    }
-    return { path: filePath, action: "create", kind, managed };
-  }
-  const current = fs.readFileSync(filePath, "utf8");
-  const bounds = managedSectionBounds(current, AGENT_ROUTE_START, AGENT_ROUTE_END);
-  if (!bounds && current.includes(".opennori/architecture/baseline.md")) {
-    return {
-      path: filePath,
-      action: "exists",
-      kind,
-      managed,
-      reason: "Existing project agent route already references the OpenNori Architecture Baseline."
-    };
-  }
-  const next = upsertManagedSection(current, section, AGENT_ROUTE_START, AGENT_ROUTE_END);
-  const action = next === current ? "exists" : "merge";
-  if (!dryRun && action === "merge") {
-    fs.writeFileSync(filePath, next);
-  }
-  return {
-    path: filePath,
-    action,
-    kind,
-    managed,
-    reason: action === "exists"
-      ? "Existing project agent route already references the OpenNori Architecture Baseline."
-      : undefined
-  };
-}
-
-function writeGeneratedFile(filePath, content, { dryRun = false, force = false, refresh = false, kind = "file", managed = true } = {}) {
-  const exists = fs.existsSync(filePath);
-  if (!exists || force) return writeIfSafe(filePath, content, { dryRun, force, kind, managed });
-  const currentHash = fileHash(filePath);
-  const expectedHash = createHash("sha256").update(content).digest("hex");
-  const action = currentHash === expectedHash ? "exists" : (refresh ? "update" : "skip");
-  if (!dryRun && action === "update") {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, content);
-  }
-  return {
-    path: filePath,
-    action,
-    kind,
-    managed,
-    reason: action === "update"
-      ? `Existing OpenNori ${kind} will be refreshed without requiring --force.`
-      : undefined
-  };
-}
-
-function ensureDir(dirPath, { dryRun = false, kind = "directory", managed = true } = {}) {
-  const exists = fs.existsSync(dirPath);
-  if (!dryRun && !exists) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-  return { path: dirPath, action: exists ? "exists" : "create", kind, managed };
-}
-
 function protocolTemplate() {
   const source = packagePath(".opennori", "protocol.md");
   if (fs.existsSync(source)) return fs.readFileSync(source, "utf8");
@@ -351,11 +267,6 @@ function protocolTemplate() {
 
 function manifestPath(root) {
   return path.join(root, ".opennori", "manifest.json");
-}
-
-function fileHash(filePath) {
-  if (!fs.existsSync(filePath)) return null;
-  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
 }
 
 function projectSkillState(root) {
@@ -838,8 +749,8 @@ export function installActions(root, { dryRun = false, force = false, requestedS
     ensureDir(path.join(root, ".opennori", "architecture", "evidence"), { dryRun }),
     writeIfSafe(path.join(root, ".opennori", "protocol.md"), protocolTemplate(), { dryRun, force, kind: "protocol" }),
     writeIfSafe(agentGuidePath(root), renderAgentGuideMarkdown(), { dryRun, force, kind: "agent-guide" }),
-    writeAgentRoute(path.join(root, "AGENTS.md"), renderAgentRouteMarkdown("AGENTS"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true }),
-    writeAgentRoute(path.join(root, "CLAUDE.md"), renderAgentRouteMarkdown("CLAUDE"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true })
+    writeAgentRoute(path.join(root, "AGENTS.md"), renderAgentRouteMarkdown("AGENTS"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END }),
+    writeAgentRoute(path.join(root, "CLAUDE.md"), renderAgentRouteMarkdown("CLAUDE"), agentRouteSection, { dryRun, force, merge: mergeAgentRoute, kind: "agent-route", managed: true, startMarker: AGENT_ROUTE_START, endMarker: AGENT_ROUTE_END })
   ];
 
   if (requestedSkill) {
