@@ -1,17 +1,17 @@
 {
   "name": "opennori",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "OpenNori: human-centered Nori Contracts and evidence records for coding agents.",
   "type": "module",
   "bin": {
     "opennori": "dist/bin/opennori.js"
   },
   "files": [
-    ".codex-plugin/",
+    ".agents/plugins/",
     ".opennori/protocol.md",
     "bin/opennori.js",
     "dist/",
-    "skills/",
+    "plugins/opennori/",
     "src/",
     "schemas/",
     "examples/",

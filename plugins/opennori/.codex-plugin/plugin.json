@@ -1,6 +1,6 @@
 {
   "name": "opennori",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "OpenNori helps coding agents turn natural-language goals into human-reviewable acceptance contracts, evidence, and reports.",
   "author": {
     "name": "okbexx",

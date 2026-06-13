@@ -1,0 +1,20 @@
+{
+  "name": "opennori",
+  "interface": {
+    "displayName": "OpenNori"
+  },
+  "plugins": [
+    {
+      "name": "opennori",
+      "source": {
+        "source": "local",
+        "path": "./plugins/opennori"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

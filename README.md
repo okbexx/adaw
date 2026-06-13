@@ -18,22 +18,47 @@ whether the goal is complete.
 
 Choose one path.
 
-### Try once
+### Install the Codex Plugin
+
+Use this when you want Codex to discover OpenNori Skills from natural language:
+
+```bash
+codex plugin marketplace add okbexx/opennori --ref main
+codex plugin add opennori@opennori
+```
+
+For local development from a checkout:
+
+```bash
+codex plugin marketplace add .
+codex plugin add opennori@opennori
+```
+
+After installing the plugin, open a new Codex session and say:
+
+```text
+Use OpenNori for this goal.
+```
+
+### Try the CLI once
 
 ```bash
 npx opennori
 ```
 
-### Pin to a project
+### Pin the CLI to a project
 
 ```bash
 npm install -D opennori
 opennori
 ```
 
-Project installs expose `opennori` through npm scripts, package-manager exec,
-and agent/tool environments that load `node_modules/.bin`. Use `npx opennori`
-when you want npm to resolve OpenNori for a one-off command.
+The Codex Plugin gives agents the Skills. The `opennori` CLI is the
+deterministic state layer those Skills call to create `.opennori/`, update
+contracts, record evidence, run doctor checks, and generate reports. Project
+installs expose `opennori` through npm scripts, package-manager exec, and
+agent/tool environments that load `node_modules/.bin`. Use `npx opennori` when
+you want npm to resolve OpenNori for a one-off command.
 
 ## Quick Start
 
@@ -56,9 +81,9 @@ non-trivial work, and keep working from acceptance gaps until the report can
 say whether it is complete.
 ```
 
-Users do not need to memorize CLI flags. OpenNori ships Codex Plugin Skills in
-the npm package; those Skills map natural language to the deterministic
-`opennori` state layer.
+Users do not need to memorize CLI flags. OpenNori ships Codex Plugin Skills and
+a Codex marketplace entry; those Skills map natural language to the
+deterministic `opennori` state layer.
 
 ## What It Creates
 

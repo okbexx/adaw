@@ -43,15 +43,32 @@
     "active_goals": { "type": "array" },
     "plugin": {
       "type": "object",
-      "required": ["schema_version", "name", "version", "manifest_path", "skills_path", "packaged", "skill_count", "skills"],
+      "required": [
+        "schema_version",
+        "name",
+        "version",
+        "manifest_path",
+        "marketplace_path",
+        "marketplace_name",
+        "marketplace_plugin_path",
+        "skills_path",
+        "packaged",
+        "marketplace_packaged",
+        "skill_count",
+        "skills"
+      ],
       "additionalProperties": true,
       "properties": {
         "schema_version": { "const": "opennori/plugin-v1" },
         "name": { "const": "opennori" },
         "version": { "type": "string" },
         "manifest_path": { "type": "string", "minLength": 1 },
+        "marketplace_path": { "type": "string", "minLength": 1 },
+        "marketplace_name": { "const": "opennori" },
+        "marketplace_plugin_path": { "const": "./plugins/opennori" },
         "skills_path": { "type": "string", "minLength": 1 },
         "packaged": { "type": "boolean" },
+        "marketplace_packaged": { "type": "boolean" },
         "skill_count": { "type": "integer", "minimum": 0 },
         "skills": {
           "type": "array",

@@ -4,7 +4,11 @@ import { parse as parseYaml } from "yaml";
 import { packagePath } from "./package-root.ts";
 import type { JsonObject } from "./types.ts";
 
-const SKILLS_DIR = packagePath("skills");
+export const OPENNORI_PLUGIN_ROOT = packagePath("plugins", "opennori");
+export const OPENNORI_PLUGIN_MANIFEST_PATH = path.join(OPENNORI_PLUGIN_ROOT, ".codex-plugin", "plugin.json");
+export const OPENNORI_PLUGIN_SKILLS_DIR = path.join(OPENNORI_PLUGIN_ROOT, "skills");
+
+const SKILLS_DIR = OPENNORI_PLUGIN_SKILLS_DIR;
 const PREFERRED_SKILL_ORDER = [
   "nori",
   "nori-acceptance",

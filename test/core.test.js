@@ -83,6 +83,10 @@ test("command help is side-effect free", () => {
 test("published package uses built dist bin while local source bin remains available", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
   assert.equal(packageJson.bin.opennori, "dist/bin/opennori.js");
+  assert.equal(packageJson.files.includes(".agents/plugins/"), true);
+  assert.equal(packageJson.files.includes(".codex-plugin/"), false);
+  assert.equal(packageJson.files.includes("skills/"), false);
+  assert.equal(packageJson.files.includes("plugins/opennori/"), true);
   assert.equal(packageJson.files.includes("bin/opennori.js"), true);
   assert.equal(packageJson.files.includes("bin/"), false);
   assert.equal(fs.existsSync(path.join(ROOT, "bin", "opennori.js")), true);
@@ -119,6 +123,12 @@ test("built dist bin can report package-root Plugin Skill assets", () => {
   assert.equal(payload.data.manifest.plugin.schema_version, "opennori/plugin-v1");
   assert.equal(payload.data.manifest.plugin.name, "opennori");
   assert.equal(payload.data.manifest.plugin.packaged, true);
+  assert.equal(payload.data.manifest.plugin.marketplace_packaged, true);
+  assert.equal(payload.data.manifest.plugin.marketplace_path, ".agents/plugins/marketplace.json");
+  assert.equal(payload.data.manifest.plugin.marketplace_name, "opennori");
+  assert.equal(payload.data.manifest.plugin.marketplace_plugin_path, "./plugins/opennori");
+  assert.equal(payload.data.manifest.plugin.manifest_path, "plugins/opennori/.codex-plugin/plugin.json");
+  assert.equal(payload.data.manifest.plugin.skills_path, "plugins/opennori/skills");
   assert.equal(payload.data.manifest.plugin.skill_count, 10);
   assert.equal(payload.data.manifest.plugin.skills.some((skill) => skill.name === "nori"), true);
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
@@ -758,15 +768,25 @@ test("protocol v1 example contains concrete user tool operations", () => {
 });
 
 test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => {
-  const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, ".codex-plugin", "plugin.json"), "utf8"));
+  const pluginRoot = path.join(ROOT, "plugins", "opennori");
+  const plugin = JSON.parse(fs.readFileSync(path.join(pluginRoot, ".codex-plugin", "plugin.json"), "utf8"));
+  const marketplace = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "plugins", "marketplace.json"), "utf8"));
   assert.equal(plugin.name, "opennori");
   assert.equal(plugin.skills, "./skills/");
   assert.equal(plugin.interface.displayName, "OpenNori");
   assert.equal(plugin.interface.defaultPrompt.length, 3);
   assert.match(plugin.interface.defaultPrompt[0], /acceptance criteria/);
+  assert.equal(marketplace.name, "opennori");
+  assert.equal(marketplace.interface.displayName, "OpenNori");
+  assert.equal(marketplace.plugins.length, 1);
+  assert.equal(marketplace.plugins[0].name, "opennori");
+  assert.equal(marketplace.plugins[0].source.source, "local");
+  assert.equal(marketplace.plugins[0].source.path, "./plugins/opennori");
+  assert.equal(marketplace.plugins[0].policy.installation, "AVAILABLE");
+  assert.equal(marketplace.plugins[0].policy.authentication, "ON_INSTALL");
 
-  const names = fs.readdirSync(path.join(ROOT, "skills"))
-    .filter((name) => fs.existsSync(path.join(ROOT, "skills", name, "SKILL.md")))
+  const names = fs.readdirSync(path.join(pluginRoot, "skills"))
+    .filter((name) => fs.existsSync(path.join(pluginRoot, "skills", name, "SKILL.md")))
     .sort();
   assert.deepEqual(names.sort(), [
     "nori",
@@ -781,7 +801,7 @@ test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => 
     "nori-reporting"
   ].sort());
 
-  const noriAsset = fs.readFileSync(path.join(ROOT, "skills", "nori", "SKILL.md"), "utf8");
+  const noriAsset = fs.readFileSync(path.join(pluginRoot, "skills", "nori", "SKILL.md"), "utf8");
   assert.match(noriAsset, /^---\nname: nori\n/m);
   assert.match(noriAsset, /nori-acceptance/);
   assert.match(noriAsset, /nori-evidence/);
@@ -794,12 +814,12 @@ test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => 
   assert.doesNotMatch(noriAsset, /skill export/);
   assert.doesNotMatch(noriAsset, /process steps/);
 
-  const evidenceAsset = fs.readFileSync(path.join(ROOT, "skills", "nori-evidence", "SKILL.md"), "utf8");
+  const evidenceAsset = fs.readFileSync(path.join(pluginRoot, "skills", "nori-evidence", "SKILL.md"), "utf8");
   assert.match(evidenceAsset, /Do not force evidence into a fixed adapter taxonomy/);
   assert.match(evidenceAsset, /basis, sources, reviewability, confidence, and limitations/);
 
   for (const name of names) {
-    const asset = fs.readFileSync(path.join(ROOT, "skills", name, "SKILL.md"), "utf8");
+    const asset = fs.readFileSync(path.join(pluginRoot, "skills", name, "SKILL.md"), "utf8");
     assert.match(asset, /^---\nname: /);
     assert.match(asset, /\ndescription: /);
   }
@@ -894,6 +914,11 @@ test("install creates project assets and skips existing user content by default"
   assert.equal(manifest.plugin.schema_version, "opennori/plugin-v1");
   assert.equal(manifest.plugin.name, "opennori");
   assert.equal(manifest.plugin.packaged, true);
+  assert.equal(manifest.plugin.marketplace_packaged, true);
+  assert.equal(manifest.plugin.marketplace_name, "opennori");
+  assert.equal(manifest.plugin.marketplace_plugin_path, "./plugins/opennori");
+  assert.equal(manifest.plugin.manifest_path, "plugins/opennori/.codex-plugin/plugin.json");
+  assert.equal(manifest.plugin.skills_path, "plugins/opennori/skills");
   assert.equal(manifest.plugin.skill_count, 10);
   assert.equal(manifest.plugin.skills.some((skill) => skill.name === "nori-project-health"), true);
   assert.equal(manifest.managed_files.some((entry) => entry.path === ".opennori/protocol.md" && entry.exists), true);
@@ -985,8 +1010,10 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   assert.equal(ready.data.status, "ready");
   assert.equal(ready.data.checks.every((check) => check.ok), true);
   assert.equal(ready.data.plugin.packaged, true);
+  assert.equal(ready.data.plugin.marketplace_packaged, true);
   assert.equal(ready.data.plugin.skill_count, 10);
   assert.equal(ready.data.checks.find((check) => check.name === "plugin_manifest").ok, true);
+  assert.equal(ready.data.checks.find((check) => check.name === "plugin_marketplace").ok, true);
   assert.equal(ready.data.checks.find((check) => check.name === "plugin_skills").ok, true);
   assert.equal(ready.data.architecture.decision, "missing");
   assert.equal(ready.data.checks.find((check) => check.name === "architecture_baseline").ok, true);

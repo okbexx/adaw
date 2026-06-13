@@ -179,8 +179,8 @@
       "id": "AC-Z-1",
       "layer": "productization",
       "user_story": "作为用户，我通过 OpenNori Codex Plugin 获得 OpenNori Skills 后，agent 能自然语言使用 OpenNori，而不要求我运行 Skill export 或记住 Skill 名称。",
-      "measurement": "安装或检查 OpenNori Plugin，查看 .codex-plugin/plugin.json 与 skills/nori*/SKILL.md。",
-      "threshold": "Plugin manifest 指向 package-local skills/；nori 总入口和子 Skills 能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。",
+      "measurement": "安装或检查 OpenNori Plugin，查看 .agents/plugins/marketplace.json、plugins/opennori/.codex-plugin/plugin.json 与 plugins/opennori/skills/nori*/SKILL.md。",
+      "threshold": "Marketplace 指向 ./plugins/opennori，Plugin manifest 指向 package-local skills/；nori 总入口和子 Skills 能指导 agent 使用 resume、next、evidence、evaluate、status 和 report，不要求用户追踪过程任务。",
       "risk": "medium"
     },
     {
@@ -267,7 +267,7 @@
       "id": "AC-Z-12",
       "layer": "productization",
       "user_story": "作为用户，我安装 OpenNori 后，agent 能获得一组职责清晰的 OpenNori Skills 来处理验收、证据、能力偏好、项目健康和报告，而我不需要记住这些 Skill 名。",
-      "measurement": "查看 .codex-plugin/plugin.json、skills/nori*/SKILL.md、opennori install 输出和 opennori doctor 结果。",
+      "measurement": "查看 .agents/plugins/marketplace.json、plugins/opennori/.codex-plugin/plugin.json、plugins/opennori/skills/nori*/SKILL.md、opennori install 输出和 opennori doctor 结果。",
       "threshold": "OpenNori Plugin 包含总入口和 acceptance、evidence、capability-profile、project-health、reporting 子 Skill；install 不把 Skills 复制进用户项目；manifest 记录 plugin；doctor 能报告 packaged Skills 是否可用。",
       "risk": "high"
     },

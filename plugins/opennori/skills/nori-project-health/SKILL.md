@@ -26,7 +26,7 @@ Use when the user asks to install OpenNori, upgrade OpenNori project state, unin
 ## Rules
 Always show dry-run plans before destructive writes.
 Install and upgrade manage `.opennori` project state. They do not copy OpenNori Skills into the user's project.
-OpenNori Skills are package assets exposed by `.codex-plugin/plugin.json`; if doctor reports missing Plugin Skills, reinstall or update the OpenNori package.
+OpenNori Skills are package assets exposed by `plugins/opennori/.codex-plugin/plugin.json`; if doctor reports missing Plugin Skills, reinstall or update the OpenNori package.
 Use `--merge-agent-route` only as an explicit optional fallback when the user wants AGENTS.md or CLAUDE.md to point new sessions at `.opennori/architecture/baseline.md`.
 Default uninstall preserves active goals, evidence, reports, archives, brainstorms, protocol, guide, and architecture state.
 Doctor output includes packaged Plugin Skill health, Architecture Baseline health, and active goal recoverability.

@@ -73,8 +73,8 @@ const BUILTIN_ARCHITECTURE_PROFILES: Record<string, ArchitectureProfile> = {
       {
         id: "ARCH-3",
         audience: "maintainer",
-        statement: "OpenNori Skill content lives in plugin-packaged skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings or project-local copies.",
-        review: "Inspect .codex-plugin/plugin.json, skills/ assets, package files, and doctor plugin output."
+        statement: "OpenNori Skill content lives in plugin-packaged plugins/opennori/skills/*/SKILL.md with optional references/scripts/assets/openai metadata, not as hard-coded JS strings or project-local copies.",
+        review: "Inspect .agents/plugins/marketplace.json, plugins/opennori/.codex-plugin/plugin.json, plugins/opennori/skills/ assets, package files, and doctor plugin output."
       },
       {
         id: "ARCH-4",

@@ -629,8 +629,12 @@ export type PluginState = {
   name: string;
   version: string;
   manifest_path: string;
+  marketplace_path: string;
+  marketplace_name: string;
+  marketplace_plugin_path: string;
   skills_path: string;
   packaged: boolean;
+  marketplace_packaged: boolean;
   skill_count: number;
   skills: PluginSkillState[];
 };

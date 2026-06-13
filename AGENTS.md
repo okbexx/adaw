@@ -16,8 +16,9 @@ Before implementing a non-trivial change, read:
 - `.opennori/active/*.acceptance.md`
 - `.opennori/architecture/baseline.md`
 - `.opennori/agent-guide.md`
-- `skills/nori*/SKILL.md`
-- `.codex-plugin/plugin.json` if present
+- `plugins/opennori/skills/nori*/SKILL.md`
+- `plugins/opennori/.codex-plugin/plugin.json`
+- `.agents/plugins/marketplace.json`
 
 Follow the Architecture Baseline while completing Product AC.
 If the baseline conflicts with project evidence, create an Architecture Challenge instead of silently replacing it.
@@ -36,5 +37,5 @@ user natural-language goal
 
 Do not turn architecture choices, Skills, technology stacks, hooks, AW exports, or implementation tasks into user AC. They can influence Nori Profile, Architecture Baseline, evidence risk, or recovery guidance, but Product AC must remain human-visible operations or judgments.
 
-When changing Skill behavior, update package-local `skills/nori*/SKILL.md` and Plugin metadata first.
+When changing Skill behavior, update package-local `plugins/opennori/skills/nori*/SKILL.md`, `plugins/opennori/.codex-plugin/plugin.json`, and marketplace metadata first.
 Do not add compatibility shims for old `adaw`, `nori`, `opennori skill export`, `install --skill`, or `refresh-skill` entry points.

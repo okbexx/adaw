@@ -29,8 +29,17 @@ export function inspectPluginHealth(manifest: Manifest | null, manifestReadable:
     plugin.packaged,
     plugin.packaged
       ? "OpenNori Codex Plugin manifest and package Skill assets are present."
-      : "OpenNori package is missing .codex-plugin/plugin.json or skills/ assets.",
+      : "OpenNori package is missing plugins/opennori/.codex-plugin/plugin.json or plugins/opennori/skills/ assets.",
     "Reinstall OpenNori from npm or the source repository, then rerun opennori doctor --root <project> --json.",
+    "broken"
+  ));
+  checks.push(doctorCheck(
+    "plugin_marketplace",
+    plugin.marketplace_packaged,
+    plugin.marketplace_packaged
+      ? "OpenNori Codex marketplace metadata is present."
+      : "OpenNori package is missing .agents/plugins/marketplace.json or the opennori entry pointing to ./plugins/opennori.",
+    "Reinstall OpenNori from npm or the source repository; Codex Plugin installs require a marketplace entry.",
     "broken"
   ));
   checks.push(doctorCheck(

@@ -1,9 +1,9 @@
 {
   "schema_version": "opennori/manifest-v1",
   "protocol_version": "opennori/v1",
-  "opennori_version": "0.1.7",
+  "opennori_version": "0.1.8",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-13T11:26:48.009Z",
+  "updated_at": "2026-06-13T13:49:28.026Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -144,70 +144,74 @@
   "plugin": {
     "schema_version": "opennori/plugin-v1",
     "name": "opennori",
-    "version": "0.1.7",
-    "manifest_path": ".codex-plugin/plugin.json",
-    "skills_path": "skills",
+    "version": "0.1.8",
+    "manifest_path": "plugins/opennori/.codex-plugin/plugin.json",
+    "marketplace_path": ".agents/plugins/marketplace.json",
+    "marketplace_name": "opennori",
+    "marketplace_plugin_path": "./plugins/opennori",
+    "skills_path": "plugins/opennori/skills",
     "packaged": true,
+    "marketplace_packaged": true,
     "skill_count": 10,
     "skills": [
       {
         "name": "nori",
         "description": "Route OpenNori work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
-        "path": "skills/nori/SKILL.md",
+        "path": "plugins/opennori/skills/nori/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-acceptance",
         "description": "Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.",
-        "path": "skills/nori-acceptance/SKILL.md",
+        "path": "plugins/opennori/skills/nori-acceptance/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-evidence",
         "description": "Record and judge OpenNori evidence while preserving agent freedom to choose verification methods.",
-        "path": "skills/nori-evidence/SKILL.md",
+        "path": "plugins/opennori/skills/nori-evidence/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-capability-profile",
         "description": "Record and report OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
-        "path": "skills/nori-capability-profile/SKILL.md",
+        "path": "plugins/opennori/skills/nori-capability-profile/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-brainstorm",
         "description": "Create and confirm an OpenNori Architecture Baseline before non-trivial implementation.",
-        "path": "skills/nori-architecture-brainstorm/SKILL.md",
+        "path": "plugins/opennori/skills/nori-architecture-brainstorm/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-apply",
         "description": "Apply the confirmed OpenNori Architecture Baseline before implementing acceptance gaps.",
-        "path": "skills/nori-architecture-apply/SKILL.md",
+        "path": "plugins/opennori/skills/nori-architecture-apply/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-challenge",
         "description": "Create reviewable Architecture Challenges when project evidence conflicts with the confirmed baseline.",
-        "path": "skills/nori-architecture-challenge/SKILL.md",
+        "path": "plugins/opennori/skills/nori-architecture-challenge/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-build-vs-buy",
         "description": "Record build-vs-buy decisions so agents prefer existing libraries and avoid repeating solved infrastructure.",
-        "path": "skills/nori-build-vs-buy/SKILL.md",
+        "path": "plugins/opennori/skills/nori-build-vs-buy/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-project-health",
         "description": "Install, upgrade, uninstall, diagnose, and recover project-local OpenNori state, manifest, Plugin health, and active goals.",
-        "path": "skills/nori-project-health/SKILL.md",
+        "path": "plugins/opennori/skills/nori-project-health/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-reporting",
         "description": "Summarize OpenNori status, reports, current gaps, user intervention, and acceptance evidence for humans.",
-        "path": "skills/nori-reporting/SKILL.md",
+        "path": "plugins/opennori/skills/nori-reporting/SKILL.md",
         "source": "package"
       }
     ]
@@ -370,8 +374,8 @@
         "need": "Ship OpenNori Skills as Codex Plugin package assets instead of hard-coded JavaScript strings or project-local copies",
         "recommendation": "self-build",
         "status": "active",
-        "summary": "Use the OpenAI/Codex Skill directory shape as the source of truth: skills/<name>/SKILL.md with YAML frontmatter, exposed through .codex-plugin/plugin.json and read by a thin runtime module for Plugin state, manifest, and doctor checks.",
-        "current_project": "OpenNori ships .codex-plugin/plugin.json and package-local skills/*/SKILL.md assets; src/skills.ts reads package assets and src/plugin.ts reports Plugin state without copying Skills into user projects.",
+        "summary": "Use the OpenAI/Codex Skill directory shape as the source of truth: plugins/opennori/skills/<name>/SKILL.md with YAML frontmatter, exposed through plugins/opennori/.codex-plugin/plugin.json and the repo marketplace, then read by a thin runtime module for Plugin state, manifest, and doctor checks.",
+        "current_project": "OpenNori ships .agents/plugins/marketplace.json, plugins/opennori/.codex-plugin/plugin.json, and package-local plugins/opennori/skills/*/SKILL.md assets; src/skills.ts reads package assets and src/plugin.ts reports Plugin state without copying Skills into user projects.",
         "standard_library": "Node fs/path can discover and read package-local Skill assets; no template engine is needed for static Skill content.",
         "official_sdk": "OpenAI/Codex Skill authoring convention is directory-based SKILL.md with optional references/scripts/assets, which defines the asset shape even though no SDK is needed to read local files.",
         "open_source": "superpowers, vibecode-pro-max-kit, ECC, and compound-engineering-plugin demonstrate directory Skill assets and plugin/component packaging boundaries; OpenNori borrows the asset shape without adopting process-centered install/sync.",

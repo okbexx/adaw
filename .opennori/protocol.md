@@ -77,7 +77,7 @@ a durable workflow asset.
 
 | ID | Tool / entrypoint | User operation | User acceptance criterion | Passing threshold |
 | --- | --- | --- | --- | --- |
-| AC-Z-1 | Codex Plugin / package assets | Install or inspect the OpenNori package | The user's agent can discover focused OpenNori Skills without the user memorizing CLI flags. | `.codex-plugin/plugin.json` points to package-local `skills/`; the `nori` Skill routes natural-language work through acceptance, evidence, profile, architecture, health, and reporting. |
+| AC-Z-1 | Codex Plugin / package assets | Install or inspect the OpenNori package | The user's agent can discover focused OpenNori Skills without the user memorizing CLI flags. | `.agents/plugins/marketplace.json` points to `./plugins/opennori`; `plugins/opennori/.codex-plugin/plugin.json` points to package-local `skills/`; the `nori` Skill routes natural-language work through acceptance, evidence, profile, architecture, health, and reporting. |
 | AC-Z-2 | CLI | Run `opennori install` | The user can install OpenNori into a project without unexpected overwrites. | Install shows created/skipped assets; existing user content is not overwritten by default. |
 | AC-Z-3 | Git / PR diff | Review the agent's changes | The user can separate acceptance evidence changes from implementation noise. | Summary defaults to AC status changes, evidence changes, and user impact. |
 | AC-Z-4 | CLI | Run `opennori list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
@@ -88,7 +88,7 @@ a durable workflow asset.
 | AC-Z-9 | CLI | Preview install with `opennori install --dry-run` | The user can judge what OpenNori would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
 | AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `opennori install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 | AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall OpenNori entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.opennori` state is deleted only with `--include-state --confirm`. |
-| AC-Z-12 | Codex Plugin / Codex Skills | Use OpenNori Plugin Skills | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, architecture, project health, and reporting while the user keeps using natural language. | The npm package ships `.codex-plugin/plugin.json` and package-local `skills/nori*/SKILL.md`; install does not copy Skills into the project; manifest records `plugin`; doctor detects missing packaged Plugin Skills. |
+| AC-Z-12 | Codex Plugin / Codex Skills | Use OpenNori Plugin Skills | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, architecture, project health, and reporting while the user keeps using natural language. | The npm package ships `.agents/plugins/marketplace.json`, `plugins/opennori/.codex-plugin/plugin.json`, and `plugins/opennori/skills/nori*/SKILL.md`; install does not copy Skills into the project; manifest records `plugin`; doctor detects missing packaged Plugin Skills. |
 | AC-Z-13 | CLI / project file browser | Establish an Architecture Baseline | The user can see what architecture the agent must follow while implementing Product AC. | `.opennori/architecture/baseline.json`, `.opennori/architecture/baseline.md`, and `.opennori/agent-guide.md` expose the baseline to agents and reviewers. |
 | AC-Z-14 | CLI / project file browser | Add a project Architecture Profile | The user can extend built-in profiles with a reviewed project profile. | `opennori architecture profile --from <profile.json>` writes `.opennori/architecture/profiles/<id>.json`; `architecture profiles` lists it before built-ins. |
 | AC-Z-15 | CLI / report | Challenge a baseline | The user can review evidence before an agent changes architecture. | `opennori architecture challenge` records current baseline, conflict evidence, recommendation, and user confirmation requirement. |
@@ -173,9 +173,10 @@ remember these Skill names; the root `nori` Skill routes natural-language reques
 - `nori-project-health`: install, upgrade, uninstall, doctor, manifest, Plugin health, and project recoverability
 - `nori-reporting`: status, report, current gap, user intervention, and changes
 
-The package ships `.codex-plugin/plugin.json` with `skills: "./skills/"`. `opennori install` writes
-project state under `.opennori/`; it does not copy OpenNori Skills into the user's project. The
-manifest records `plugin` state, and `opennori doctor` checks whether packaged Plugin Skills are
+The package ships `.agents/plugins/marketplace.json` pointing to `./plugins/opennori`, where
+`plugins/opennori/.codex-plugin/plugin.json` declares `skills: "./skills/"`. `opennori install`
+writes project state under `.opennori/`; it does not copy OpenNori Skills into the user's project.
+The manifest records `plugin` state, and `opennori doctor` checks whether packaged Plugin Skills are
 present and whether the manifest Plugin state is stale.
 
 When upgrading an existing OpenNori project, upgrade entry assets first, then run `opennori check`.

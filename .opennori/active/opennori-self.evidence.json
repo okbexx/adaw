@@ -448,7 +448,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-13T11:26:10.530Z",
+    "updated_at": "2026-06-13T13:48:05.422Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -2788,7 +2788,7 @@
       },
       "AC-Z-1": {
         "status": "passing",
-        "confidence": "verified",
+        "confidence": "high",
         "required": true,
         "risk": "medium",
         "evidence": [
@@ -2834,6 +2834,49 @@
             "limitations": "Historical architecture/evidence records may still mention old Skill Pack decisions as superseded history; this evidence covers current package and user-facing surfaces.",
             "gate": "accepted",
             "created_at": "2026-06-13T10:25:31.079Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "Codex Plugin distribution now follows the repo marketplace shape proven by OpenAI docs and TK references: .agents/plugins/marketplace.json points to ./plugins/opennori, the plugin root contains .codex-plugin/plugin.json and bundled Skills, and a real local Codex install succeeded with opennori@opennori installed and enabled from /Users/jarl/code/jarlone/opennori/plugins/opennori.",
+            "result": "passing",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "command",
+                "label": "codex plugin marketplace add .",
+                "command": "codex plugin marketplace add ."
+              },
+              {
+                "type": "command",
+                "label": "codex plugin add opennori@opennori",
+                "command": "codex plugin add opennori@opennori"
+              },
+              {
+                "type": "command",
+                "label": "codex plugin list",
+                "command": "codex plugin list"
+              },
+              {
+                "type": "artifact",
+                "label": ".agents/plugins/marketplace.json",
+                "path": ".agents/plugins/marketplace.json"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/.codex-plugin/plugin.json",
+                "path": "plugins/opennori/.codex-plugin/plugin.json"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills/nori/SKILL.md",
+                "path": "plugins/opennori/skills/nori/SKILL.md"
+              }
+            ],
+            "reviewability": "Run the three Codex plugin commands and confirm opennori@opennori is installed, enabled, and resolved to plugins/opennori; inspect marketplace and plugin manifest paths.",
+            "limitations": "This verifies the local repo marketplace install path. A GitHub marketplace install should be retested after pushing and any npm publish/version bump.",
+            "gate": "accepted",
+            "created_at": "2026-06-13T13:47:48.746Z"
           }
         ]
       },
@@ -3828,7 +3871,7 @@
       },
       "AC-Z-12": {
         "status": "passing",
-        "confidence": "verified",
+        "confidence": "high",
         "required": true,
         "risk": "high",
         "evidence": [
@@ -3909,6 +3952,49 @@
             "limitations": "This validates the local package asset layout; external Codex Plugin installation should be smoke-tested after publishing.",
             "gate": "accepted",
             "created_at": "2026-06-13T10:25:31.054Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "OpenNori Plugin now bundles the full Skill set under plugins/opennori/skills and installs through Codex as opennori@opennori. Doctor reports plugin_manifest, plugin_marketplace, plugin_skills, and manifest_plugin_state passing; npm run check passes 73 tests; plugin-creator validation passes for plugins/opennori.",
+            "result": "passing",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori",
+                "command": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js doctor --root . --json",
+                "command": "node ./bin/opennori.js doctor --root . --json"
+              },
+              {
+                "type": "command",
+                "label": "codex plugin add opennori@opennori",
+                "command": "codex plugin add opennori@opennori"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills",
+                "path": "plugins/opennori/skills"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Run check, doctor, plugin validation, and Codex plugin install; inspect the Skill directory and package tests for nested plugin asset assertions.",
+            "limitations": "The current thread cannot hot-load newly installed Skills; OpenAI guidance requires opening a new Codex session after plugin install.",
+            "gate": "accepted",
+            "created_at": "2026-06-13T13:48:05.422Z"
           }
         ]
       },
