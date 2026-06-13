@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineCommand } from "citty";
 import { currentGap, findActivePairs, ok, readJson } from "../../core.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
 export const listCommand = defineCommand({
   meta: {
@@ -36,6 +36,6 @@ export const listCommand = defineCommand({
   }
 });
 
-export async function runListCommand(rawArgs) {
+export async function runListCommand(rawArgs: string[]) {
   return runJsonCommand(listCommand, rawArgs);
 }

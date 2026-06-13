@@ -1,4 +1,4 @@
-import { bootstrapResult, runBootstrapCommand } from "./commands/bootstrap.js";
+import { bootstrapResult, runBootstrapCommand } from "./commands/bootstrap.ts";
 import { hasFlag, resolveRoot } from "./runtime.ts";
 
 type JsonPrinter = (payload: unknown) => void;

@@ -4,7 +4,7 @@ import { defineCommand } from "citty";
 import { completionAnswer, currentGap, evidenceHealth, fail, intervention, nextRecommendation, ok, pathsForGoal, recomputeWorkflowStatus, syncAcceptanceMarkdown, writeJson } from "../../core.js";
 import { architectureState, renderReportWithArchitecture } from "../../architecture.js";
 import { refreshManifest } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
 export const reportCommand = defineCommand({
   meta: {
@@ -57,7 +57,7 @@ export const reportCommand = defineCommand({
   }
 });
 
-export async function runReportCommand(rawArgs, { loadPair }) {
+export async function runReportCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(reportCommand, rawArgs, { loadPair });
 }
 
@@ -130,6 +130,6 @@ export const archiveCommand = defineCommand({
   }
 });
 
-export async function runArchiveCommand(rawArgs, { loadPair }) {
+export async function runArchiveCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(archiveCommand, rawArgs, { loadPair });
 }

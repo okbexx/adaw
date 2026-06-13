@@ -2,7 +2,22 @@ import path from "node:path";
 import { defineCommand } from "citty";
 import { fail, ok } from "../../core.js";
 import { buildInstallPlan, installActions } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
+
+type InstallResultOptions = {
+  root?: unknown;
+  dryRun?: boolean;
+  force?: boolean;
+  confirmed?: boolean;
+  requestedSkill?: boolean;
+  refreshSkill?: boolean;
+  mergeAgentRoute?: boolean;
+};
+
+type ManifestAction = {
+  kind: string;
+  manifest?: unknown;
+};
 
 export function installResult({
   root,
@@ -12,7 +27,7 @@ export function installResult({
   requestedSkill = false,
   refreshSkill = false,
   mergeAgentRoute = false
-}) {
+}: InstallResultOptions) {
   const projectRoot = path.resolve(String(root || process.cwd()));
   if ((force || refreshSkill || mergeAgentRoute) && !dryRun && !confirmed) {
     const previewFlags = [
@@ -31,7 +46,7 @@ export function installResult({
   }
 
   const actions = installActions(projectRoot, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
-  const manifestAction = actions.find((action) => action.kind === "manifest");
+  const manifestAction = actions.find((action) => action.kind === "manifest") as ManifestAction | undefined;
   const installPlan = buildInstallPlan(projectRoot, actions, { dryRun, force, requestedSkill, refreshSkill, mergeAgentRoute });
   return ok({
     root: projectRoot,
@@ -40,7 +55,7 @@ export function installResult({
     confirmed,
     install_plan: installPlan,
     actions: installPlan.actions,
-    manifest: manifestAction.manifest
+    manifest: manifestAction?.manifest ?? null
   });
 }
 
@@ -104,6 +119,6 @@ export const installCommand = defineCommand({
   }
 });
 
-export async function runInstallCommand(rawArgs) {
+export async function runInstallCommand(rawArgs: string[]) {
   return runJsonCommand(installCommand, rawArgs);
 }

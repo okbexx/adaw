@@ -2,21 +2,36 @@ import { defineCommand } from "citty";
 import { parseArgs } from "node:util";
 import { addEvidence, criterionStatusRows, currentGap, ok, syncAcceptanceMarkdown, writeJson } from "../../core.js";
 import { refreshManifest } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
-function argValues(rawArgs, name) {
+type CliArgs = Record<string, any>;
+type EvidenceSource = Record<string, any>;
+type ParsedOptionToken = {
+  kind: "option";
+  index: number;
+  rawName: string;
+  value?: string;
+};
+type ParsedToken = ParsedOptionToken | {
+  kind: string;
+  index: number;
+  rawName?: string;
+  value?: string;
+};
+
+function argValues(rawArgs: string[], name: string): string[] {
   const rawName = name.startsWith("--") ? name : `--${name}`;
-  return parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens
+  return (parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens as ParsedToken[])
     .filter((item) => item.kind === "option" && item.rawName === rawName)
     .map((item) => {
       if (item.value !== undefined) return item.value;
       const next = rawArgs[item.index + 1];
       return next && !next.startsWith("-") ? next : undefined;
     })
-    .filter((value) => value !== undefined);
+    .filter((value): value is string => value !== undefined);
 }
 
-function parseEvidenceSource(value) {
+function parseEvidenceSource(value: unknown): EvidenceSource | null {
   const raw = String(value || "").trim();
   if (!raw) return null;
   if (raw.startsWith("{")) {
@@ -29,21 +44,21 @@ function parseEvidenceSource(value) {
   return { type: "reference", label: raw };
 }
 
-function arrayValue(value) {
+function arrayValue(value: unknown): unknown[] {
   if (value === undefined) return [];
   return Array.isArray(value) ? value : [value];
 }
 
-function repeatableArgValues(args, rawArgs, name, fallbackName) {
+function repeatableArgValues(args: CliArgs, rawArgs: string[], name: string, fallbackName: string): unknown[] {
   const rawValues = argValues(rawArgs, name);
   if (rawValues.length > 0) return rawValues;
   return arrayValue(args[fallbackName]);
 }
 
-function evidenceSourcesFromArgs(args, rawArgs) {
-  const sources = repeatableArgValues(args, rawArgs, "--source", "source")
+function evidenceSourcesFromArgs(args: CliArgs, rawArgs: string[]): EvidenceSource[] {
+  const sources: EvidenceSource[] = repeatableArgValues(args, rawArgs, "--source", "source")
     .map((source) => parseEvidenceSource(source))
-    .filter(Boolean);
+    .filter((source): source is EvidenceSource => Boolean(source));
   for (const command of repeatableArgValues(args, rawArgs, "--source-command", "sourceCommand")) {
     sources.push({ type: "command", label: command, command });
   }
@@ -158,7 +173,7 @@ export const evidenceAddCommand = defineCommand({
       criterion: criterionId,
       criterion_status: ledger.criteria[criterionId].status,
       confidence: ledger.criteria[criterionId].confidence,
-      latest_evidence: criterionStatusRows(contract, ledger).find((row) => row.id === criterionId)?.latest_evidence,
+      latest_evidence: criterionStatusRows(contract, ledger).find((row: any) => row.id === criterionId)?.latest_evidence,
       gate: ledger.criteria[criterionId].evidence.at(-1)?.gate,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger)
@@ -166,6 +181,6 @@ export const evidenceAddCommand = defineCommand({
   }
 });
 
-export async function runEvidenceAddCommand(rawArgs, { loadPair }) {
+export async function runEvidenceAddCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(evidenceAddCommand, rawArgs, { loadPair, rawArgs });
 }

@@ -2,9 +2,21 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { defineCommand } from "citty";
 import { currentGap, findActivePairs, ok, readJson } from "../../core.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
-function classifyChangedFile(filePath) {
+type ChangedFile = {
+  status: string;
+  path: string;
+};
+
+type GitChanges = {
+  available: boolean;
+  acceptance: ChangedFile[];
+  implementation: ChangedFile[];
+  raw_error?: string;
+};
+
+function classifyChangedFile(filePath: string): "acceptance" | "implementation" {
   if (
     filePath.startsWith(".opennori/") ||
     filePath.startsWith("examples/")
@@ -14,7 +26,7 @@ function classifyChangedFile(filePath) {
   return "implementation";
 }
 
-function gitChanges(root) {
+function gitChanges(root: string): GitChanges {
   const result = spawnSync("git", ["status", "--short", "--untracked-files=all"], {
     cwd: root,
     encoding: "utf8"
@@ -23,12 +35,12 @@ function gitChanges(root) {
     return { available: false, acceptance: [], implementation: [], raw_error: result.stderr.trim() };
   }
 
-  const grouped = { available: true, acceptance: [], implementation: [] };
+  const grouped: GitChanges = { available: true, acceptance: [], implementation: [] };
   for (const line of result.stdout.split("\n")) {
     if (!line.trim()) continue;
     const status = line.slice(0, 2).trim() || "modified";
     const rawPath = line.slice(3).trim();
-    const filePath = rawPath.includes(" -> ") ? rawPath.split(" -> ").at(-1) : rawPath;
+    const filePath = rawPath.includes(" -> ") ? rawPath.split(" -> ").at(-1) || rawPath : rawPath;
     grouped[classifyChangedFile(filePath)].push({ status, path: filePath });
   }
   return grouped;
@@ -69,6 +81,6 @@ export const changesCommand = defineCommand({
   }
 });
 
-export async function runChangesCommand(rawArgs) {
+export async function runChangesCommand(rawArgs: string[]) {
   return runJsonCommand(changesCommand, rawArgs);
 }

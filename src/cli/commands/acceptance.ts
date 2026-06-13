@@ -23,9 +23,21 @@ import {
 } from "../../core.js";
 import { architectureState } from "../../architecture.js";
 import { refreshManifest } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
-function brainstormPaths(root, brainstormId) {
+type CliPayload = Record<string, any>;
+type NoriPathPair = {
+  jsonPath: string;
+  markdownPath: string;
+};
+
+const buildBrainstormForCommand = buildBrainstorm as (idea: string, id?: string) => CliPayload;
+const discoverAcceptanceForCommand = discoverAcceptance as (goal: string, id?: string) => CliPayload;
+const briefFromBrainstormForCommand = briefFromBrainstorm as (brainstorm: CliPayload, candidateId: string) => CliPayload;
+const briefFromGoalForCommand = briefFromGoal as (goal: string, goalId?: string) => CliPayload;
+const validateContractForCommand = validateContract as unknown as (contract: CliPayload, ledger: CliPayload) => CliPayload[];
+
+function brainstormPaths(root: string, brainstormId: string): NoriPathPair {
   const dir = path.join(root, ".opennori", "brainstorms");
   return {
     jsonPath: path.join(dir, `${brainstormId}.json`),
@@ -33,7 +45,7 @@ function brainstormPaths(root, brainstormId) {
   };
 }
 
-function discoveryPaths(root, discoveryId) {
+function discoveryPaths(root: string, discoveryId: string): NoriPathPair {
   const dir = path.join(root, ".opennori", "brainstorms");
   return {
     jsonPath: path.join(dir, `${discoveryId}.discovery.json`),
@@ -70,7 +82,7 @@ export const brainstormCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     const idea = String(args.idea || "").trim();
     if (!idea) throw new Error("--idea is required");
-    const brainstorm = buildBrainstorm(idea, args.id);
+    const brainstorm = buildBrainstormForCommand(idea, args.id);
     const paths = brainstormPaths(root, brainstorm.id);
     writeJson(paths.jsonPath, brainstorm);
     fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
@@ -96,7 +108,7 @@ export const brainstormCommand = defineCommand({
   }
 });
 
-export async function runBrainstormCommand(rawArgs) {
+export async function runBrainstormCommand(rawArgs: string[]) {
   return runJsonCommand(brainstormCommand, rawArgs);
 }
 
@@ -133,7 +145,7 @@ export const discoverCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     const goal = String(args.goal || args.idea || "").trim();
     if (!goal) throw new Error("--goal is required");
-    const discovery = discoverAcceptance(goal, args.id);
+    const discovery = discoverAcceptanceForCommand(goal, args.id);
     const paths = discoveryPaths(root, discovery.id);
     writeJson(paths.jsonPath, discovery);
     fs.mkdirSync(path.dirname(paths.markdownPath), { recursive: true });
@@ -145,7 +157,7 @@ export const discoverCommand = defineCommand({
         status: discovery.status,
         goal: discovery.goal,
         gaps: discovery.gaps,
-        questions: discovery.gaps.map((gap) => gap.question),
+        questions: discovery.gaps.map((gap: any) => gap.question),
         discovery_path: paths.jsonPath,
         markdown_path: paths.markdownPath,
         is_acceptance_contract: false
@@ -160,7 +172,7 @@ export const discoverCommand = defineCommand({
   }
 });
 
-export async function runDiscoverCommand(rawArgs) {
+export async function runDiscoverCommand(rawArgs: string[]) {
   return runJsonCommand(discoverCommand, rawArgs);
 }
 
@@ -204,15 +216,15 @@ export const draftCommand = defineCommand({
     if (brainstormId) {
       const candidateId = args.candidate;
       if (!candidateId) throw new Error("--candidate is required with --from-brainstorm");
-      brief = briefFromBrainstorm(readJson(brainstormPaths(root, brainstormId).jsonPath), candidateId);
+      brief = briefFromBrainstormForCommand(readJson(brainstormPaths(root, brainstormId).jsonPath), String(candidateId));
     } else {
       const goal = String(args.goal || "").trim();
       if (!goal) throw new Error("--goal is required");
-      brief = briefFromGoal(goal, args.goalId);
+      brief = briefFromGoalForCommand(goal, args.goalId);
     }
     const contract = buildContractFromBrief(brief);
     const ledger = buildEvidenceLedger(contract);
-    const issues = validateContract(contract, ledger);
+    const issues = validateContractForCommand(contract, ledger);
     if (issues.length > 0) {
       return { ...fail("invalid_acceptance", "Draft does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
     }
@@ -240,7 +252,7 @@ export const draftCommand = defineCommand({
   }
 });
 
-export async function runDraftCommand(rawArgs) {
+export async function runDraftCommand(rawArgs: string[]) {
   return runJsonCommand(draftCommand, rawArgs);
 }
 
@@ -267,7 +279,7 @@ export const initCommand = defineCommand({
     const brief = readJson(briefPath);
     const contract = buildContractFromBrief(brief);
     const ledger = buildEvidenceLedger(contract);
-    const issues = validateContract(contract, ledger);
+    const issues = validateContractForCommand(contract, ledger);
     if (issues.length > 0) {
       return { ...fail("invalid_acceptance", "Brief does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
     }
@@ -296,7 +308,7 @@ export const initCommand = defineCommand({
   }
 });
 
-export async function runInitCommand(rawArgs) {
+export async function runInitCommand(rawArgs: string[]) {
   return runJsonCommand(initCommand, rawArgs);
 }
 
@@ -334,7 +346,7 @@ export const nextCommand = defineCommand({
   }
 });
 
-export async function runNextCommand(rawArgs, { loadPair }) {
+export async function runNextCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(nextCommand, rawArgs, { loadPair });
 }
 
@@ -377,7 +389,7 @@ export const resumeCommand = defineCommand({
   }
 });
 
-export async function runResumeCommand(rawArgs, { loadPair }) {
+export async function runResumeCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(resumeCommand, rawArgs, { loadPair });
 }
 
@@ -419,7 +431,7 @@ export const statusCommand = defineCommand({
   }
 });
 
-export async function runStatusCommand(rawArgs, { loadPair }) {
+export async function runStatusCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(statusCommand, rawArgs, { loadPair });
 }
 
@@ -458,7 +470,7 @@ export const evaluateCommand = defineCommand({
   }
 });
 
-export async function runEvaluateCommand(rawArgs, { loadPair }) {
+export async function runEvaluateCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(evaluateCommand, rawArgs, { loadPair });
 }
 
@@ -508,7 +520,7 @@ export const approveCommand = defineCommand({
   }
 });
 
-export async function runApproveCommand(rawArgs, { loadPair }) {
+export async function runApproveCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(approveCommand, rawArgs, { loadPair });
 }
 
@@ -557,7 +569,7 @@ export const criterionUpdateCommand = defineCommand({
     const { contract, ledger, acceptancePath, evidencePath, root } = data.loadPair();
     const criterionId = args.criterion;
     if (!criterionId) throw new Error("--criterion is required");
-    const criterion = contract.criteria.find((item) => item.id === criterionId);
+    const criterion = contract.criteria.find((item: any) => item.id === criterionId);
     if (!criterion) throw new Error(`Criterion not found: ${criterionId}`);
 
     const before = {
@@ -590,7 +602,7 @@ export const criterionUpdateCommand = defineCommand({
       summary: args.summary || `User revised ${criterionId}.`,
       approved_at: new Date().toISOString()
     };
-    const issues = validateContract(contract, ledger);
+    const issues = validateContractForCommand(contract, ledger);
     if (issues.length > 0) {
       return {
         ok: false,
@@ -617,6 +629,6 @@ export const criterionUpdateCommand = defineCommand({
   }
 });
 
-export async function runCriterionUpdateCommand(rawArgs, { loadPair }) {
+export async function runCriterionUpdateCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(criterionUpdateCommand, rawArgs, { loadPair });
 }

@@ -19,9 +19,12 @@ type ParsedToken = ParsedOptionToken | {
   value?: string;
 };
 
-type ActiveGoalPair = {
-  contract: unknown;
-  ledger: unknown;
+export type CliCommand = CommandDef<any>;
+export type CliPayload = Record<string, any>;
+
+export type ActiveGoalPair = {
+  contract: CliPayload;
+  ledger: CliPayload;
   acceptancePath: string;
   evidencePath: string;
   root: string;
@@ -33,7 +36,7 @@ export type ActiveGoalRuntime = {
   refreshManifest: typeof refreshManifest;
 };
 
-export async function runJsonCommand(command: CommandDef, rawArgs: string[], data?: unknown): Promise<unknown> {
+export async function runJsonCommand(command: CliCommand, rawArgs: string[], data?: unknown): Promise<unknown> {
   const { result } = await runCommand(command, { rawArgs, data });
   return result;
 }
@@ -62,7 +65,7 @@ export function resolveRoot(args: string[]): string {
   return path.resolve(argValue(args, "--root", process.cwd()));
 }
 
-export function savePair(acceptancePath: string, evidencePath: string, contract: unknown, ledger: unknown): void {
+export function savePair(acceptancePath: string, evidencePath: string, contract: CliPayload, ledger: CliPayload): void {
   writeJson(evidencePath, { contract, ledger });
   syncAcceptanceMarkdown(acceptancePath, contract, ledger);
 }

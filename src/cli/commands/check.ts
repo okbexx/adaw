@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { auditAcceptanceQuality } from "../../acceptance.js";
 import { architectureState } from "../../architecture.js";
 import { currentGap, evidenceHealth, fail, ok, validateContract } from "../../core.js";
-import { runJsonCommand } from "../runtime.js";
+import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
 export const checkCommand = defineCommand({
   meta: {
@@ -117,7 +117,7 @@ export const checkCommand = defineCommand({
       goal_id: contract.goal_id,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger),
-      statuses: Object.fromEntries(Object.entries(ledger.criteria).map(([id, state]) => [id, state.status])),
+      statuses: Object.fromEntries(Object.entries(ledger.criteria).map(([id, state]) => [id, (state as any).status])),
       acceptance_quality: acceptanceQuality,
       architecture_check: {
         status: architectureStatus,
@@ -130,6 +130,6 @@ export const checkCommand = defineCommand({
   }
 });
 
-export async function runCheckCommand(rawArgs, { loadPair }) {
+export async function runCheckCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(checkCommand, rawArgs, { loadPair });
 }

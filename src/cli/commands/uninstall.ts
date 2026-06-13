@@ -2,14 +2,21 @@ import path from "node:path";
 import { defineCommand } from "citty";
 import { fail, ok } from "../../core.js";
 import { applyUninstallActions, buildUninstallActions, buildUninstallPlan } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
+
+type UninstallResultOptions = {
+  root?: unknown;
+  dryRun?: boolean;
+  confirmed?: boolean;
+  includeState?: boolean;
+};
 
 export function uninstallResult({
   root,
   dryRun = false,
   confirmed = false,
   includeState = false
-}) {
+}: UninstallResultOptions) {
   const projectRoot = path.resolve(String(root || process.cwd()));
   const actions = buildUninstallActions(projectRoot, { includeState });
   const uninstallPlan = buildUninstallPlan(projectRoot, actions, { dryRun, includeState });
@@ -78,6 +85,6 @@ export const uninstallCommand = defineCommand({
   }
 });
 
-export async function runUninstallCommand(rawArgs) {
+export async function runUninstallCommand(rawArgs: string[]) {
   return runJsonCommand(uninstallCommand, rawArgs);
 }

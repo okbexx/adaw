@@ -2,7 +2,7 @@ import path from "node:path";
 import { defineCommand } from "citty";
 import { findActivePairs, ok, writeJson } from "../../core.js";
 import { buildContextExport } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
 export const contextExportCommand = defineCommand({
   meta: {
@@ -54,6 +54,6 @@ export const contextExportCommand = defineCommand({
   }
 });
 
-export async function runContextExportCommand(rawArgs) {
+export async function runContextExportCommand(rawArgs: string[]) {
   return runJsonCommand(contextExportCommand, rawArgs);
 }

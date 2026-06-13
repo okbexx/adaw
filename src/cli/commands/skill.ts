@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { fail, ok } from "../../core.js";
 import { SKILL_PACK, skillMarkdown } from "../../skills.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
 export const skillExportCommand = defineCommand({
   meta: {
@@ -46,6 +46,6 @@ export const skillExportCommand = defineCommand({
   }
 });
 
-export async function runSkillExportCommand(rawArgs) {
+export async function runSkillExportCommand(rawArgs: string[]) {
   return runJsonCommand(skillExportCommand, rawArgs);
 }

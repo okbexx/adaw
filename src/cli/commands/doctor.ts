@@ -2,7 +2,7 @@ import path from "node:path";
 import { defineCommand } from "citty";
 import { ok } from "../../core.js";
 import { doctor } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
 export const doctorCommand = defineCommand({
   meta: {
@@ -32,6 +32,6 @@ export const doctorCommand = defineCommand({
   }
 });
 
-export async function runDoctorCommand(rawArgs) {
+export async function runDoctorCommand(rawArgs: string[]) {
   return runJsonCommand(doctorCommand, rawArgs);
 }

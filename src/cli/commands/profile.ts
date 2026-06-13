@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { addProfileEvidence, addProfileItem, currentGap, ok, profileCompliance, recomputeWorkflowStatus } from "../../core.js";
 import { autoProfileChecks, recordAutoProfileChecks } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { type ActiveGoalRuntime, runJsonCommand } from "../runtime.ts";
 
 export const profileAddCommand = defineCommand({
   meta: {
@@ -82,7 +82,7 @@ export const profileAddCommand = defineCommand({
   }
 });
 
-export async function runProfileAddCommand(rawArgs, { loadPair, savePair, refreshManifest }) {
+export async function runProfileAddCommand(rawArgs: string[], { loadPair, savePair, refreshManifest }: ActiveGoalRuntime) {
   return runJsonCommand(profileAddCommand, rawArgs, { loadPair, savePair, refreshManifest });
 }
 
@@ -149,7 +149,7 @@ export const profileEvidenceCommand = defineCommand({
   }
 });
 
-export async function runProfileEvidenceCommand(rawArgs, { loadPair, savePair, refreshManifest }) {
+export async function runProfileEvidenceCommand(rawArgs: string[], { loadPair, savePair, refreshManifest }: ActiveGoalRuntime) {
   return runJsonCommand(profileEvidenceCommand, rawArgs, { loadPair, savePair, refreshManifest });
 }
 
@@ -186,7 +186,7 @@ export const profileShowCommand = defineCommand({
   }
 });
 
-export async function runProfileShowCommand(rawArgs, { loadPair }) {
+export async function runProfileShowCommand(rawArgs: string[], { loadPair }: ActiveGoalRuntime) {
   return runJsonCommand(profileShowCommand, rawArgs, { loadPair });
 }
 
@@ -238,6 +238,6 @@ export const profileCheckCommand = defineCommand({
   }
 });
 
-export async function runProfileCheckCommand(rawArgs, { loadPair, savePair, refreshManifest }) {
+export async function runProfileCheckCommand(rawArgs: string[], { loadPair, savePair, refreshManifest }: ActiveGoalRuntime) {
   return runJsonCommand(profileCheckCommand, rawArgs, { loadPair, savePair, refreshManifest });
 }

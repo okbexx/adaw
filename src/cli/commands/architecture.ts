@@ -21,27 +21,55 @@ import {
 } from "../../architecture.js";
 import { fail, ok, readJson, slugify, writeJson } from "../../core.js";
 import { refreshManifest } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
+
+type CliPayload = Record<string, any>;
+type ParsedOptionToken = {
+  kind: "option";
+  index: number;
+  rawName: string;
+  value?: string;
+};
+type ParsedToken = ParsedOptionToken | {
+  kind: string;
+  index: number;
+  rawName?: string;
+  value?: string;
+};
+
+const normalizeArchitectureProfileForCommand = normalizeArchitectureProfile as (profile: CliPayload, id?: string) => CliPayload;
+const buildArchitectureBaselineForCommand = buildArchitectureBaseline as unknown as (
+  root: string,
+  options: {
+    profileId: string;
+    goal: string;
+    goalId: string;
+    summary?: string;
+    accepted?: boolean;
+  }
+) => CliPayload;
+const architectureStateForCommand = architectureState as (root: string, goalId?: string) => CliPayload;
+const readArchitectureBaselineForCommand = readArchitectureBaseline as (root: string) => CliPayload | null;
 
 const rootArg = {
   type: "string",
   description: "Project root.",
   default: process.cwd()
-};
+} as const;
 
 const jsonArg = {
   type: "boolean",
   description: "Keep deterministic JSON output for agents.",
   default: false
-};
+} as const;
 
-function hasRawFlag(rawArgs, name) {
+function hasRawFlag(rawArgs: string[], name: string): boolean {
   const rawName = name.startsWith("--") ? name : `--${name}`;
-  return parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens
+  return (parseArgs({ args: rawArgs, allowPositionals: true, strict: false, tokens: true }).tokens as ParsedToken[])
     .some((item) => item.kind === "option" && item.rawName === rawName);
 }
 
-function relativeTo(root, filePath) {
+function relativeTo(root: string, filePath: string): string {
   return path.relative(root, filePath) || ".";
 }
 
@@ -95,7 +123,7 @@ export const architectureProfileCommand = defineCommand({
     const source = args.from || args.path;
     if (!source) throw new Error("--from is required");
     const sourcePath = path.resolve(String(source));
-    const profile = normalizeArchitectureProfile(readJson(sourcePath), args.id);
+    const profile = normalizeArchitectureProfileForCommand(readJson(sourcePath), args.id);
     const issues = validateArchitectureProfile(profile);
     if (issues.length > 0) {
       return { ...fail("invalid_architecture_profile", "Architecture Profile failed validation", "Add id, title, summary, principles, checks, and build_vs_buy_policy."), issues };
@@ -157,7 +185,7 @@ export const architectureBaselineCommand = defineCommand({
     const goalId = args.goalId || slugify(goal || profileId);
     const confirmed = Boolean(args.confirm);
     if (!goal) throw new Error("--goal is required");
-    const baseline = buildArchitectureBaseline(root, {
+    const baseline = buildArchitectureBaselineForCommand(root, {
       profileId,
       goal,
       goalId,
@@ -174,8 +202,8 @@ export const architectureBaselineCommand = defineCommand({
         root,
         confirmed,
         baseline,
-        architecture: confirmed ? architectureState(root, goalId) : {
-          ...architectureState(root, goalId),
+        architecture: confirmed ? architectureStateForCommand(root, goalId) : {
+          ...architectureStateForCommand(root, goalId),
           preview: {
             baseline_path: relativeTo(root, paths.jsonPath),
             markdown_path: relativeTo(root, paths.markdownPath),
@@ -215,8 +243,8 @@ export const architectureShowCommand = defineCommand({
     const root = path.resolve(String(args.root || process.cwd()));
     return ok({
       root,
-      architecture: architectureState(root, args.goal),
-      baseline: readArchitectureBaseline(root),
+      architecture: architectureStateForCommand(root, args.goal),
+      baseline: readArchitectureBaselineForCommand(root),
       side_effect: "none"
     });
   }
@@ -254,7 +282,7 @@ export const architectureChallengeCommand = defineCommand({
   },
   run({ args, data }) {
     const root = path.resolve(String(args.root || process.cwd()));
-    const baseline = readArchitectureBaseline(root);
+    const baseline = readArchitectureBaselineForCommand(root);
     if (!baseline) throw new Error("No Architecture Baseline found. Create one before challenging it.");
     const summary = String(args.summary || "").trim();
     const evidence = String(args.evidence || "").trim();
@@ -288,7 +316,7 @@ export const architectureChallengeCommand = defineCommand({
       {
         root,
         challenge,
-        architecture: architectureState(root, baseline.goal_id),
+        architecture: architectureStateForCommand(root, baseline.goal_id),
         challenge_path: paths.jsonPath,
         markdown_path: paths.markdownPath
       },
@@ -410,7 +438,7 @@ export const architectureBuildVsBuyCommand = defineCommand({
         decision,
         decision_path: paths.jsonPath,
         markdown_path: paths.markdownPath,
-        architecture: architectureState(root)
+        architecture: architectureStateForCommand(root)
       },
       [
         { kind: "build_vs_buy_decision", path: paths.jsonPath },
@@ -424,26 +452,26 @@ export const architectureBuildVsBuyCommand = defineCommand({
   }
 });
 
-export async function runArchitectureProfilesCommand(rawArgs) {
+export async function runArchitectureProfilesCommand(rawArgs: string[]) {
   return runJsonCommand(architectureProfilesCommand, rawArgs);
 }
 
-export async function runArchitectureProfileCommand(rawArgs) {
+export async function runArchitectureProfileCommand(rawArgs: string[]) {
   return runJsonCommand(architectureProfileCommand, rawArgs);
 }
 
-export async function runArchitectureBaselineCommand(rawArgs) {
+export async function runArchitectureBaselineCommand(rawArgs: string[]) {
   return runJsonCommand(architectureBaselineCommand, rawArgs);
 }
 
-export async function runArchitectureShowCommand(rawArgs) {
+export async function runArchitectureShowCommand(rawArgs: string[]) {
   return runJsonCommand(architectureShowCommand, rawArgs);
 }
 
-export async function runArchitectureChallengeCommand(rawArgs) {
+export async function runArchitectureChallengeCommand(rawArgs: string[]) {
   return runJsonCommand(architectureChallengeCommand, rawArgs, { rawArgs });
 }
 
-export async function runArchitectureBuildVsBuyCommand(rawArgs) {
+export async function runArchitectureBuildVsBuyCommand(rawArgs: string[]) {
   return runJsonCommand(architectureBuildVsBuyCommand, rawArgs);
 }

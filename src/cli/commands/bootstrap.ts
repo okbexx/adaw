@@ -1,9 +1,14 @@
 import path from "node:path";
 import { defineCommand } from "citty";
 import { bootstrap } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
 
-export function bootstrapResult({ root, confirmed = false }) {
+type BootstrapResultOptions = {
+  root?: unknown;
+  confirmed?: boolean;
+};
+
+export function bootstrapResult({ root, confirmed = false }: BootstrapResultOptions) {
   return bootstrap(path.resolve(String(root || process.cwd())), { confirmed: Boolean(confirmed) });
 }
 
@@ -34,6 +39,6 @@ export const bootstrapCommand = defineCommand({
   }
 });
 
-export async function runBootstrapCommand(rawArgs) {
+export async function runBootstrapCommand(rawArgs: string[]) {
   return runJsonCommand(bootstrapCommand, rawArgs);
 }

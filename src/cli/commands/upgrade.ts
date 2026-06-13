@@ -9,7 +9,15 @@ import {
   upgradeActions,
   writeManifest
 } from "../../lifecycle.js";
-import { runJsonCommand } from "../runtime.js";
+import { runJsonCommand } from "../runtime.ts";
+
+type UpgradeResultOptions = {
+  root?: unknown;
+  dryRun?: boolean;
+  confirmed?: boolean;
+  requestedSkill?: boolean;
+  mergeAgentRoute?: boolean;
+};
 
 export function upgradeResult({
   root,
@@ -17,7 +25,7 @@ export function upgradeResult({
   confirmed = false,
   requestedSkill = false,
   mergeAgentRoute = false
-}) {
+}: UpgradeResultOptions) {
   const projectRoot = path.resolve(String(root || process.cwd()));
   const actions = upgradeActions(projectRoot, { requestedSkill, mergeAgentRoute });
   const upgradePlan = buildUpgradePlan(projectRoot, actions, { dryRun, requestedSkill, mergeAgentRoute });
@@ -110,6 +118,6 @@ export const upgradeCommand = defineCommand({
   }
 });
 
-export async function runUpgradeCommand(rawArgs) {
+export async function runUpgradeCommand(rawArgs: string[]) {
   return runJsonCommand(upgradeCommand, rawArgs);
 }
