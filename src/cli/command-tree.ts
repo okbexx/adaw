@@ -1,6 +1,6 @@
 import type { CommandDef, SubCommandsDef } from "citty";
 import { defineCommand, runCommand } from "citty";
-import { approveCommand, brainstormCommand, criterionUpdateCommand, discoverCommand, draftCommand, evaluateCommand, initCommand, nextCommand, resumeCommand, statusCommand } from "./commands/acceptance.ts";
+import { approveCommand, brainstormCommand, criterionAddCommand, criterionUpdateCommand, discoverCommand, draftCommand, evaluateCommand, initCommand, nextCommand, resumeCommand, statusCommand } from "./commands/acceptance.ts";
 import { architectureBaselineCommand, architectureBuildVsBuyCommand, architectureChallengeCommand, architectureProfileCommand, architectureProfilesCommand, architectureShowCommand } from "./commands/architecture.ts";
 import { bootstrapCommand } from "./commands/bootstrap.ts";
 import { changesCommand } from "./commands/changes.ts";
@@ -73,6 +73,7 @@ const architectureCommand = groupCommand("architecture", "Review and manage Open
 });
 
 const criterionCommand = groupCommand("criterion", "Revise human-centered acceptance criteria.", {
+  add: withPolicy(asCommand(criterionAddCommand), { activeGoal: true, activeGoalWrite: true, commandResult: true }),
   update: withPolicy(asCommand(criterionUpdateCommand), { activeGoal: true, activeGoalWrite: true, commandResult: true })
 });
 

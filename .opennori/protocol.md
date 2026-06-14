@@ -18,6 +18,16 @@ For non-trivial goals, OpenNori also carries an Architecture Baseline. Product A
 human user must be able to accept. Architecture Baseline answers what technical architecture the
 agent must follow while producing that outcome. These are reported together but kept separate.
 
+OpenNori is installed and used as one agent capability bundle:
+
+- Codex Plugin distributes and discovers packaged OpenNori Skills.
+- Skills define the agent behavior protocols and natural-language routing.
+- `opennori` is the deterministic state layer those Skills call.
+- `.opennori/` is the project-local contract, evidence, profile, architecture, health, and report store.
+
+Do not present Plugin, Skills, CLI, or `.opennori` state as separate user workflows. Direct CLI use
+is an advanced, automation, or debugging route for the same state layer.
+
 ## Layered Acceptance Criteria v1
 
 OpenNori itself is accepted only when it satisfies user-tool-operation acceptance criteria.
@@ -93,6 +103,7 @@ a durable workflow asset.
 | AC-Z-14 | CLI / project file browser | Add a project Architecture Profile | The user can extend built-in profiles with a reviewed project profile. | `opennori architecture profile --from <profile.json>` writes `.opennori/architecture/profiles/<id>.json`; `architecture profiles` lists it before built-ins. |
 | AC-Z-15 | CLI / report | Challenge a baseline | The user can review evidence before an agent changes architecture. | `opennori architecture challenge` records current baseline, conflict evidence, recommendation, and user confirmation requirement. |
 | AC-Z-16 | CLI / report | Record build-vs-buy decisions | The user can see whether existing dependencies, standard libraries, official SDKs, and mature OSS were checked before self-building infrastructure. | `opennori architecture build-vs-buy` records the decision under `.opennori/architecture/decisions/` and status/report summarize it. |
+| AC-Z-18 | README / website / Plugin description | First read the OpenNori entry material | The user understands OpenNori as one agent capability bundle: Plugin discovery, packaged Skills, deterministic CLI state layer, and `.opennori` project state work together. | README Install/Quick Start, website Start, Plugin longDescription, and nori/project-health Skills do not present Plugin, Skills, or CLI as separate user paths; they explain that missing bundle parts should be recovered through doctor/health rather than used as a half-installed workflow. |
 
 ## Required Artifact Pair
 
@@ -371,14 +382,15 @@ On every turn:
 12. Before implementing an acceptance gap, read `.opennori/architecture/baseline.md` and keep Product AC separate from Architecture Checks.
 13. Before self-building infrastructure, record a build-vs-buy decision.
 14. If project evidence conflicts with the baseline, run `opennori architecture challenge`; do not silently replace the baseline.
-15. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-16. If the user asks to update an existing OpenNori project, run `opennori doctor`, use `opennori upgrade --dry-run/--confirm` for manifest/protocol/guide refreshes, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_review`. If packaged Plugin Skills are missing, reinstall or update the OpenNori package instead of copying Skills into the project.
-17. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
-18. Work only to produce evidence for that gap under the confirmed Architecture Baseline.
-19. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. If existing evidence is invalid or obsolete, run `opennori evidence prune` first so stale proof does not occupy active context. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
-20. Run `opennori evaluate`.
-21. Report acceptance state, profile compliance, and evidence, not implementation steps.
-22. If the goal is complete and the user asked to continue, review `next_recommendation.candidate_goals`, choose or refine the strongest human-facing next goal, then run discovery or draft for a new Nori Contract. Do not treat candidate goals as approved AC, phases, task lists, or evidence.
+15. If the user adds a new acceptance boundary after approval, run `opennori criterion add --root <repo> --id <id> ... --json`; the new criterion becomes an evidence gap without forcing the agent to edit state files manually.
+16. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
+17. If the user asks to update an existing OpenNori project, run `opennori doctor`, use `opennori upgrade --dry-run/--confirm` for manifest/protocol/guide refreshes, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_review`. If packaged Plugin Skills are missing, reinstall or update the OpenNori package instead of copying Skills into the project.
+18. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
+19. Work only to produce evidence for that gap under the confirmed Architecture Baseline.
+20. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. If existing evidence is invalid or obsolete, run `opennori evidence prune` first so stale proof does not occupy active context. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
+21. Run `opennori evaluate`.
+22. Report acceptance state, profile compliance, and evidence, not implementation steps.
+23. If the goal is complete and the user asked to continue, review `next_recommendation.candidate_goals`, choose or refine the strongest human-facing next goal, then run discovery or draft for a new Nori Contract. Do not treat candidate goals as approved AC, phases, task lists, or evidence.
 
 Useful commands:
 
@@ -387,6 +399,7 @@ Useful commands:
 - `opennori draft --goal "<goal>" --root <repo>`: create a draft Nori Contract that needs user approval.
 - `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo>`: convert a selected brainstorm direction into a draft contract.
 - `opennori approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
+- `opennori criterion add --root <repo> --id <id> ...`: add a newly confirmed acceptance boundary to the active contract and ledger.
 - `opennori criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
 - `opennori evidence add --root <repo> --criterion <id> --kind <kind> --summary "<summary>" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "<how to review>" --limitations "<known limits>"`: attach user-understandable, reviewable evidence without forcing a fixed adapter.
 - `opennori evidence prune --root <repo> --criterion <id> --reason "<reason>"`: remove invalid or obsolete evidence from an active criterion so reports and context exports only carry current proof.

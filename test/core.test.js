@@ -929,11 +929,11 @@ test("agent can explicitly prune obsolete evidence before recording fresh proof"
 
 test("protocol v1 example contains concrete user tool operations", () => {
   const brief = JSON.parse(fs.readFileSync(path.join(ROOT, "examples", "opennori-self.json"), "utf8"));
-  assert.equal(brief.criteria.length, 48);
+  assert.equal(brief.criteria.length, 49);
   assert.deepEqual(new Set(brief.criteria.map((criterion) => criterion.layer)), new Set(["protocol", "operator", "productization", "architecture"]));
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-P-")).length, 13);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-O-")).length, 8);
-  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 17);
+  assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-Z-")).length, 18);
   assert.equal(brief.criteria.filter((criterion) => criterion.id.startsWith("AC-A-")).length, 10);
 
   const expectedTools = [
@@ -1034,6 +1034,30 @@ test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => 
     assert.doesNotMatch(asset, /install --skill/);
     assert.doesNotMatch(asset, /refresh-skill/);
     assert.doesNotMatch(asset, /skill export/);
+  }
+});
+
+test("public product surfaces present OpenNori as one capability bundle", () => {
+  const readme = fs.readFileSync(path.join(ROOT, "README.md"), "utf8");
+  const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, "plugins", "opennori", ".codex-plugin", "plugin.json"), "utf8"));
+  const nori = fs.readFileSync(path.join(ROOT, "plugins", "opennori", "skills", "nori", "SKILL.md"), "utf8");
+  const health = fs.readFileSync(path.join(ROOT, "plugins", "opennori", "skills", "nori-project-health", "SKILL.md"), "utf8");
+  const protocol = fs.readFileSync(path.join(ROOT, ".opennori", "protocol.md"), "utf8");
+
+  for (const text of [readme, plugin.interface.longDescription, nori, health, protocol]) {
+    assert.match(text, /capability bundle/);
+  }
+  assert.match(readme, /deterministic state layer/);
+  assert.match(readme, /not a separate product\s+path/);
+  assert.match(plugin.interface.longDescription, /Do not treat Plugin, Skills, and CLI as separate user paths/);
+  assert.match(nori, /Do not split OpenNori into separate Plugin, Skill, and CLI user paths/);
+  assert.match(health, /half-installed/);
+  assert.match(protocol, /Direct CLI use\s+is an advanced, automation, or debugging route/);
+
+  for (const text of [readme, protocol]) {
+    assert.doesNotMatch(text, /Choose one path/);
+    assert.doesNotMatch(text, /Try the CLI once/);
+    assert.doesNotMatch(text, /Pin the CLI to a project/);
   }
 });
 
@@ -1986,6 +2010,49 @@ test("criterion update preserves the revised acceptance basis and clears stale e
   const payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
   assert.equal(payload.ledger.criteria["AC-P-1"].status, "unknown");
   assert.equal(payload.ledger.criteria["AC-P-1"].evidence.length, 0);
+});
+
+test("criterion add preserves contract and ledger consistency", () => {
+  const root = tempRoot();
+  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+
+  const added = run([
+    "criterion", "add",
+    "--root", root,
+    "--id", "AC-Z-99",
+    "--user-story", "作为用户，我能确认 OpenNori 是一个不可拆开的 agent capability bundle。",
+    "--measurement", "阅读 README、Plugin 说明、Skill 边界和官网 Start 区域。",
+    "--threshold", "主路径表达为安装和使用 OpenNori capability bundle，CLI 只作为 Skills 使用的 deterministic state layer 和高级/CI 入口。",
+    "--summary", "User added the capability bundle boundary AC.",
+    "--json"
+  ]);
+
+  assert.equal(added.data.criterion.id, "AC-Z-99");
+  assert.equal(added.data.workflow_status, "active");
+
+  const payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
+  assert.equal(payload.contract.criteria.some((criterion) => criterion.id === "AC-Z-99"), true);
+  assert.equal(payload.ledger.criteria["AC-Z-99"].status, "unknown");
+
+  const duplicate = spawnSync(process.execPath, [
+    CLI,
+    "criterion",
+    "add",
+    "--root", root,
+    "--id", "AC-Z-99",
+    "--user-story", "作为用户，我不会看到重复 AC。",
+    "--measurement", "再次添加同一 id。",
+    "--threshold", "命令失败。",
+    "--json"
+  ], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.equal(duplicate.status, 1);
+  const duplicatePayload = JSON.parse(duplicate.stdout || duplicate.stderr);
+  assert.equal(duplicatePayload.ok, false);
+  assert.equal(duplicatePayload.error.type, "unexpected_error");
+  assert.match(duplicatePayload.error.message, /Criterion already exists/);
 });
 
 test("check reviews possible implementation details without rejecting the contract", () => {

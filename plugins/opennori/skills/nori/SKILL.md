@@ -1,6 +1,6 @@
 ---
 name: nori
-description: Root OpenNori router for natural-language agent work. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to choose the right OpenNori Skill without exposing CLI parameters.
+description: "Root OpenNori router for the complete agent capability bundle. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to use OpenNori without exposing CLI parameters. Treat Plugin discovery, packaged Skills, opennori CLI, and .opennori state as coupled parts of one product."
 ---
 
 ## Mission
@@ -9,6 +9,15 @@ Turn a user's natural OpenNori request into the right acceptance loop action whi
 
 This is the only OpenNori Skill that should behave as the default entrypoint. Use focused child Skills for domain work instead of teaching the user internal Skill names.
 
+OpenNori is one capability bundle:
+
+- Plugin discovery makes these packaged Skills available.
+- Skills define agent behavior and natural-language routing.
+- `opennori` is the deterministic state layer.
+- `.opennori/` stores the project contract, evidence, profile, architecture, health, and report state.
+
+Do not present those pieces as optional standalone product paths.
+
 ## Start Here
 
 1. Identify the project root from the current workspace or the user's explicit path.
@@ -16,7 +25,7 @@ This is the only OpenNori Skill that should behave as the default entrypoint. Us
 3. If the project is already initialized, run `opennori list --root <repo> --json`, then `opennori resume --root <repo> --goal <goal-id> --json` or `opennori status --root <repo> --goal <goal-id> --json`.
 4. If multiple active goals exist and the user did not identify one, summarize the choices and ask for a target instead of guessing.
 5. If bootstrap returns a preview that needs confirmation, show the user what would be created and wait for explicit approval before rerunning with confirmation.
-6. If `opennori` is not on PATH, use the local package binary available in the project or this repository's `node ./bin/opennori.js`.
+6. If `opennori` is not on PATH, use the local package binary available in the project or this repository's `node ./bin/opennori.js`; if the Plugin, packaged Skills, CLI, or `.opennori` state is missing, route to `nori-project-health` instead of continuing in a half-installed mode.
 
 ## Natural-Language Mapping
 
@@ -62,6 +71,8 @@ Then include only the minimum context needed for the user to approve, revise, pr
 ## Misuse Guards
 
 - Do not make the user memorize CLI flags or internal Skill names.
+- Do not split OpenNori into separate Plugin, Skill, and CLI user paths; they are one capability bundle.
+- Do not continue a half-installed mode when Plugin discovery, packaged Skills, CLI access, or `.opennori` state is missing; route to project health and recover the missing piece.
 - Do not present candidate goals as approved AC, evidence, phases, or task lists.
 - Do not answer confidently complete while required AC evidence, blocking profile items, architecture challenges, evidence health, or acceptance review risks remain unresolved or unaccepted.
 - Do not turn architecture, profile, build-vs-buy, Plugin, hook, or tool preferences into Product AC.

@@ -1,7 +1,7 @@
 {
   "name": "opennori",
   "version": "0.1.8",
-  "description": "OpenNori helps coding agents turn natural-language goals into human-reviewable acceptance contracts, evidence, and reports.",
+  "description": "OpenNori is an agent capability bundle for human-reviewable acceptance contracts, evidence, and reports.",
   "author": {
     "name": "okbexx",
     "email": "okbexx@gmail.com",
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "OpenNori",
-    "shortDescription": "Acceptance contracts and evidence for coding agents.",
-    "longDescription": "OpenNori ships Codex Skills as agent behavior protocols for turning natural-language goals into human-centered acceptance contracts, architecture baselines, reviewable evidence, project health checks, and completion reports without making users memorize CLI flags.",
+    "shortDescription": "Agent capability bundle for acceptance contracts and evidence.",
+    "longDescription": "OpenNori is a single agent capability bundle: the Codex Plugin distributes packaged Skills, the Skills turn natural-language goals into human-centered acceptance contracts, architecture baselines, evidence, health checks, and reports, and the opennori CLI acts as the deterministic state layer for .opennori. Do not treat Plugin, Skills, and CLI as separate user paths.",
     "developerName": "okbexx",
     "category": "Productivity",
     "capabilities": [

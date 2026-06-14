@@ -6,8 +6,8 @@
     "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
-      "summary": "User refined AC-Z-12 to require mature agent behavior protocols for the packaged Skill Pack.",
-      "approved_at": "2026-06-14T07:33:10.872Z"
+      "summary": "User clarified OpenNori must be presented and operated as one coupled capability bundle, not split into Plugin, Skills, and CLI as separable user paths.",
+      "approved_at": "2026-06-14T08:22:24.971Z"
     },
     "criteria": [
       {
@@ -441,6 +441,15 @@
         "threshold": "报告同时呈现产品完成状态、架构健康状态、Plugin package 能力、证据、未解决风险和是否需要用户确认；用户不需要记住 CLI 参数；doctor/check 不依赖项目内 Skill 资产副本。",
         "risk": "high",
         "required": true
+      },
+      {
+        "id": "AC-Z-18",
+        "layer": "productization",
+        "user_story": "作为用户，我第一次阅读 OpenNori 的 README、官网或 Plugin 说明时，理解 OpenNori 是一个 agent capability bundle：Codex Plugin 负责分发发现，packaged Skills 负责 agent 行为协议，opennori CLI 负责确定性状态读写，.opennori 负责项目状态；我不会被引导把 Plugin、Skills 或 CLI 当成三种可拆开的独立产品路径。",
+        "measurement": "阅读 README Install/Quick Start、官网 Start 区域、Plugin longDescription、nori/nori-project-health Skills、protocol，并检查测试对主路径文案和 Skill 边界的断言。",
+        "threshold": "用户主路径表达为安装和使用 OpenNori capability bundle；CLI 被说明为 Skills 使用的 deterministic state layer 和高级/CI 入口，而不是与 Plugin 并列的替代使用方式；文档和 Skill 明确不要继续使用半残模式，缺 Plugin/Skills/CLI/state 任一关键能力时应通过 doctor/health 引导补齐；测试防止重新出现 Choose one path、Try CLI once、Pin CLI to this project 这类拆分心智。",
+        "required": true,
+        "risk": "high"
       }
     ]
   },
@@ -448,7 +457,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-14T07:50:48.355Z",
+    "updated_at": "2026-06-14T08:29:10.361Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -4160,6 +4169,72 @@
             "limitations": "Dogfood covered a static Astro website repo and local CLI behavior; it did not validate a third-party production app or remote deployed website.",
             "gate": "accepted",
             "created_at": "2026-06-13T15:03:36.293Z"
+          }
+        ]
+      },
+      "AC-Z-18": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "high",
+        "evidence": [
+          {
+            "kind": "artifact-review",
+            "basis": "tool-observation",
+            "summary": "README, Plugin metadata, package Skills, protocol, tests, and website now present OpenNori as one agent capability bundle: Plugin discovery, packaged Skills, opennori deterministic state layer, and .opennori project state work together. The old split-path language is removed, and nori/project-health Skills route missing bundle parts to doctor/health recovery instead of half-installed use.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "rg -n 'Install OpenNori Capability Bundle|capability bundle|deterministic state layer|not a separate product path|Do not treat Plugin|Do not split OpenNori|half-installed|Install one OpenNori capability bundle|Advanced state-layer commands|Choose one path|Try CLI once|Pin CLI' README.md plugins/opennori/.codex-plugin/plugin.json plugins/opennori/skills/nori/SKILL.md plugins/opennori/skills/nori-project-health/SKILL.md .opennori/protocol.md test/core.test.js /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "command": "rg -n 'Install OpenNori Capability Bundle|capability bundle|deterministic state layer|not a separate product path|Do not treat Plugin|Do not split OpenNori|half-installed|Install one OpenNori capability bundle|Advanced state-layer commands|Choose one path|Try CLI once|Pin CLI' README.md plugins/opennori/.codex-plugin/plugin.json plugins/opennori/skills/nori/SKILL.md plugins/opennori/skills/nori-project-health/SKILL.md .opennori/protocol.md test/core.test.js /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+              },
+              {
+                "type": "artifact",
+                "label": "README.md",
+                "path": "README.md"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/.codex-plugin/plugin.json",
+                "path": "plugins/opennori/.codex-plugin/plugin.json"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills/nori/SKILL.md",
+                "path": "plugins/opennori/skills/nori/SKILL.md"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills/nori-project-health/SKILL.md",
+                "path": "plugins/opennori/skills/nori-project-health/SKILL.md"
+              },
+              {
+                "type": "artifact",
+                "label": ".opennori/protocol.md",
+                "path": ".opennori/protocol.md"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+              }
+            ],
+            "reviewability": "Read README Install/Quick Start, Plugin longDescription, nori and nori-project-health Skill frontmatter/body, protocol AC-Z-18, website Start section, and test/core.test.js public product surface assertions; rerun npm run check and the rg command.",
+            "limitations": "This proves source, packaged assets, tests, and local website source. Live Codex plugin behavior still depends on installing the updated package/plugin in a new session after publish.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T08:29:10.361Z"
           }
         ]
       }

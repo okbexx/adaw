@@ -3,7 +3,7 @@
   "protocol_version": "opennori/v1",
   "opennori_version": "0.1.8",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-14T07:52:24.756Z",
+  "updated_at": "2026-06-14T08:29:24.900Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -156,7 +156,7 @@
     "skills": [
       {
         "name": "nori",
-        "description": "Root OpenNori router for natural-language agent work. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to choose the right OpenNori Skill without exposing CLI parameters.",
+        "description": "Root OpenNori router for the complete agent capability bundle. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to use OpenNori without exposing CLI parameters. Treat Plugin discovery, packaged Skills, opennori CLI, and .opennori state as coupled parts of one product.",
         "path": "plugins/opennori/skills/nori/SKILL.md",
         "source": "package"
       },
@@ -204,7 +204,7 @@
       },
       {
         "name": "nori-project-health",
-        "description": "Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
+        "description": "Diagnose, initialize, upgrade, uninstall, and recover the complete OpenNori capability bundle: Plugin discovery, packaged Skill health, opennori CLI access, project-local .opennori state, manifest, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
         "path": "plugins/opennori/skills/nori-project-health/SKILL.md",
         "source": "package"
       },

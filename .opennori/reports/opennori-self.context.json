@@ -1,13 +1,13 @@
 {
   "schema_version": "opennori/context-export-v1",
-  "exported_at": "2026-06-14T07:52:24.802Z",
+  "exported_at": "2026-06-14T08:29:25.033Z",
   "root": "/Users/jarl/code/jarlone/opennori",
   "goal_id": "opennori-self",
   "goal": "让 OpenNori 从只保存目标、AC、证据、报告的验收工具，升级为能先确立 Architecture Baseline，并让 agent 在后续实现 AC 时持续沿用该技术架构的验收驱动产品；用户不仅能判断产品目标是否完成，也能判断交付物是否按确认过的优秀技术架构完成。",
   "acceptance_basis": {
     "status": "approved",
-    "summary": "User refined AC-Z-12 to require mature agent behavior protocols for the packaged Skill Pack.",
-    "approved_at": "2026-06-14T07:33:10.872Z"
+    "summary": "User clarified OpenNori must be presented and operated as one coupled capability bundle, not split into Plugin, Skills, and CLI as separable user paths.",
+    "approved_at": "2026-06-14T08:22:24.971Z"
   },
   "workflow_status": "complete",
   "current_gap": null,
@@ -2190,6 +2190,71 @@
         "gate": "accepted",
         "created_at": "2026-06-13T15:03:36.293Z"
       }
+    },
+    {
+      "id": "AC-Z-18",
+      "layer": "productization",
+      "user_story": "作为用户，我第一次阅读 OpenNori 的 README、官网或 Plugin 说明时，理解 OpenNori 是一个 agent capability bundle：Codex Plugin 负责分发发现，packaged Skills 负责 agent 行为协议，opennori CLI 负责确定性状态读写，.opennori 负责项目状态；我不会被引导把 Plugin、Skills 或 CLI 当成三种可拆开的独立产品路径。",
+      "status": "passing",
+      "confidence": "verified",
+      "latest_evidence": {
+        "kind": "artifact-review",
+        "basis": "tool-observation",
+        "summary": "README, Plugin metadata, package Skills, protocol, tests, and website now present OpenNori as one agent capability bundle: Plugin discovery, packaged Skills, opennori deterministic state layer, and .opennori project state work together. The old split-path language is removed, and nori/project-health Skills route missing bundle parts to doctor/health recovery instead of half-installed use.",
+        "result": "passing",
+        "confidence": "verified",
+        "sources": [
+          {
+            "type": "command",
+            "label": "npm run check",
+            "command": "npm run check"
+          },
+          {
+            "type": "command",
+            "label": "rg -n 'Install OpenNori Capability Bundle|capability bundle|deterministic state layer|not a separate product path|Do not treat Plugin|Do not split OpenNori|half-installed|Install one OpenNori capability bundle|Advanced state-layer commands|Choose one path|Try CLI once|Pin CLI' README.md plugins/opennori/.codex-plugin/plugin.json plugins/opennori/skills/nori/SKILL.md plugins/opennori/skills/nori-project-health/SKILL.md .opennori/protocol.md test/core.test.js /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+            "command": "rg -n 'Install OpenNori Capability Bundle|capability bundle|deterministic state layer|not a separate product path|Do not treat Plugin|Do not split OpenNori|half-installed|Install one OpenNori capability bundle|Advanced state-layer commands|Choose one path|Try CLI once|Pin CLI' README.md plugins/opennori/.codex-plugin/plugin.json plugins/opennori/skills/nori/SKILL.md plugins/opennori/skills/nori-project-health/SKILL.md .opennori/protocol.md test/core.test.js /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+          },
+          {
+            "type": "artifact",
+            "label": "README.md",
+            "path": "README.md"
+          },
+          {
+            "type": "artifact",
+            "label": "plugins/opennori/.codex-plugin/plugin.json",
+            "path": "plugins/opennori/.codex-plugin/plugin.json"
+          },
+          {
+            "type": "artifact",
+            "label": "plugins/opennori/skills/nori/SKILL.md",
+            "path": "plugins/opennori/skills/nori/SKILL.md"
+          },
+          {
+            "type": "artifact",
+            "label": "plugins/opennori/skills/nori-project-health/SKILL.md",
+            "path": "plugins/opennori/skills/nori-project-health/SKILL.md"
+          },
+          {
+            "type": "artifact",
+            "label": ".opennori/protocol.md",
+            "path": ".opennori/protocol.md"
+          },
+          {
+            "type": "artifact",
+            "label": "test/core.test.js",
+            "path": "test/core.test.js"
+          },
+          {
+            "type": "artifact",
+            "label": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+            "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+          }
+        ],
+        "reviewability": "Read README Install/Quick Start, Plugin longDescription, nori and nori-project-health Skill frontmatter/body, protocol AC-Z-18, website Start section, and test/core.test.js public product surface assertions; rerun npm run check and the rg command.",
+        "limitations": "This proves source, packaged assets, tests, and local website source. Live Codex plugin behavior still depends on installing the updated package/plugin in a new session after publish.",
+        "gate": "accepted",
+        "created_at": "2026-06-14T08:29:10.361Z"
+      }
     }
   ],
   "capability_profile": {
@@ -2451,7 +2516,7 @@
     "protocol_version": "opennori/v1",
     "opennori_version": "0.1.8",
     "created_at": "2026-06-10T09:12:16.646Z",
-    "updated_at": "2026-06-14T07:52:24.756Z",
+    "updated_at": "2026-06-14T08:29:24.900Z",
     "capabilities": [
       "acceptance-contract",
       "evidence-ledger",
@@ -2604,7 +2669,7 @@
       "skills": [
         {
           "name": "nori",
-          "description": "Root OpenNori router for natural-language agent work. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to choose the right OpenNori Skill without exposing CLI parameters.",
+          "description": "Root OpenNori router for the complete agent capability bundle. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to use OpenNori without exposing CLI parameters. Treat Plugin discovery, packaged Skills, opennori CLI, and .opennori state as coupled parts of one product.",
           "path": "plugins/opennori/skills/nori/SKILL.md",
           "source": "package"
         },
@@ -2652,7 +2717,7 @@
         },
         {
           "name": "nori-project-health",
-          "description": "Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
+          "description": "Diagnose, initialize, upgrade, uninstall, and recover the complete OpenNori capability bundle: Plugin discovery, packaged Skill health, opennori CLI access, project-local .opennori state, manifest, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
           "path": "plugins/opennori/skills/nori-project-health/SKILL.md",
           "source": "package"
         },

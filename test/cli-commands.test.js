@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vitest";
-import { runApproveCommand, runBrainstormCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runInitCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.ts";
+import { runApproveCommand, runBrainstormCommand, runCriterionAddCommand, runCriterionUpdateCommand, runDiscoverCommand, runDraftCommand, runEvaluateCommand, runInitCommand, runNextCommand, runResumeCommand, runStatusCommand } from "../src/cli/commands/acceptance.ts";
 import { runArchitectureBaselineCommand, runArchitectureBuildVsBuyCommand, runArchitectureChallengeCommand, runArchitectureProfileCommand, runArchitectureProfilesCommand } from "../src/cli/commands/architecture.ts";
 import { runCheckCommand } from "../src/cli/commands/check.ts";
 import { runChangesCommand } from "../src/cli/commands/changes.ts";
@@ -852,6 +852,53 @@ test("criterion update command module clears stale evidence after a user revisio
   const written = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
   assert.equal(written.ledger.criteria["AC-1"].status, "unknown");
   assert.equal(written.ledger.criteria["AC-1"].evidence.length, 0);
+});
+
+test("criterion add command module extends the contract and ledger together", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    protocol_version: "opennori/v1",
+    goal_id: "module-goal",
+    goal: "Add module acceptance",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can inspect the existing criterion.",
+        measurement: "Open the existing report.",
+        threshold: "The existing criterion is visible."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+  addEvidence(contract, ledger, "AC-1", { kind: "test-summary", summary: "Existing evidence passes.", result: "passing" });
+  fs.mkdirSync(path.dirname(acceptancePath), { recursive: true });
+  fs.writeFileSync(acceptancePath, "# Module goal\n");
+  writeJson(evidencePath, { contract, ledger });
+
+  const added = await runCriterionAddCommand([
+    "--id", "AC-Z-18",
+    "--user-story", "As a user, I can review the new product boundary.",
+    "--measurement", "Read the OpenNori README and report.",
+    "--threshold", "The new boundary is visible and pending evidence.",
+    "--summary", "User added AC-Z-18.",
+    "--json"
+  ], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+
+  assert.equal(added.ok, true);
+  assert.equal(added.data.criterion.id, "AC-Z-18");
+  assert.equal(added.data.criterion.layer, "productization");
+  assert.equal(added.data.current_gap.id, "AC-Z-18");
+
+  const written = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  assert.equal(written.contract.criteria.some((criterion) => criterion.id === "AC-Z-18"), true);
+  assert.equal(written.ledger.criteria["AC-Z-18"].status, "unknown");
+  assert.match(fs.readFileSync(acceptancePath, "utf8"), /AC-Z-18/);
 });
 
 test("evidence add command module records flexible reviewable sources", async () => {

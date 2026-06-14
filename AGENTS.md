@@ -3,13 +3,14 @@
 ## OpenNori
 
 OpenNori is a Plugin-first / Skill-driven / CLI-state-backed acceptance product.
-Keep these layers separate:
+It is one agent capability bundle, not three separate user paths. Keep these
+layers separated by responsibility but coupled as one product:
 
 - Codex Plugin / Skills: agent discovery and natural-language routing.
 - `opennori` CLI: deterministic state reads/writes and JSON/report output.
 - `.opennori/`: project-local contracts, evidence, profiles, architecture, and reports.
 
-Do not implement project-local Skill copying, Skill Pack install/sync, or `.agents/skills` as product behavior. The product goal is for a user agent to get OpenNori through Codex Plugin/Skill discovery, then use the CLI only as the deterministic state layer.
+Do not implement project-local Skill copying, Skill Pack install/sync, or `.agents/skills` as product behavior. The product goal is for a user agent to get OpenNori through Codex Plugin/Skill discovery, then use the CLI only as the deterministic state layer. If Plugin discovery, packaged Skills, CLI access, or `.opennori` state is missing, route through doctor/project-health and recover the missing bundle part instead of continuing a half-installed workflow.
 
 Before implementing a non-trivial change, read:
 

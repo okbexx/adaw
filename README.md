@@ -14,17 +14,27 @@ plan internally, but the user-facing loop stays centered on what the user wants,
 what acceptance checks define done, what evidence supports each check, and
 whether the goal is complete.
 
-## Install
+## Install OpenNori Capability Bundle
 
-Choose one path.
+OpenNori is one agent capability bundle, not three separate products:
 
-### Install the Codex Plugin
+- Codex Plugin distributes and discovers the packaged OpenNori Skills.
+- OpenNori Skills are agent behavior protocols for natural-language work.
+- `opennori` is the deterministic state layer those Skills call.
+- `.opennori/` stores project contracts, evidence, profile, architecture, health, and reports.
 
-Use this when you want Codex to discover OpenNori Skills from natural language:
+Install the Codex Plugin so Codex can discover the Skills:
 
 ```bash
 codex plugin marketplace add okbexx/opennori --ref main
 codex plugin add opennori@opennori
+```
+
+Pin the state-layer CLI version in projects that should carry OpenNori with
+their dev tooling:
+
+```bash
+npm install -D opennori
 ```
 
 For local development from a checkout:
@@ -34,43 +44,33 @@ codex plugin marketplace add .
 codex plugin add opennori@opennori
 ```
 
-After installing the plugin, open a new Codex session and say:
+After installing the capability bundle, open a new Codex session and say:
 
 ```text
 Use OpenNori for this goal.
 ```
 
-### Try the CLI once
+For a quick terminal smoke test or CI job, use the same state layer directly:
 
 ```bash
 npx opennori
 ```
 
-### Pin the CLI to a project
-
-```bash
-npm install -D opennori
-opennori
-```
-
-The Codex Plugin gives agents the Skills. The `opennori` CLI is the
-deterministic state layer those Skills call to create `.opennori/`, update
-contracts, record evidence, run doctor checks, and generate reports. Project
-installs expose `opennori` through npm scripts, package-manager exec, and
-agent/tool environments that load `node_modules/.bin`. Use `npx opennori` when
-you want npm to resolve OpenNori for a one-off command.
+Direct CLI use is an advanced or automation path, not a separate product path
+from the Plugin and Skills.
 
 ## Quick Start
 
-Run OpenNori in a project:
+If you are in a terminal, run OpenNori once in the project:
 
 ```bash
 opennori
 ```
 
 The interactive entry previews the `.opennori/` state it would create and asks
-before writing. Agents and CI can use `--json` for deterministic machine-readable
-output.
+before writing. If your shell does not expose project-local `node_modules/.bin`,
+use `npx opennori` or `npm exec opennori`. Agents and CI can use `--json` for
+deterministic machine-readable output.
 
 Then talk to your agent:
 
@@ -81,8 +81,7 @@ non-trivial work, and keep working from acceptance gaps until the report can
 say whether it is complete.
 ```
 
-Users do not need to memorize CLI flags. OpenNori ships Codex Plugin Skills and
-a Codex marketplace entry; those Skills are agent behavior protocols that map
+Users do not need to memorize CLI flags or Skill names. The bundled Skills map
 natural language to the deterministic `opennori` state layer.
 
 ## What It Creates

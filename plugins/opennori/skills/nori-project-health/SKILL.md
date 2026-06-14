@@ -1,6 +1,6 @@
 ---
 name: nori-project-health
-description: Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.
+description: "Diagnose, initialize, upgrade, uninstall, and recover the complete OpenNori capability bundle: Plugin discovery, packaged Skill health, opennori CLI access, project-local .opennori state, manifest, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation."
 ---
 
 ## Mission
@@ -9,12 +9,15 @@ Keep OpenNori project state usable and recoverable without making lifecycle comm
 
 Health work protects `.opennori/` integrity, manifest freshness, packaged Plugin Skill visibility, and active-goal recoverability. It should not decide subjective product acceptance.
 
+Treat OpenNori readiness as bundle readiness. Plugin discovery, packaged Skills, CLI access, and `.opennori` state are coupled product parts; if one is missing, recover it instead of telling the user to use the remaining pieces as a separate workflow.
+
 ## Start Here
 
 1. Run `opennori doctor --root <repo> --json` when the project may already use OpenNori.
 2. Run `opennori bootstrap --root <repo> --json` for first contact or unknown readiness.
-3. For lifecycle writes, show preview first and ask for explicit confirmation when the action writes, overwrites, upgrades, uninstalls, or deletes state.
-4. After upgrade or repair, run `opennori check --root <repo> --json` and route soft review findings to the relevant Skill.
+3. If doctor/bootstrap reports missing Plugin assets, packaged Skills, CLI access, manifest, or active state, present the missing bundle part and the recovery action.
+4. For lifecycle writes, show preview first and ask for explicit confirmation when the action writes, overwrites, upgrades, uninstalls, or deletes state.
+5. After upgrade or repair, run `opennori check --root <repo> --json` and route soft review findings to the relevant Skill.
 
 Useful state commands:
 
@@ -34,6 +37,7 @@ Useful state commands:
 
 - "Set up OpenNori here" -> bootstrap preview, then confirm only after the user approves.
 - "Is OpenNori healthy" -> doctor and summarize ready, needs-action, or broken with recovery actions.
+- "The CLI works but Plugin/Skills are missing" or "Plugin is installed but .opennori is missing" -> diagnose bundle readiness and recover the missing part instead of treating the remainder as a separate user path.
 - "Upgrade this project" -> upgrade dry run, confirm if approved, then check.
 - "Remove OpenNori" -> uninstall dry run; preserve `.opennori` state unless the user explicitly asks to delete it.
 - "State is broken" -> doctor, identify hard integrity failures, and propose recovery actions.
@@ -69,6 +73,8 @@ For previews, list create/skip/update/overwrite/remove and whether the action is
 ## Misuse Guards
 
 - Do not copy OpenNori Skills into the user project; packaged Plugin Skills are the agent discovery surface.
+- Do not present Plugin, Skills, CLI, or `.opennori` state as separate install choices; recover bundle readiness.
+- Do not continue in a half-installed state without surfacing the missing bundle part and a recovery action.
 - Do not perform destructive lifecycle writes without preview and explicit confirmation.
 - Do not treat soft review findings as hard protocol rejection.
 - Do not reopen Product AC just because architecture, build-vs-buy, evidence health, or profile review needs user attention.

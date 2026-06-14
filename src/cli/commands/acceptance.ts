@@ -25,6 +25,8 @@ export {
   runApproveCommand
 } from "./acceptance/approval.ts";
 export {
+  criterionAddCommand,
   criterionUpdateCommand,
+  runCriterionAddCommand,
   runCriterionUpdateCommand
 } from "./acceptance/criterion.ts";
