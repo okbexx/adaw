@@ -1,4 +1,4 @@
-import { slugify } from "./core.ts";
+import { slugify } from "./core/shared.ts";
 import type {
   AcceptanceCriterion,
   AcceptanceDiscovery,
@@ -125,9 +125,153 @@ const DISCOVERY_GAPS: AcceptanceDiscoveryGap[] = [
   }
 ];
 
+const USER_OPERATION_TERMS = [
+  "运行",
+  "打开",
+  "查看",
+  "选择",
+  "阅读",
+  "询问",
+  "确认",
+  "比较",
+  "检查",
+  "审查",
+  "预览",
+  "安装",
+  "卸载",
+  "归档",
+  "添加",
+  "修改",
+  "提出",
+  "触发",
+  "执行",
+  "创建",
+  "run",
+  "open",
+  "view",
+  "select",
+  "read",
+  "ask",
+  "confirm",
+  "compare",
+  "review",
+  "preview",
+  "install",
+  "uninstall",
+  "archive",
+  "add",
+  "update",
+  "check"
+];
+
+const USER_OUTCOME_TERMS = [
+  "能",
+  "看到",
+  "显示",
+  "输出",
+  "返回",
+  "包含",
+  "结果",
+  "状态",
+  "缺口",
+  "反馈",
+  "报告",
+  "摘要",
+  "入口",
+  "建议",
+  "知道",
+  "判断",
+  "确认",
+  "区分",
+  "理解",
+  "提示",
+  "展示",
+  "保留",
+  "标明",
+  "说明",
+  "指出",
+  "回答",
+  "可复查",
+  "可执行",
+  "不需要",
+  "不会",
+  "不能",
+  "不创建",
+  "can",
+  "see",
+  "show",
+  "output",
+  "include",
+  "result",
+  "status",
+  "gap",
+  "report",
+  "summary",
+  "entry",
+  "action",
+  "return",
+  "understand",
+  "decide",
+  "confirm",
+  "distinguish",
+  "explain",
+  "answer",
+  "review"
+];
+
+const IMPLEMENTATION_DETAIL_TERMS = [
+  "acceptance.json",
+  "evidence.json",
+  "plan.md",
+  "json",
+  "schema",
+  "script",
+  "file exists",
+  "脚本",
+  "命令",
+  "计划",
+  "实现步骤"
+];
+
+const IMPLEMENTATION_ONLY_PHRASES = [
+  "文件存在",
+  "字段存在",
+  "命令执行成功",
+  "测试通过",
+  "用例通过",
+  "模块实现",
+  "接口实现",
+  "函数实现",
+  "组件实现",
+  "schema 校验通过",
+  "json 字段",
+  "manifest 字段",
+  "file exists",
+  "field exists",
+  "tests pass",
+  "test passes",
+  "module implemented",
+  "function implemented",
+  "schema passes"
+];
+
+const NEGATION_TERMS = ["不能", "不应", "不是", "不得", "避免", "cannot", "must not", "should not", "reject"];
+
 function sentenceHasSpecifics(text: unknown, terms: string[]): boolean {
   const value = String(text || "").toLowerCase();
   return terms.some((term) => value.includes(term.toLowerCase()));
+}
+
+function includesAny(text: unknown, terms: string[]): boolean {
+  const value = String(text || "").toLowerCase();
+  return terms.some((term) => value.includes(term.toLowerCase()));
+}
+
+function looksImplementationOnly(text: unknown): boolean {
+  const value = String(text || "");
+  if (includesAny(value, NEGATION_TERMS)) return false;
+  if (includesAny(value, USER_OPERATION_TERMS) && includesAny(value, USER_OUTCOME_TERMS)) return false;
+  return includesAny(value, IMPLEMENTATION_ONLY_PHRASES);
 }
 
 export function discoverAcceptanceGaps(text: string, { fallback = false, allowedIds = null as Set<string> | null } = {}): AcceptanceDiscoveryGap[] {
@@ -181,7 +325,7 @@ export function discoverAcceptance(goal: string, explicitId: string | undefined 
   };
 }
 
-export function auditAcceptanceQuality(contract: NoriContract): AcceptanceQualityAudit {
+export function reviewAcceptanceQuality(contract: NoriContract): AcceptanceQualityAudit {
   const findings: AcceptanceQualityFinding[] = [];
   for (const [index, criterion] of (contract.criteria || []).entries()) {
     const triggerText = [
@@ -193,7 +337,7 @@ export function auditAcceptanceQuality(contract: NoriContract): AcceptanceQualit
       criterion.measurement,
       criterion.threshold
     ].filter(Boolean).join("\n");
-    const addFinding = (gapId: string) => {
+    const addFinding = (gapId: string, overrides: Partial<AcceptanceQualityFinding> = {}) => {
       const gap = discoveryGap(gapId);
       if (!gap) return;
       findings.push({
@@ -202,9 +346,83 @@ export function auditAcceptanceQuality(contract: NoriContract): AcceptanceQualit
         gap_id: gap.id,
         question: gap.question,
         why: gap.why,
+        message: overrides.message || gap.why,
+        agent_guidance: overrides.agent_guidance || "Ask the user or record an explicit assumption before treating this criterion as confidently complete.",
+        source: "heuristic",
+        severity: "needs-user-review",
+        ...overrides
+      });
+    };
+
+    const addCustomFinding = (gapId: string, field: string, question: string, why: string, message: string) => {
+      findings.push({
+        criterion_id: criterion.id,
+        path: `criteria[${index}].${field}`,
+        gap_id: gapId,
+        question,
+        why,
+        message,
+        agent_guidance: "Use this as a review signal, not a hard rejection. Clarify with the user or rewrite the criterion only after user confirmation.",
+        source: "heuristic",
         severity: "needs-user-review"
       });
     };
+
+    const userStory = String(criterion.user_story || "");
+    if (userStory && !userStory.startsWith("作为用户") && !userStory.toLowerCase().startsWith("as a user")) {
+      addCustomFinding(
+        "user-perspective-format",
+        "user_story",
+        "这条 AC 是否确实从最终用户或评审者的操作/判断出发？",
+        "AC 不必机械套用固定句式，但 agent 需要确认它表达的是人类用户可执行的操作或判断。",
+        "Acceptance criterion does not use the usual user-perspective wording."
+      );
+    }
+
+    const implementationTerms = IMPLEMENTATION_DETAIL_TERMS.filter((term) => userStory.toLowerCase().includes(term.toLowerCase()));
+    if (implementationTerms.length > 0) {
+      addCustomFinding(
+        "possible-implementation-detail",
+        "user_story",
+        "这些技术词是否是用户实际会看到/操作的内容，还是应该移到证据、Profile 或 Architecture Baseline？",
+        "技术词可能是产品表面，也可能是实现细节；需要 agent 结合上下文判断，不能由代码直接拒绝。",
+        `Acceptance criterion contains possible implementation detail terms: ${implementationTerms.join(", ")}.`
+      );
+    }
+
+    const measurement = String(criterion.measurement || "");
+    if (measurement && !includesAny(measurement, USER_OPERATION_TERMS)) {
+      addCustomFinding(
+        "measurement-review-method-unclear",
+        "measurement",
+        "用户或评审者具体通过什么入口、操作或审查动作判断这条 AC？",
+        "measurement 缺少明显的用户操作或复查动作，agent 需要确认验收入口，而不是把它当结构错误。",
+        "Measurement may not describe a user operation or review action."
+      );
+    }
+
+    const threshold = String(criterion.threshold || "");
+    if (threshold && !includesAny(threshold, USER_OUTCOME_TERMS)) {
+      addCustomFinding(
+        "threshold-user-outcome-unclear",
+        "threshold",
+        "通过时用户会看到什么结果、反馈或可作出什么判断？",
+        "threshold 缺少明显的用户可观察结果，agent 需要澄清完成判断。",
+        "Passing threshold may not describe a user-observable outcome or judgment."
+      );
+    }
+
+    for (const [field, value] of Object.entries({ measurement, threshold })) {
+      if (looksImplementationOnly(value)) {
+        addCustomFinding(
+          "implementation-only-completion-signal",
+          field,
+          "这个完成信号如何映射到用户可见结果？如果只是测试、文件或模块状态，应作为 evidence 或 architecture/profile 证据，而不是用户 AC。",
+          "实现层信号可以成为证据，但通常不能单独代表用户验收完成。",
+          `${field} looks like an implementation-only completion signal.`
+        );
+      }
+    }
 
     const vagueEditableProfile = sentenceHasSpecifics(triggerText, [
       "修改个人资料",
@@ -258,6 +476,8 @@ export function auditAcceptanceQuality(contract: NoriContract): AcceptanceQualit
     findings
   };
 }
+
+export const auditAcceptanceQuality = reviewAcceptanceQuality;
 
 export function renderDiscoveryMarkdown(discovery: AcceptanceDiscovery): string {
   const lines = [

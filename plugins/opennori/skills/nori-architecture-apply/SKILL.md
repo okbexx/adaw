@@ -17,3 +17,4 @@ Implement only acceptance gaps that are compatible with the confirmed baseline.
 If the baseline is missing for an active non-trivial goal, use `nori-architecture-brainstorm` before implementation.
 If project evidence conflicts with the baseline, use `nori-architecture-challenge`; do not silently change technology stack, directory boundaries, dependency policy, or state model.
 Keep Product AC and Architecture Checks separate in explanations and reports.
+If Product ACs are complete but `architecture_review` remains, report it as completion review risk instead of inventing or reopening Product AC.

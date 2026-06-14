@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { test } from "vitest";
+import { reviewAcceptanceQuality } from "../src/acceptance.ts";
 import { validateContract } from "../src/core.ts";
 import { validateSchema } from "../src/validation.ts";
 
@@ -449,9 +450,63 @@ test("Nori Profile records required skills and blocks completion until satisfied
   assert.match(text, /radix-ui/);
 });
 
+test("preferred profile items create review risk without blocking objective completion", () => {
+  const root = tempRoot();
+  const init = run(["draft", "--goal", "Build a frontend page", "--root", root, "--json"]);
+  const payload = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
+
+  run(["approve", "--root", root, "--summary", "User approved frontend acceptance criteria.", "--json"]);
+  for (const criterion of Object.keys(payload.ledger.criteria)) {
+    run([
+      "evidence", "add",
+      "--root", root,
+      "--criterion", criterion,
+      "--kind", "test-summary",
+      "--summary", `${criterion} is satisfied.`,
+      "--result", "passing",
+      "--source-command", "npm test",
+      "--reviewability", "Run npm test and inspect the completed UI.",
+      "--limitations", "Profile preference still needs review.",
+      "--json"
+    ]);
+  }
+
+  const preferred = run([
+    "profile", "add",
+    "--root", root,
+    "--type", "stack",
+    "--name", "radix-ui",
+    "--strength", "prefer",
+    "--purpose", "Use accessible primitives for custom components.",
+    "--install-policy", "ask_before_install",
+    "--json"
+  ]);
+  assert.equal(preferred.data.workflow_status, "complete");
+  assert.equal(preferred.data.current_gap, null);
+  assert.equal(preferred.data.compliance.review.some((item) => item.name === "radix-ui" && item.status === "unknown"), true);
+
+  const status = run(["status", "--root", root, "--json"]);
+  assert.equal(status.data.completion.objective_complete, true);
+  assert.equal(status.data.completion.confidence, "review-risk");
+  assert.equal(status.data.completion.review_risks.includes("profile_review"), true);
+  assert.equal(status.data.next_recommendation.status, "completion-review-required");
+
+  const check = run(["check", "--root", root, "--json"]);
+  assert.equal(check.ok, true);
+  assert.equal(check.data.capability_compliance.review.some((item) => item.name === "radix-ui"), true);
+  assert.equal(check.warnings.some((warning) => warning.type === "profile_review" && warning.item_id === "stack-radix-ui"), true);
+
+  const report = run(["report", "--root", root, "--json"]);
+  const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.match(text, /Review risks: profile_review/);
+  assert.match(text, /Profile review risks:/);
+  assert.match(text, /radix-ui is unknown \(prefer\)/);
+});
+
 test("evidence can drive the workflow to complete and render a human report", () => {
   const root = tempRoot();
   const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  run(["install", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
 
   for (const criterion of Object.keys(ledger.ledger.criteria)) {
@@ -479,6 +534,15 @@ test("evidence can drive the workflow to complete and render a human report", ()
   ]);
   assert.equal(evaluated.data.workflow_status, "complete");
 
+  run([
+    "architecture", "baseline",
+    "--root", root,
+    "--goal", ledger.contract.goal,
+    "--goal-id", ledger.contract.goal_id,
+    "--confirm",
+    "--json"
+  ]);
+
   const report = run([
     "report",
     "--acceptance", init.data.acceptance_path,
@@ -490,9 +554,12 @@ test("evidence can drive the workflow to complete and render a human report", ()
   assert.equal(report.data.workflow_status, "complete");
   assert.equal(report.data.current_gap, null);
   assert.equal(report.data.completion.complete, true);
+  assert.equal(report.data.completion.confidence, "confident");
+  assert.equal(report.data.completion.review_risks.length, 0);
   assert.equal(report.data.intervention.required, false);
   assert.equal(report.data.evidence_health.status, "clear");
   assert.ok(report.data.architecture);
+  assert.equal(report.data.architecture.decision, "valid");
   assert.match(text, /## Decision Summary/);
   assert.ok(text.indexOf("## Decision Summary") < text.indexOf("## Acceptance Status"));
   assert.match(text, /Completion: Complete: all required acceptance criteria have passing or waived evidence\./);
@@ -615,7 +682,7 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
 
   assert.equal(added.data.criterion_status, "passing");
   assert.equal(added.data.latest_evidence.basis, "tool-observation");
-  assert.equal(added.data.latest_evidence.sources.length, 5);
+  assert.equal(added.data.latest_evidence.sources.length, 4);
   assert.equal(added.data.latest_evidence.reviewability, "User can rerun the command or open the artifact.");
   assert.equal(added.data.latest_evidence.limitations, "Browser-specific visual review was not performed.");
 
@@ -625,10 +692,9 @@ test("evidence records flexible reviewable sources without fixed adapters", () =
   assert.equal(criterion.latest_evidence.sources[1].label, "screenshots/reviewable-flow.png");
   assert.equal(criterion.latest_evidence.sources[2].type, "command");
   assert.equal(criterion.latest_evidence.sources[2].command, "npm run check");
-  assert.equal(criterion.latest_evidence.sources[3].type, "artifact");
-  assert.equal(criterion.latest_evidence.sources[3].path, "src/cli.ts");
-  assert.equal(criterion.latest_evidence.sources[4].type, "url");
-  assert.equal(criterion.latest_evidence.sources[4].url, "https://example.com/review");
+  assert.equal(criterion.latest_evidence.sources[3].type, "url");
+  assert.equal(criterion.latest_evidence.sources[3].url, "https://example.com/review");
+  assert.equal(criterion.latest_evidence.sources.some((source) => source.path === "src/cli.ts"), false);
 
   const report = run(["report", "--root", root, "--json"]);
   const text = fs.readFileSync(report.data.report_path, "utf8");
@@ -698,6 +764,21 @@ test("check surfaces evidence health without forcing adapter taxonomy", () => {
     "--confidence", "verified",
     "--json"
   ]);
+  for (const criterion of ["AC-2", "AC-3"]) {
+    run([
+      "evidence", "add",
+      "--root", weakRoot,
+      "--criterion", criterion,
+      "--kind", "test-summary",
+      "--summary", `${criterion} has reviewable evidence.`,
+      "--result", "passing",
+      "--confidence", "verified",
+      "--source-command", "opennori status --root . --json",
+      "--reviewability", "Run status and inspect the result.",
+      "--limitations", "This fixture focuses on evidence health semantics.",
+      "--json"
+    ]);
+  }
 
   const weakCheck = run(["check", "--root", weakRoot, "--json"]);
   assert.equal(weakCheck.data.evidence_health.status, "review");
@@ -706,7 +787,10 @@ test("check surfaces evidence health without forcing adapter taxonomy", () => {
   assert.equal(weakCheck.next_actions.some((action) => /evidence_health/.test(action)), true);
 
   const report = run(["report", "--root", weakRoot, "--json"]);
-  assert.equal(report.data.completion.complete, false);
+  assert.equal(report.data.completion.complete, true);
+  assert.equal(report.data.completion.objective_complete, true);
+  assert.equal(report.data.completion.confidence, "review-risk");
+  assert.equal(report.data.completion.review_risks.includes("evidence_health"), true);
   assert.equal(report.data.evidence_health.status, "review");
   assert.match(fs.readFileSync(report.data.report_path, "utf8"), /## Evidence Health/);
 
@@ -731,6 +815,89 @@ test("check surfaces evidence health without forcing adapter taxonomy", () => {
   const strongCheck = run(["check", "--root", strongRoot, "--json"]);
   assert.equal(strongCheck.data.evidence_health.status, "clear");
   assert.equal(strongCheck.warnings.some((warning) => warning.type === "evidence_health"), false);
+});
+
+test("missing local artifact evidence is pruned and does not occupy report or context export", () => {
+  const root = tempRoot();
+  run(["draft", "--goal", "Ship without stale evidence", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+
+  const stalePath = "docs/removed-proof.md";
+  const added = run([
+    "evidence", "add",
+    "--root", root,
+    "--criterion", "AC-1",
+    "--kind", "artifact",
+    "--summary", "The user-visible operation was proven by an artifact that was later removed.",
+    "--source-path", stalePath,
+    "--reviewability", "Open the artifact.",
+    "--limitations", "Only proves the local artifact existed.",
+    "--confidence", "verified",
+    "--result", "passing",
+    "--json"
+  ]);
+  assert.equal(added.data.criterion_status, "unknown");
+  assert.equal(added.data.latest_evidence, null);
+
+  const status = run(["status", "--root", root, "--json"]);
+  assert.equal(status.data.workflow_status, "active");
+  assert.equal(status.data.current_gap.id, "AC-1");
+  const criterion = status.data.criteria.find((row) => row.id === "AC-1");
+  assert.equal(criterion.status, "unknown");
+  assert.equal(criterion.latest_evidence, null);
+
+  const evidencePath = path.join(root, ".opennori", "active", "ship-without-stale-evidence.evidence.json");
+  const payload = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  assert.equal(payload.ledger.criteria["AC-1"].evidence.length, 0);
+  assert.equal(payload.ledger.criteria["AC-1"].status, "unknown");
+
+  const exported = run(["context", "export", "--root", root, "--json"]);
+  assert.equal(exported.data.criteria.find((row) => row.id === "AC-1").latest_evidence, null);
+  assert.equal(JSON.stringify(exported.data).includes(stalePath), false);
+
+  const report = run(["report", "--root", root, "--json"]);
+  const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.doesNotMatch(text, /docs\/removed-proof\.md/);
+  assert.match(text, /AC-1/);
+});
+
+test("agent can explicitly prune obsolete evidence before recording fresh proof", () => {
+  const root = tempRoot();
+  run(["draft", "--goal", "Refresh obsolete evidence", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+
+  run([
+    "evidence", "add",
+    "--root", root,
+    "--criterion", "AC-1",
+    "--kind", "review-result",
+    "--basis", "tool-observation",
+    "--summary", "Old product behavior passed before the acceptance target changed.",
+    "--source-command", "npm test",
+    "--reviewability", "Rerun the old command.",
+    "--limitations", "This evidence is obsolete after the product changed.",
+    "--confidence", "verified",
+    "--result", "passing",
+    "--json"
+  ]);
+
+  const pruned = run([
+    "evidence", "prune",
+    "--root", root,
+    "--criterion", "AC-1",
+    "--reason", "Old product behavior no longer proves the current AC.",
+    "--json"
+  ]);
+  assert.equal(pruned.data.evidence_prune.removed_records, 1);
+  assert.equal(pruned.data.criterion_status, "unknown");
+  assert.equal(pruned.data.current_gap.id, "AC-1");
+
+  const report = run(["report", "--root", root, "--json"]);
+  const text = fs.readFileSync(report.data.report_path, "utf8");
+  assert.doesNotMatch(text, /Old product behavior/);
+
+  const exported = run(["context", "export", "--root", root, "--json"]);
+  assert.equal(JSON.stringify(exported.data).includes("Old product behavior"), false);
 });
 
 test("protocol v1 example contains concrete user tool operations", () => {
@@ -868,7 +1035,8 @@ test("public JSON Schemas validate persisted OpenNori state and separate structu
 
   evidence.contract.criteria[0].user_story = "Implementation detail only";
   assert.equal(validateSchema("evidence-payload", evidence).valid, true);
-  assert.equal(validateContract(evidence.contract, evidence.ledger).some((issue) => issue.path === "criteria[0].user_story"), true);
+  assert.equal(validateContract(evidence.contract, evidence.ledger).some((issue) => issue.path === "criteria[0].user_story"), false);
+  assert.equal(reviewAcceptanceQuality(evidence.contract).status, "needs-user-review");
 });
 
 test("install creates project assets and skips existing user content by default", () => {
@@ -1354,6 +1522,43 @@ test("architecture baseline loop is agent-readable sticky and challengeable", ()
   assert.equal(fs.existsSync(draft.data.acceptance_path), true);
 });
 
+test("missing architecture baseline is a completion review risk, not a product AC gap", () => {
+  const root = tempRoot();
+  const draft = run(["draft", "--goal", "Ship an architecture-aware user outcome", "--root", root, "--json"]);
+  run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+
+  const payload = JSON.parse(fs.readFileSync(draft.data.evidence_path, "utf8"));
+  for (const criterion of Object.keys(payload.ledger.criteria)) {
+    run([
+      "evidence", "add",
+      "--root", root,
+      "--criterion", criterion,
+      "--kind", "test-summary",
+      "--summary", `${criterion} has user-reviewable evidence.`,
+      "--result", "passing",
+      "--source-command", "opennori status --root . --json",
+      "--source-path", ".opennori/reports/architecture-aware.report.md",
+      "--reviewability", "Run status and inspect the report artifact.",
+      "--limitations", "This fixture intentionally omits Architecture Baseline.",
+      "--json"
+    ]);
+  }
+
+  const status = run(["status", "--root", root, "--json"]);
+  assert.equal(status.data.workflow_status, "complete");
+  assert.equal(status.data.current_gap, null);
+  assert.equal(status.data.architecture.decision, "missing");
+  assert.equal(status.data.completion.objective_complete, true);
+  assert.equal(status.data.completion.confidence, "review-risk");
+  assert.equal(status.data.completion.review_risks.includes("architecture_review"), true);
+  assert.equal(status.data.next_recommendation.status, "completion-review-required");
+  assert.equal(status.data.next_recommendation.actions.some((action) => /architecture_check/.test(action)), true);
+  assert.equal(status.data.criteria.some((criterion) => /^ARCH-/.test(criterion.id)), false);
+
+  const report = run(["report", "--root", root, "--json"]);
+  assert.match(fs.readFileSync(report.data.report_path, "utf8"), /Review risks: architecture_review/);
+});
+
 test("project architecture profiles can be added and used for baselines", () => {
   const root = tempRoot();
   run(["install", "--root", root, "--json"]);
@@ -1424,6 +1629,22 @@ test("build-vs-buy health surfaces missing reuse review before self-build", () =
   run(["install", "--root", root, "--json"]);
   const draft = run(["draft", "--goal", "Ship a reusable infrastructure choice", "--root", root, "--json"]);
   run(["approve", "--root", root, "--summary", "User approved criteria.", "--json"]);
+  const payload = JSON.parse(fs.readFileSync(draft.data.evidence_path, "utf8"));
+  for (const criterion of Object.keys(payload.ledger.criteria)) {
+    run([
+      "evidence", "add",
+      "--root", root,
+      "--criterion", criterion,
+      "--kind", "test-summary",
+      "--summary", `${criterion} has user-reviewable evidence.`,
+      "--result", "passing",
+      "--source-command", "opennori status --root . --json",
+      "--source-path", ".opennori/reports/build-vs-buy.report.md",
+      "--reviewability", "Run status and inspect the report artifact.",
+      "--limitations", "This fixture focuses on build-vs-buy health.",
+      "--json"
+    ]);
+  }
   run([
     "architecture", "baseline",
     "--root", root,
@@ -1474,6 +1695,20 @@ test("build-vs-buy health surfaces missing reuse review before self-build", () =
   assert.equal(unhealthy.warnings.some((warning) => warning.type === "build_vs_buy" && warning.issue === "missing-open-source"), true);
   assert.equal(unhealthy.warnings.some((warning) => warning.type === "build_vs_buy" && warning.issue === "missing-self-build-reason"), true);
   assert.equal(unhealthy.next_actions.some((action) => /build_vs_buy/.test(action)), true);
+
+  const status = run(["status", "--root", root, "--json"]);
+  assert.equal(status.data.current_gap, null);
+  assert.equal(status.data.completion.objective_complete, true);
+  assert.equal(status.data.completion.confidence, "review-risk");
+  assert.equal(status.data.completion.review_risks.includes("build_vs_buy"), true);
+  assert.equal(status.data.next_recommendation.status, "completion-review-required");
+  assert.equal(status.data.next_recommendation.actions.some((action) => /build_vs_buy/.test(action)), true);
+  assert.equal(status.data.criteria.some((criterion) => /^ARCH-/.test(criterion.id)), false);
+
+  const report = run(["report", "--root", root, "--json"]);
+  assert.equal(report.data.completion.confidence, "review-risk");
+  assert.equal(report.data.completion.review_risks.includes("build_vs_buy"), true);
+  assert.match(fs.readFileSync(report.data.report_path, "utf8"), /Review risks: build_vs_buy/);
 
   const doctorPayload = run(["doctor", "--root", root, "--json"]);
   const buildVsBuyCheck = doctorPayload.data.checks.find((check) => check.name === "build_vs_buy_health");
@@ -1708,12 +1943,12 @@ test("criterion update preserves the revised acceptance basis and clears stale e
   assert.equal(payload.ledger.criteria["AC-P-1"].evidence.length, 0);
 });
 
-test("check rejects implementation details inside user acceptance criteria", () => {
+test("check reviews possible implementation details without rejecting the contract", () => {
   const root = tempRoot();
-  const badBrief = path.join(root, "bad.json");
-  fs.writeFileSync(badBrief, JSON.stringify({
-    goal_id: "bad",
-    goal: "Bad example",
+  const reviewBrief = path.join(root, "review.json");
+  fs.writeFileSync(reviewBrief, JSON.stringify({
+    goal_id: "review",
+    goal: "Review example",
     criteria: [
       {
         id: "AC-1",
@@ -1724,22 +1959,22 @@ test("check rejects implementation details inside user acceptance criteria", () 
     ]
   }));
 
-  const result = spawnSync(process.execPath, [CLI, "init", badBrief, "--root", root, "--json"], {
-    cwd: ROOT,
-    encoding: "utf8"
-  });
-  assert.equal(result.status, 1);
-  const payload = JSON.parse(result.stdout);
-  assert.equal(payload.ok, false);
-  assert.equal(payload.issues[0].message, "Implementation detail appears in user acceptance criterion");
+  const payload = run(["init", reviewBrief, "--root", root, "--json"]);
+  assert.equal(payload.ok, true);
+
+  const check = run(["check", "--root", root, "--json"]);
+  assert.equal(check.ok, true);
+  assert.equal(check.data.acceptance_review.status, "needs-user-review");
+  assert.equal(check.warnings.some((warning) => warning.type === "acceptance_review" && warning.gap_id === "possible-implementation-detail"), true);
+  assert.equal(check.warnings.some((warning) => /技术词是否是用户实际会看到/.test(warning.message)), true);
 });
 
-test("check requires measurable user operations and observable outcomes", () => {
-  const badRoot = tempRoot();
-  const badBrief = path.join(badRoot, "bad-quality.json");
-  fs.writeFileSync(badBrief, JSON.stringify({
-    goal_id: "bad-quality",
-    goal: "Bad quality example",
+test("check reviews weak measurement and threshold semantics without hard failure", () => {
+  const reviewRoot = tempRoot();
+  const reviewBrief = path.join(reviewRoot, "review-quality.json");
+  fs.writeFileSync(reviewBrief, JSON.stringify({
+    goal_id: "review-quality",
+    goal: "Review quality example",
     criteria: [
       {
         id: "AC-1",
@@ -1750,16 +1985,13 @@ test("check requires measurable user operations and observable outcomes", () => 
     ]
   }));
 
-  const badResult = spawnSync(process.execPath, [CLI, "init", badBrief, "--root", badRoot, "--json"], {
-    cwd: ROOT,
-    encoding: "utf8"
-  });
-  assert.equal(badResult.status, 1);
-  const badPayload = JSON.parse(badResult.stdout);
-  assert.equal(badPayload.ok, false);
-  assert.equal(badPayload.issues.some((issue) => issue.message === "Measurement must describe a user operation or review action"), true);
-  assert.equal(badPayload.issues.some((issue) => issue.message === "Passing threshold must describe a user-observable outcome or judgment"), true);
-  assert.equal(badPayload.issues.some((issue) => issue.message === "Implementation-only completion condition is not a user acceptance criterion"), true);
+  const reviewPayload = run(["init", reviewBrief, "--root", reviewRoot, "--json"]);
+  assert.equal(reviewPayload.ok, true);
+  const reviewCheck = run(["check", "--root", reviewRoot, "--json"]);
+  assert.equal(reviewCheck.data.acceptance_review.status, "needs-user-review");
+  assert.equal(reviewCheck.warnings.some((warning) => warning.gap_id === "measurement-review-method-unclear"), true);
+  assert.equal(reviewCheck.warnings.some((warning) => warning.gap_id === "threshold-user-outcome-unclear"), true);
+  assert.equal(reviewCheck.warnings.some((warning) => warning.gap_id === "implementation-only-completion-signal"), true);
 
   const goodRoot = tempRoot();
   const goodBrief = path.join(goodRoot, "good-quality.json");
@@ -1804,12 +2036,12 @@ test("check audits existing active contracts for underspecified acceptance quali
   const after = fs.readFileSync(init.data.evidence_path, "utf8");
 
   assert.equal(check.ok, true);
-  assert.equal(check.data.acceptance_quality.status, "needs-user-review");
+  assert.equal(check.data.acceptance_review.status, "needs-user-review");
   assert.equal(check.warnings.some((warning) => warning.gap_id === "missing-field-scope"), true);
   assert.equal(check.warnings.some((warning) => warning.gap_id === "missing-validation-rule"), true);
   assert.equal(check.warnings.some((warning) => warning.gap_id === "missing-success-signal"), true);
   assert.equal(check.warnings.some((warning) => warning.gap_id === "missing-failure-case"), true);
-  assert.equal(check.next_actions.some((action) => /revise/.test(action)), true);
+  assert.equal(check.next_actions.some((action) => /acceptance_review/.test(action)), true);
   assert.equal(after, before);
 
   const goodRoot = tempRoot();
@@ -1830,7 +2062,7 @@ test("check audits existing active contracts for underspecified acceptance quali
 
   run(["init", goodBrief, "--root", goodRoot, "--json"]);
   const goodCheck = run(["check", "--root", goodRoot, "--json"]);
-  assert.equal(goodCheck.data.acceptance_quality.status, "clear");
-  assert.equal(goodCheck.warnings.some((warning) => warning.type === "acceptance_quality"), false);
+  assert.equal(goodCheck.data.acceptance_review.status, "clear");
+  assert.equal(goodCheck.warnings.some((warning) => warning.type === "acceptance_review"), false);
   assert.equal(goodCheck.data.architecture_check.status, "needs-action");
 });

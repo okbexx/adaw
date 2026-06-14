@@ -10,7 +10,7 @@ architecture_check 是 OpenNori 自有验收状态语义：它复用现有 archi
 
 ## Candidates Checked
 
-- Current project: 已有 src/architecture/state.ts 的 architectureState、src/lifecycle/doctor.ts 与 manifest health、src/acceptance.ts 的 acceptance_quality audit；src/cli/commands/check.ts 聚合 active contract 状态。
+- Current project: 已有 src/architecture/state.ts 的 architectureState、src/lifecycle/doctor.ts 与 manifest health、src/acceptance.ts 的 acceptance_review surface；src/cli/commands/check.ts 聚合 active contract 状态。
 - Standard library: Node.js 标准库足够读取本地 .opennori/ 与 agent route 文件；不需要额外 runtime。
 - Official SDK: 无官方 SDK；这是 OpenNori 产品状态语义。
 - Open source: 通用 schema/validator 库能校验 JSON 形状，但不能表达 OpenNori 的 Product AC 与 Architecture Baseline 分离、challenge、agent surface 恢复建议。

@@ -6,8 +6,8 @@
     "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
-      "summary": "Revised AC-A-10 because the previous dogfood evidence used the removed Skill Pack install path and can no longer prove the Plugin-first product boundary.",
-      "approved_at": "2026-06-13T10:29:09.307Z"
+      "summary": "User revised AC-P-12 to define acceptance review as soft agent/user discussion input.",
+      "approved_at": "2026-06-14T00:58:10.102Z"
     },
     "criteria": [
       {
@@ -22,9 +22,9 @@
       {
         "id": "AC-P-2",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 opennori check 后，能知道验收标准是否仍然是用户视角，而不是技术实现清单。",
-        "measurement": "对当前 active goal 或故意写坏的验收草案运行 opennori check。",
-        "threshold": "“存在文件、字段、命令、测试通过、实现某模块”这类内容不能作为用户验收标准通过校验。",
+        "user_story": "作为用户，我运行 opennori check 后，能知道验收标准是否仍然需要人类视角复核，而不是被技术实现清单静默当成完成。",
+        "measurement": "对当前 active goal 或故意包含实现词、测试通过、字段存在等表达的验收草案运行 opennori check。",
+        "threshold": "check 只对 contract/ledger 结构完整性做硬失败；对可能偏离用户视角、过于含糊或实现中心的 AC 输出 acceptance_review findings、warnings 和 agent_guidance，提醒 agent 与用户确认、修订、记录假设或接受 review risk。",
         "required": true,
         "risk": "medium"
       },
@@ -112,9 +112,9 @@
       {
         "id": "AC-P-12",
         "layer": "protocol",
-        "user_story": "作为用户，我运行 opennori check 或让 agent 升级已使用 OpenNori 的项目后，能发现现有 active contract 里过于含糊的 AC，而不是让旧的弱验收标准静默通过。",
-        "measurement": "对已有 active goal 中包含“修改字段”“失败时有提示”等空泛完成条件的 Nori Contract 运行 opennori check；再对结构正确且包含具体用户操作、字段范围、反馈和判断方式的 contract 运行 check。",
-        "threshold": "check 在不改写历史 contract/evidence 的前提下输出 acceptance_quality 审计结果、warnings 和下一步建议；弱 AC 会标出缺少的字段范围、校验规则、成功反馈、失败场景或范围边界；具体 AC 不产生质量告警。",
+        "user_story": "作为用户，我运行 opennori check 或让 agent 升级已使用 OpenNori 的项目后，能发现现有 active contract 里过于含糊的 AC，并知道这是需要讨论的 review risk，而不是协议硬拒绝。",
+        "measurement": "对已有 active goal 中包含“修改字段”“失败时有提示”或实现中心表达的 Nori Contract 运行 opennori check；再对结构正确且包含具体用户操作、字段范围、反馈和判断方式的 contract 运行 check。",
+        "threshold": "check 在不改写历史 contract/evidence 的前提下输出 acceptance_review findings、warnings 和下一步建议；弱 AC 会标出缺少的字段范围、校验规则、成功反馈、失败场景或范围边界；具体 AC 不产生 review finding；结构合法的 contract 不会只因启发式词表而 invalid。",
         "required": true,
         "risk": "high"
       },
@@ -202,9 +202,9 @@
       {
         "id": "AC-Z-1",
         "layer": "productization",
-        "user_story": "作为用户，我获取 OpenNori 包后，我的 agent 能通过 Codex Plugin 发现 OpenNori Skills，而不需要我运行 skill export 或记住内部 Skill 名。",
-        "measurement": "查看 .codex-plugin/plugin.json、skills/nori*/SKILL.md、README 和 opennori doctor 输出。",
-        "threshold": "包内包含 .codex-plugin/plugin.json 且 skills 指向 ./skills/；nori 总入口和子 Skills 说明自然语言路由；doctor 报告 plugin_manifest、plugin_skills 和 manifest_plugin_state；不存在 opennori skill export 作为用户路径。",
+        "user_story": "作为用户，我获取 OpenNori 包后，我的 agent 能通过 Codex Plugin 发现 OpenNori Skills，而不需要我记住内部 Skill 名或手动查找能力入口。",
+        "measurement": "查看 Codex Plugin manifest、package Skills、README 和 opennori doctor 输出。",
+        "threshold": "包内包含 .codex-plugin/plugin.json 且 skills 指向 ./skills/；nori 总入口和子 Skills 说明自然语言路由；doctor 报告 plugin_manifest、plugin_skills 和 manifest_plugin_state；用户能判断 Plugin Skills 可用。",
         "required": true,
         "risk": "medium"
       },
@@ -311,8 +311,8 @@
         "id": "AC-Z-13",
         "layer": "productization",
         "user_story": "作为用户，我运行 opennori doctor 后，如果项目状态不健康，能直接看到一组可执行恢复动作。",
-        "measurement": "分别制造缺失 Skill Pack、缺失 manifest、stale manifest 和损坏 active goal 的项目，然后运行 opennori doctor。",
-        "threshold": "doctor 输出 status、失败 check、active_goal_issues 和 recovery_actions；recovery_actions 说明要运行的 OpenNori 命令或要检查的 .opennori/active 文件位置。",
+        "measurement": "分别制造缺失 manifest、stale manifest、缺失 package Plugin assets 和损坏 active goal 的项目，然后运行 opennori doctor。",
+        "threshold": "doctor 输出 status、失败 check、active_goal_issues、Plugin asset health 和 recovery_actions；recovery_actions 说明要运行的 OpenNori 命令或要检查的 .opennori/active 文件位置。",
         "required": true,
         "risk": "high"
       },
@@ -339,7 +339,7 @@
         "layer": "productization",
         "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能用 opennori 或 npx opennori 这个短入口开始，而不需要理解 install、root、dry-run、confirm 或内部 Skill 参数。",
         "measurement": "在全新临时项目中运行 opennori 或 npx opennori 等价入口，再确认 bootstrap 后运行 opennori doctor。",
-        "threshold": "npm 包只提供 opennori 这个 bin；短入口默认展示首次接入 preview 且不写入项目；显式确认后只创建 .opennori 状态；不会创建项目 Skill Pack；doctor 为 ready。",
+        "threshold": "npm 包只提供 opennori 这个 bin；短入口默认展示首次接入 preview 且不写入项目；显式确认后只创建 .opennori 状态；不会向项目写入 package Skill assets；doctor 为 ready。",
         "required": true,
         "risk": "high"
       },
@@ -427,7 +427,7 @@
       {
         "id": "AC-A-9",
         "layer": "architecture",
-        "user_story": "作为用户，我打开 README 或官网时，能理解 OpenNori 同时提供产品验收、架构基线、Plugin Skills、证据和完成判断，而不是只看到旧的验收工具或 Skill Pack 安装心智。",
+        "user_story": "作为用户，我打开 README 或官网时，能理解 OpenNori 同时提供产品验收、架构基线、Plugin Skills、证据和完成判断，而不是过程模板工具。",
         "measurement": "阅读 README、官网首页、protocol 和 OpenNori Skills。",
         "threshold": "用户能看到 Architecture Baseline、Architecture Challenge、build-vs-buy、Plugin Skills、项目 profile 和 Product AC 分离的说明与用例。",
         "risk": "medium",
@@ -437,8 +437,8 @@
         "id": "AC-A-10",
         "layer": "architecture",
         "user_story": "作为用户，我能在一个非 OpenNori 核心仓库里，按新的 Plugin-first 边界完整跑通自然语言目标、Product AC、Architecture Baseline、执行、证据、报告和完成判断。",
-        "measurement": "选择一个非 OpenNori 核心仓库，使用当前 OpenNori 从目标到报告跑完；过程中不得使用 opennori skill export、install --skill、refresh-skill 或项目内 OpenNori Skill copy/sync。",
-        "threshold": "报告同时呈现产品完成状态、架构健康状态、Plugin Skills/package 能力、证据、未解决风险和是否需要用户确认；用户不需要记住 CLI 参数；doctor/check 不依赖项目内 OpenNori Skill Pack。",
+        "measurement": "选择一个非 OpenNori 核心仓库，使用当前 OpenNori 从目标到报告跑完；过程中只通过 Plugin Skills 和 .opennori 状态驱动 OpenNori 能力。",
+        "threshold": "报告同时呈现产品完成状态、架构健康状态、Plugin package 能力、证据、未解决风险和是否需要用户确认；用户不需要记住 CLI 参数；doctor/check 不依赖项目内 Skill 资产副本。",
         "risk": "high",
         "required": true
       }
@@ -448,7 +448,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-13T13:48:05.422Z",
+    "updated_at": "2026-06-14T01:36:38.293Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -477,11 +477,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -533,26 +528,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -571,62 +546,9 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "test-summary",
-            "basis": "tool-observation",
-            "summary": "AC-P-2 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
-              },
-              {
-                "type": "url",
-                "label": "https://opennori.okbexx.com",
-                "url": "https://opennori.okbexx.com"
-              }
-            ],
-            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
-            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
-            "gate": "accepted",
-            "created_at": "2026-06-11T09:51:29.206Z"
-          },
-          {
             "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "opennori check validates user-perspective criteria and rejects implementation-only AC wording while also reporting acceptance_quality, architecture_check, and evidence_health.",
+            "summary": "OpenNori check now separates hard contract integrity from soft acceptance_review: validateContractIntegrity keeps structure/ledger hard failures, check returns acceptance_review findings with agent_guidance for subjective AC concerns, and tests prove implementation-centered wording no longer rejects otherwise valid contracts.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -642,28 +564,79 @@
               },
               {
                 "type": "artifact",
+                "label": "src/core/contract.ts",
+                "path": "src/core/contract.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/acceptance.ts",
+                "path": "src/acceptance.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/check.ts",
+                "path": "src/cli/commands/check.ts"
+              },
+              {
+                "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
+              }
+            ],
+            "reviewability": "Run npm run check and opennori check, then inspect contract integrity validation, acceptance review implementation, and tests around implementation-centered AC wording.",
+            "limitations": "This proves the local CLI and test behavior; agent/user judgment still decides whether to revise, confirm assumptions, waive, or accept review risk.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T00:58:27.223Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "OpenNori keeps subjective preference quality out of hard validators while still surfacing it: profile_review is now a completion review risk, not an invalid contract or failed Product AC.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npx vitest run test/core.test.js -t 'profile|completion-review|required skills'",
+                "command": "npx vitest run test/core.test.js -t 'profile|completion-review|required skills'"
+              }
+            ],
+            "reviewability": "Inspect the profile review-risk implementation and Skill rules, then rerun the targeted tests.",
+            "limitations": "This covers Nori Profile preference semantics; other subjective review surfaces should continue to be audited separately.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T01:10:50.101Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "OpenNori now keeps subjective product and architecture judgments out of hard contract rejection while surfacing them as review risks: acceptance_review, architecture_review, evidence_health, profile_review, and build_vs_buy affect completion confidence rather than rewriting Product AC.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js check --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js check --root . --goal opennori-self --json"
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
+                "label": "src/core/report.ts",
+                "path": "src/core/report.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/cli/commands/check.ts",
+                "path": "src/cli/commands/check.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
               },
               {
                 "type": "artifact",
@@ -671,10 +644,10 @@
                 "path": ".opennori/protocol.md"
               }
             ],
-            "reviewability": "Run npm run check and opennori check, then inspect the referenced source, tests, protocol, and generated report.",
-            "limitations": "This is local repository evidence for the current worktree; npm publishing and public site deployment are separate release steps.",
+            "reviewability": "Run npm run check and opennori check, then inspect report.ts/check.ts and the protocol section explaining review-risk versus hard validation.",
+            "limitations": "This proves the current OpenNori semantics locally; future new review surfaces still need the same boundary audit.",
             "gate": "accepted",
-            "created_at": "2026-06-12T03:14:14.972Z"
+            "created_at": "2026-06-14T01:35:42.092Z"
           }
         ]
       },
@@ -705,11 +678,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -761,26 +729,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -819,11 +767,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -875,26 +818,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -933,11 +856,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -989,26 +907,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1047,11 +945,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1103,26 +996,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1161,11 +1034,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1217,26 +1085,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1275,11 +1123,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1331,26 +1174,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1389,11 +1212,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1445,26 +1263,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1503,11 +1301,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1559,26 +1352,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1617,11 +1390,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1673,26 +1441,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1712,8 +1460,8 @@
         "evidence": [
           {
             "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "OpenNori now audits existing active contracts after upgrade: opennori check returns acceptance_quality warnings for weak ACs without rewriting contract or evidence, upgrade points agents to run check, and docs/Skill Pack describe the upgrade-safe path.",
+            "basis": "tool-observation",
+            "summary": "Existing contracts with vague or implementation-centered wording are now surfaced through acceptance_review warnings instead of invalid_acceptance hard failures: weak settings ACs produce missing-field-scope, validation, success, and failure review findings, while specific ACs stay clear and history is not rewritten.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -1724,13 +1472,18 @@
               },
               {
                 "type": "command",
-                "label": "node ./bin/opennori.js check --root . --json",
-                "command": "node ./bin/opennori.js check --root . --json"
+                "label": "node ./bin/opennori.js check --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js check --root . --goal opennori-self --json"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/acceptance.ts",
+                "path": "src/acceptance.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/check.ts",
+                "path": "src/cli/commands/check.ts"
               },
               {
                 "type": "artifact",
@@ -1739,24 +1492,14 @@
               },
               {
                 "type": "artifact",
-                "label": "README.md",
-                "path": "README.md"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
-              },
-              {
-                "type": "artifact",
-                "label": ".agents/skills/nori-project-health/SKILL.md",
-                "path": ".agents/skills/nori-project-health/SKILL.md"
               }
             ],
-            "reviewability": "Run npm run check, inspect the check audits existing active contracts test, run opennori check on this repo and verify acceptance_quality is clear, and inspect upgrade next_actions.",
-            "limitations": "The first audit is intentionally heuristic and conservative: it catches common weak AC wording without rewriting existing project history; domain-specific follow-up remains agent and user responsibility.",
+            "reviewability": "Run the test suite and inspect the acceptance_review fixtures plus protocol upgrade/check guidance.",
+            "limitations": "The review is heuristic by design; domain-specific AC quality remains an agent and user judgment, not a fixed adapter taxonomy.",
             "gate": "accepted",
-            "created_at": "2026-06-11T12:57:11.709Z"
+            "created_at": "2026-06-14T00:58:27.545Z"
           }
         ]
       },
@@ -1787,11 +1530,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1843,26 +1581,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -1901,11 +1619,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -1957,26 +1670,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2015,11 +1708,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2071,26 +1759,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2129,11 +1797,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2185,26 +1848,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2243,11 +1886,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2299,26 +1937,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2357,11 +1975,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2413,26 +2026,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2471,11 +2064,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2527,26 +2115,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2585,11 +2153,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2641,26 +2204,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2699,11 +2242,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -2755,26 +2293,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -2783,19 +2301,42 @@
             "limitations": "This is local repository evidence for the current worktree; npm publishing and public site deployment are separate release steps.",
             "gate": "accepted",
             "created_at": "2026-06-12T03:14:16.001Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "Nori Profile now separates blocking compliance from review risk: must/violated avoid still block, while unknown or violated prefer items surface as profile_review and make objective completion review-risk rather than confidently complete.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npx vitest run test/core.test.js -t 'profile|completion-review|required skills'",
+                "command": "npx vitest run test/core.test.js -t 'profile|completion-review|required skills'"
+              },
+              {
+                "type": "command",
+                "label": "npm run typecheck",
+                "command": "npm run typecheck"
+              }
+            ],
+            "reviewability": "Run the targeted profile/completion tests and inspect profileCompliance, completionAnswer, check output, and the new preferred-profile regression.",
+            "limitations": "This verifies local CLI semantics; agent/user still decides whether a preference risk should be accepted, waived, or resolved.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T01:10:50.024Z"
           }
         ]
       },
       "AC-Z-1": {
         "status": "passing",
-        "confidence": "high",
+        "confidence": "verified",
         "required": true,
         "risk": "medium",
         "evidence": [
           {
             "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "OpenNori now exposes package-local Codex Plugin Skills instead of a skill export user path: plugin manifest points to ./skills, doctor reports plugin_manifest/plugin_skills/manifest_plugin_state passing, README and package Skills describe Plugin-first natural-language routing, and the current product docs no longer present opennori skill export as a user operation.",
+            "basis": "tool-observation",
+            "summary": "OpenNori exposes package-local Codex Plugin Skills for agent discovery: the marketplace points to plugins/opennori, plugin.json points to ./skills, package Skills describe natural-language routing, and doctor reports Plugin manifest, marketplace, Skills, and manifest state as healthy.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -2803,59 +2344,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js doctor --root . --json",
                 "command": "node ./bin/opennori.js doctor --root . --json"
-              },
-              {
-                "type": "command",
-                "label": "rg -n 'opennori skill export|install --skill|refresh-skill|skill_pack' README.md .opennori/protocol.md skills .codex-plugin src schemas",
-                "command": "rg -n 'opennori skill export|install --skill|refresh-skill|skill_pack' README.md .opennori/protocol.md skills .codex-plugin src schemas"
-              },
-              {
-                "type": "artifact",
-                "label": ".codex-plugin/plugin.json",
-                "path": ".codex-plugin/plugin.json"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori/SKILL.md",
-                "path": "skills/nori/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-project-health/SKILL.md",
-                "path": "skills/nori-project-health/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "README.md",
-                "path": "README.md"
-              }
-            ],
-            "reviewability": "Inspect plugin.json and Skills, run doctor, and run the rg command to confirm old skill export/install paths are absent from user-facing product surfaces.",
-            "limitations": "Historical architecture/evidence records may still mention old Skill Pack decisions as superseded history; this evidence covers current package and user-facing surfaces.",
-            "gate": "accepted",
-            "created_at": "2026-06-13T10:25:31.079Z"
-          },
-          {
-            "kind": "review-result",
-            "basis": "tool-observation",
-            "summary": "Codex Plugin distribution now follows the repo marketplace shape proven by OpenAI docs and TK references: .agents/plugins/marketplace.json points to ./plugins/opennori, the plugin root contains .codex-plugin/plugin.json and bundled Skills, and a real local Codex install succeeded with opennori@opennori installed and enabled from /Users/jarl/code/jarlone/opennori/plugins/opennori.",
-            "result": "passing",
-            "confidence": "high",
-            "sources": [
-              {
-                "type": "command",
-                "label": "codex plugin marketplace add .",
-                "command": "codex plugin marketplace add ."
-              },
-              {
-                "type": "command",
-                "label": "codex plugin add opennori@opennori",
-                "command": "codex plugin add opennori@opennori"
-              },
-              {
-                "type": "command",
-                "label": "codex plugin list",
-                "command": "codex plugin list"
               },
               {
                 "type": "artifact",
@@ -2871,12 +2359,17 @@
                 "type": "artifact",
                 "label": "plugins/opennori/skills/nori/SKILL.md",
                 "path": "plugins/opennori/skills/nori/SKILL.md"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/doctor/plugin-health.ts",
+                "path": "src/lifecycle/doctor/plugin-health.ts"
               }
             ],
-            "reviewability": "Run the three Codex plugin commands and confirm opennori@opennori is installed, enabled, and resolved to plugins/opennori; inspect marketplace and plugin manifest paths.",
-            "limitations": "This verifies the local repo marketplace install path. A GitHub marketplace install should be retested after pushing and any npm publish/version bump.",
+            "reviewability": "Inspect plugin manifest, marketplace metadata, package Skills, and doctor data.plugin/checks.",
+            "limitations": "This validates the source checkout package assets; external package installation should be smoke-tested after publish.",
             "gate": "accepted",
-            "created_at": "2026-06-13T13:47:48.746Z"
+            "created_at": "2026-06-13T15:02:52.086Z"
           }
         ]
       },
@@ -2888,73 +2381,25 @@
         "evidence": [
           {
             "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "AC-Z-2 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
-              },
-              {
-                "type": "url",
-                "label": "https://opennori.okbexx.com",
-                "url": "https://opennori.okbexx.com"
-              }
-            ],
-            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
-            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
-            "gate": "accepted",
-            "created_at": "2026-06-11T09:51:30.257Z"
-          },
-          {
-            "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "install creates or skips OpenNori project assets, writes manifest state, installs Skill Pack when requested, and avoids overwriting existing protocol/routes without explicit force.",
+            "summary": "Install preview only manages OpenNori project state: .opennori directories, protocol, guide, manifest, agent routes, and architecture directories are create/skip/update actions, with no destructive writes unless explicitly confirmed.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
+                "label": "node ./bin/opennori.js install --root . --dry-run --json",
+                "command": "node ./bin/opennori.js install --root . --dry-run --json"
               },
               {
-                "type": "command",
-                "label": "node ./bin/opennori.js check --root . --json",
-                "command": "node ./bin/opennori.js check --root . --json"
+                "type": "artifact",
+                "label": "src/lifecycle/install.ts",
+                "path": "src/lifecycle/install.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/managed-files.ts",
+                "path": "src/lifecycle/managed-files.ts"
               },
               {
                 "type": "artifact",
@@ -2963,34 +2408,14 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
             ],
-            "reviewability": "Run npm run check and opennori check, then inspect the referenced source, tests, protocol, and generated report.",
-            "limitations": "This is local repository evidence for the current worktree; npm publishing and public site deployment are separate release steps.",
+            "reviewability": "Run install dry-run and inspect install_plan actions plus lifecycle install tests.",
+            "limitations": "Dry-run proves the plan surface; actual overwrite paths still require explicit confirmation and should be retested in fixture projects.",
             "gate": "accepted",
-            "created_at": "2026-06-12T03:14:16.094Z"
+            "created_at": "2026-06-13T15:02:52.322Z"
           }
         ]
       },
@@ -3021,11 +2446,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3077,26 +2497,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3135,11 +2535,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3191,26 +2586,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3249,11 +2624,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3305,26 +2675,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3363,11 +2713,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3419,26 +2764,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3459,7 +2784,7 @@
           {
             "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "Install dry-run reports .opennori project-state actions only and manifest records plugin state with packaged Skills, active goals, architecture state, managed files, and capabilities; no action writes .agents/skills.",
+            "summary": "Install dry-run and manifest expose project registration details users can judge: OpenNori version, active goals, managed files, protocol capabilities, architecture directories, and package Plugin state.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -3475,19 +2800,19 @@
               },
               {
                 "type": "artifact",
-                "label": "src/lifecycle/install.ts",
-                "path": "src/lifecycle/install.ts"
+                "label": "src/lifecycle/manifest.ts",
+                "path": "src/lifecycle/manifest.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/lifecycle/manifest.ts",
-                "path": "src/lifecycle/manifest.ts"
+                "label": "src/lifecycle/install.ts",
+                "path": "src/lifecycle/install.ts"
               }
             ],
-            "reviewability": "Run the install dry-run and inspect install_plan.actions plus manifest.plugin.",
-            "limitations": "Dry-run proves the plan surface; real writes still require confirmation for update/overwrite paths.",
+            "reviewability": "Run install dry-run and inspect .opennori/manifest.json plus manifest/install source.",
+            "limitations": "This verifies current local project state; package release validation should rerun after version changes.",
             "gate": "accepted",
-            "created_at": "2026-06-13T10:25:31.027Z"
+            "created_at": "2026-06-13T15:02:52.562Z"
           }
         ]
       },
@@ -3557,11 +2882,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
                 "label": "bin/opennori.js",
                 "path": "bin/opennori.js"
               },
@@ -3610,26 +2930,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3668,11 +2968,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3724,26 +3019,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3782,11 +3057,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -3838,26 +3108,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -3891,61 +3141,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js install --root . --dry-run --json",
                 "command": "node ./bin/opennori.js install --root . --dry-run --json"
-              },
-              {
-                "type": "artifact",
-                "label": ".codex-plugin/plugin.json",
-                "path": ".codex-plugin/plugin.json"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori/SKILL.md",
-                "path": "skills/nori/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-acceptance/SKILL.md",
-                "path": "skills/nori-acceptance/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-evidence/SKILL.md",
-                "path": "skills/nori-evidence/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-capability-profile/SKILL.md",
-                "path": "skills/nori-capability-profile/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-architecture-brainstorm/SKILL.md",
-                "path": "skills/nori-architecture-brainstorm/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-architecture-apply/SKILL.md",
-                "path": "skills/nori-architecture-apply/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-architecture-challenge/SKILL.md",
-                "path": "skills/nori-architecture-challenge/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-build-vs-buy/SKILL.md",
-                "path": "skills/nori-build-vs-buy/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-project-health/SKILL.md",
-                "path": "skills/nori-project-health/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-reporting/SKILL.md",
-                "path": "skills/nori-reporting/SKILL.md"
               }
             ],
             "reviewability": "Inspect package Skill files and plugin manifest, then run doctor and install dry-run to confirm plugin state and absence of project Skill copy actions.",
@@ -4006,73 +3201,15 @@
         "evidence": [
           {
             "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "AC-Z-13 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
-              },
-              {
-                "type": "url",
-                "label": "https://opennori.okbexx.com",
-                "url": "https://opennori.okbexx.com"
-              }
-            ],
-            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
-            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
-            "gate": "accepted",
-            "created_at": "2026-06-11T09:51:30.862Z"
-          },
-          {
-            "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "doctor recovery_actions identify concrete next actions for missing directories, stale Skill Pack, missing architecture routes, invalid manifest, or unrecoverable active goals.",
+            "summary": "Doctor provides actionable recovery for unhealthy OpenNori state: tests cover missing manifest, stale manifest, invalid manifest, missing baseline routes, broken active goals, and Plugin asset health; current doctor output reports ready with no recovery actions.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js check --root . --json",
-                "command": "node ./bin/opennori.js check --root . --json"
+                "label": "node ./bin/opennori.js doctor --root . --json",
+                "command": "node ./bin/opennori.js doctor --root . --json"
               },
               {
                 "type": "artifact",
@@ -4081,34 +3218,24 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
+                "label": "src/lifecycle/doctor.ts",
+                "path": "src/lifecycle/doctor.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/lifecycle/doctor/plugin-health.ts",
+                "path": "src/lifecycle/doctor/plugin-health.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/protocol.md",
-                "path": ".opennori/protocol.md"
+                "label": "src/lifecycle/doctor/active-goals.ts",
+                "path": "src/lifecycle/doctor/active-goals.ts"
               }
             ],
-            "reviewability": "Run npm run check and opennori check, then inspect the referenced source, tests, protocol, and generated report.",
-            "limitations": "This is local repository evidence for the current worktree; npm publishing and public site deployment are separate release steps.",
+            "reviewability": "Run doctor and inspect doctor tests for unhealthy fixtures and recovery_actions assertions.",
+            "limitations": "Current repo is healthy, so broken-state behavior is verified through test fixtures rather than by damaging this checkout.",
             "gate": "accepted",
-            "created_at": "2026-06-12T03:14:16.629Z"
+            "created_at": "2026-06-13T15:02:52.802Z"
           }
         ]
       },
@@ -4139,11 +3266,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -4195,26 +3317,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -4253,11 +3355,6 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js",
                 "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
               },
               {
                 "type": "artifact",
@@ -4309,26 +3406,6 @@
               },
               {
                 "type": "artifact",
-                "label": "src/core.js",
-                "path": "src/core.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -4349,19 +3426,19 @@
           {
             "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "Quickstart now keeps opennori as the only bin and removes Skill Pack parameters from the short entry: README shows opennori for installed use and npx opennori for try-once; bootstrap/install create .opennori state only; package.json exposes only the opennori bin.",
+            "summary": "The package exposes only the opennori bin, README shows short opennori and npx opennori entries, and bootstrap/install preview project-state writes before confirmed setup.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "node ./bin/opennori.js install --root . --dry-run --json",
-                "command": "node ./bin/opennori.js install --root . --dry-run --json"
+                "label": "node ./bin/opennori.js --help",
+                "command": "node ./bin/opennori.js --help"
               },
               {
                 "type": "command",
-                "label": "rg -n 'Skill Pack|install --skill|refresh-skill' README.md examples/opennori-self.json src/cli src/lifecycle",
-                "command": "rg -n 'Skill Pack|install --skill|refresh-skill' README.md examples/opennori-self.json src/cli src/lifecycle"
+                "label": "node ./bin/opennori.js bootstrap --root /tmp/opennori-bootstrap-smoke --json",
+                "command": "node ./bin/opennori.js bootstrap --root /tmp/opennori-bootstrap-smoke --json"
               },
               {
                 "type": "artifact",
@@ -4375,14 +3452,19 @@
               },
               {
                 "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
+                "label": "src/cli/bootstrap.ts",
+                "path": "src/cli/bootstrap.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
               }
             ],
-            "reviewability": "Inspect package.json bin, README install/quickstart sections, example AC, and install dry-run actions.",
-            "limitations": "This validates current docs and local CLI behavior; npm published smoke should be rerun after version bump/publish.",
+            "reviewability": "Inspect package.json bin and README quickstart, then run help/bootstrap preview and bootstrap tests.",
+            "limitations": "npx behavior depends on npm registry propagation after publish; local CLI behavior is verified here.",
             "gate": "accepted",
-            "created_at": "2026-06-13T10:26:03.181Z"
+            "created_at": "2026-06-13T15:02:53.058Z"
           }
         ]
       },
@@ -4394,73 +3476,15 @@
         "evidence": [
           {
             "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "AC-Z-17 is covered by the OpenNori 0.1.3 single-bin CLI implementation, self contract refresh, tests, and reviewable artifacts.",
+            "basis": "tool-observation",
+            "summary": "README and website quickstart lead with short commands: try once with npx opennori, pin with npm install -D opennori, then use opennori as the project-local entry.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm run check",
-                "command": "npm run check"
-              },
-              {
-                "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js",
-                "command": "node ./bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "bin/opennori.js",
-                "path": "bin/opennori.js"
-              },
-              {
-                "type": "artifact",
-                "label": "package.json",
-                "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "examples/opennori-self.json",
-                "path": "examples/opennori-self.json"
-              },
-              {
-                "type": "url",
-                "label": "https://opennori.okbexx.com",
-                "url": "https://opennori.okbexx.com"
-              }
-            ],
-            "reviewability": "Run npm run check, inspect package.json bin.opennori, run node ./bin/opennori.js in a fresh directory, inspect README and the public site quick start.",
-            "limitations": "This verifies local implementation and staged site content; public npm and public site require publish/deploy before external users get this exact version.",
-            "gate": "accepted",
-            "created_at": "2026-06-11T09:51:31.065Z"
-          },
-          {
-            "kind": "review-result",
-            "basis": "protocol-check",
-            "summary": "README and website Quick Start now lead with npx opennori, and project install also uses the same short opennori entry instead of long install/bootstrap parameters.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "pnpm build in adaw-site",
-                "command": "pnpm build in adaw-site"
-              },
-              {
-                "type": "command",
-                "label": "rg old nori command residuals in README/site/dist",
-                "command": "rg old nori command residuals in README/site/dist"
+                "label": "rg -n 'npx opennori|npm install -D opennori|opennori' README.md /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "command": "rg -n 'npx opennori|npm install -D opennori|opennori' README.md /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
               },
               {
                 "type": "artifact",
@@ -4469,14 +3493,14 @@
               },
               {
                 "type": "artifact",
-                "label": "/Users/jarl/code/jarlone/adaw-site/src/pages/index.astro",
-                "path": "/Users/jarl/code/jarlone/adaw-site/src/pages/index.astro"
+                "label": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
               }
             ],
-            "reviewability": "Open README and website source or built dist, confirm the first visible Quick Start is npx opennori and old nori command examples are absent.",
-            "limitations": "Website source and local build are verified; public site requires deployment before external users see this exact copy.",
+            "reviewability": "Open README and website source, or run the rg command, to verify the visible quickstart copy.",
+            "limitations": "This verifies local website source; public site deployment is a separate release step.",
             "gate": "accepted",
-            "created_at": "2026-06-11T10:08:25.562Z"
+            "created_at": "2026-06-13T15:02:53.305Z"
           }
         ]
       },
@@ -4500,18 +3524,8 @@
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".agents/skills/nori-architecture-brainstorm/SKILL.md",
-                "path": ".agents/skills/nori-architecture-brainstorm/SKILL.md"
               },
               {
                 "type": "artifact",
@@ -4550,26 +3564,6 @@
                 "type": "artifact",
                 "label": "package.json",
                 "path": "package.json"
-              },
-              {
-                "type": "artifact",
-                "label": "src/package-root.js",
-                "path": "src/package-root.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/validation.js",
-                "path": "src/validation.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
               },
               {
                 "type": "artifact",
@@ -4616,16 +3610,6 @@
                 "type": "artifact",
                 "label": ".opennori/agent-guide.md",
                 "path": ".opennori/agent-guide.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori/SKILL.md",
-                "path": "skills/nori/SKILL.md"
-              },
-              {
-                "type": "artifact",
-                "label": "skills/nori-architecture-apply/SKILL.md",
-                "path": "skills/nori-architecture-apply/SKILL.md"
               }
             ],
             "reviewability": "Inspect baseline agent_surfaces, nori routing, architecture apply Skill, and architecture show output.",
@@ -4642,47 +3626,9 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "test-summary",
+            "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "OpenNori lists built-in Architecture Profiles, imports project profiles, and can build a baseline from a project profile without turning architecture into Product AC.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "npm test",
-                "command": "npm test"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js architecture profiles --root . --json",
-                "command": "node ./bin/opennori.js architecture profiles --root . --json"
-              },
-              {
-                "type": "artifact",
-                "label": "test/core.test.js",
-                "path": "test/core.test.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".agents/skills/nori-architecture-brainstorm/SKILL.md",
-                "path": ".agents/skills/nori-architecture-brainstorm/SKILL.md"
-              }
-            ],
-            "reviewability": "Run npm test and inspect the project architecture profile regression test plus architecture profile command.",
-            "limitations": "The current repository has only the built-in profile installed; project profile behavior is verified in temporary test projects.",
-            "gate": "accepted",
-            "created_at": "2026-06-12T00:38:40.635Z"
-          },
-          {
-            "kind": "test-summary",
-            "basis": "tool-observation",
-            "summary": "Architecture Profiles are now reviewable before baseline confirmation: architecture profiles --json exposes built-in and project profile validity, suitable use cases, sources, principles, checks, preferred libraries, avoid boundaries, and build-vs-buy policy; tests cover built-in and project profiles.",
+            "summary": "Architecture Profiles are reviewable before baseline confirmation: architecture profiles --json exposes built-in and project profile validity, suitable use cases, sources, principles, checks, preferred libraries, avoid boundaries, and build-vs-buy policy; tests cover built-in and project profiles.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -4693,18 +3639,23 @@
               },
               {
                 "type": "command",
-                "label": "node --test --test-name-pattern 'architecture baseline loop|project architecture profiles|skill export' test/core.test.js",
-                "command": "node --test --test-name-pattern 'architecture baseline loop|project architecture profiles|skill export' test/core.test.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/architecture.js",
-                "path": "src/architecture.js"
+                "label": "npx vitest run test/core.test.js -t 'architecture profiles|project architecture profiles'",
+                "command": "npx vitest run test/core.test.js -t 'architecture profiles|project architecture profiles'"
               },
               {
                 "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "src/architecture/profile.ts",
+                "path": "src/architecture/profile.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/architecture/profiles.ts",
+                "path": "src/cli/commands/architecture/profiles.ts"
               },
               {
                 "type": "artifact",
@@ -4712,10 +3663,10 @@
                 "path": ".opennori/architecture/decisions/architecture-profile-review-surface.json"
               }
             ],
-            "reviewability": "Run architecture profiles --json and inspect agent-native-cli fields; run the targeted architecture profile tests.",
-            "limitations": "This uses OpenNori's existing profile model rather than a generic registry; richer schema validation can be reconsidered if profile complexity grows.",
+            "reviewability": "Run architecture profiles and targeted tests, then inspect the profile implementation and build-vs-buy decision.",
+            "limitations": "This validates the current built-in/project profile model; richer external registries would need a new build-vs-buy decision.",
             "gate": "accepted",
-            "created_at": "2026-06-12T02:53:39.451Z"
+            "created_at": "2026-06-13T15:03:35.283Z"
           }
         ]
       },
@@ -4739,18 +3690,8 @@
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".agents/skills/nori-architecture-challenge/SKILL.md",
-                "path": ".agents/skills/nori-architecture-challenge/SKILL.md"
               }
             ],
             "reviewability": "Run npm test and inspect the architecture challenge regression test and Skill rules.",
@@ -4769,29 +3710,39 @@
           {
             "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "OpenNori status, report, and context export expose Product decision and Architecture decision separately.",
+            "summary": "status/report/context export separate Product decision from Architecture decision: outputs include workflow_status, current_gap, completion, intervention, evidence_health, architecture.decision, and next_recommendation.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "node ./bin/opennori.js status --root . --json",
-                "command": "node ./bin/opennori.js status --root . --json"
+                "label": "node ./bin/opennori.js report --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js report --root . --goal opennori-self --json"
               },
               {
                 "type": "command",
-                "label": "node ./bin/opennori.js report --root . --json",
-                "command": "node ./bin/opennori.js report --root . --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js context export --root . --json",
-                "command": "node ./bin/opennori.js context export --root . --json"
+                "label": "node ./bin/opennori.js context export --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js context export --root . --goal opennori-self --json"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/cli/commands/acceptance/runtime-status.ts",
+                "path": "src/cli/commands/acceptance/runtime-status.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/reporting.ts",
+                "path": "src/cli/commands/reporting.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/context-export.ts",
+                "path": "src/lifecycle/context-export.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/architecture/report.ts",
+                "path": "src/architecture/report.ts"
               },
               {
                 "type": "artifact",
@@ -4799,32 +3750,47 @@
                 "path": "test/core.test.js"
               }
             ],
-            "reviewability": "Run the listed commands and inspect architecture.decision separately from workflow_status/current_gap/completion.",
-            "limitations": "Report rendering is verified locally; external review tooling integration still needs AW dogfood.",
+            "reviewability": "Run report/context export and inspect JSON fields plus reporting/context tests.",
+            "limitations": "This verifies local CLI JSON/report surfaces; external review tools consume the exported context separately.",
             "gate": "accepted",
-            "created_at": "2026-06-12T00:38:40.641Z"
+            "created_at": "2026-06-13T15:03:35.596Z"
           },
           {
             "kind": "review-result",
             "basis": "tool-observation",
-            "summary": "report --json now exposes Product decision fields and Architecture decision together: workflow_status, current_gap, completion, intervention, evidence_health, architecture.decision, and next_recommendation; targeted regression tests cover complete and evidence-review report JSON.",
+            "summary": "Status, report, and context export now pass ArchitectureState into completionAnswer/nextRecommendation so Product AC completion and Architecture decision are shown separately; missing or challenged architecture becomes architecture_review without replacing current_gap.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "node ./bin/opennori.js report --root . --goal opennori-self --json | jq '{workflow_status:.data.workflow_status,current_gap:.data.current_gap,completion:.data.completion,evidence_health:.data.evidence_health,architecture_decision:.data.architecture.decision}'",
-                "command": "node ./bin/opennori.js report --root . --goal opennori-self --json | jq '{workflow_status:.data.workflow_status,current_gap:.data.current_gap,completion:.data.completion,evidence_health:.data.evidence_health,architecture_decision:.data.architecture.decision}'"
+                "label": "npm run check",
+                "command": "npm run check"
               },
               {
                 "type": "command",
-                "label": "node --test --test-name-pattern 'evidence can drive|evidence health|architecture baseline loop' test/core.test.js",
-                "command": "node --test --test-name-pattern 'evidence can drive|evidence health|architecture baseline loop' test/core.test.js"
+                "label": "npx vitest run test/core.test.js -t 'architecture|build-vs-buy'",
+                "command": "npx vitest run test/core.test.js -t 'architecture|build-vs-buy'"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/core/report.ts",
+                "path": "src/core/report.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/architecture/report.ts",
+                "path": "src/architecture/report.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/acceptance/runtime-status.ts",
+                "path": "src/cli/commands/acceptance/runtime-status.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/context-export.ts",
+                "path": "src/lifecycle/context-export.ts"
               },
               {
                 "type": "artifact",
@@ -4832,10 +3798,10 @@
                 "path": "test/core.test.js"
               }
             ],
-            "reviewability": "Run the listed report JSON command and targeted tests, then inspect src/cli.js report handler and test/core.test.js assertions.",
-            "limitations": "This verifies the local CLI JSON report surface; public npm users need the next package publish to receive it.",
+            "reviewability": "Run the targeted tests and inspect status/report/context export wiring plus the missing architecture baseline test.",
+            "limitations": "This verifies CLI/report surfaces; downstream UI or website renderers should continue to mirror the same fields.",
             "gate": "accepted",
-            "created_at": "2026-06-12T03:25:04.896Z"
+            "created_at": "2026-06-14T01:35:54.741Z"
           }
         ]
       },
@@ -4869,11 +3835,6 @@
               },
               {
                 "type": "artifact",
-                "label": "skills/nori-project-health/SKILL.md",
-                "path": "skills/nori-project-health/SKILL.md"
-              },
-              {
-                "type": "artifact",
                 "label": ".opennori/protocol.md",
                 "path": ".opennori/protocol.md"
               }
@@ -4882,6 +3843,49 @@
             "limitations": "This validates current ready-state and current warnings; separate negative-fixture tests cover broken/missing states in the test suite.",
             "gate": "accepted",
             "created_at": "2026-06-13T10:26:03.585Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "opennori check/report/context export are clean for opennori-self after architecture/build-vs-buy completion-risk wiring: architecture_check is clear, build_vs_buy is clear, evidence_health is clear, and completion is confident.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run check",
+                "command": "npm run check"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js check --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js check --root . --goal opennori-self --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js report --root . --goal opennori-self --json",
+                "command": "node ./bin/opennori.js report --root . --goal opennori-self --json"
+              },
+              {
+                "type": "command",
+                "label": "node ./bin/opennori.js context export --root . --goal opennori-self --output .opennori/reports/opennori-self.context.json --json",
+                "command": "node ./bin/opennori.js context export --root . --goal opennori-self --output .opennori/reports/opennori-self.context.json --json"
+              },
+              {
+                "type": "artifact",
+                "label": ".opennori/reports/opennori-self.report.md",
+                "path": ".opennori/reports/opennori-self.report.md"
+              },
+              {
+                "type": "artifact",
+                "label": ".opennori/reports/opennori-self.context.json",
+                "path": ".opennori/reports/opennori-self.context.json"
+              }
+            ],
+            "reviewability": "Rerun the listed commands and inspect report/context export for confident completion and clear architecture/build-vs-buy state.",
+            "limitations": "This records the current repository health; later managed-file or Skill asset changes should rerun doctor/check.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T01:36:08.467Z"
           }
         ]
       },
@@ -4902,27 +3906,50 @@
                 "type": "command",
                 "label": "node ./bin/opennori.js architecture show --root . --json",
                 "command": "node ./bin/opennori.js architecture show --root . --json"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.json",
-                "path": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.json"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md",
-                "path": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md"
-              },
-              {
-                "type": "artifact",
-                "label": ".agents/skills/nori-build-vs-buy/SKILL.md",
-                "path": ".agents/skills/nori-build-vs-buy/SKILL.md"
               }
             ],
             "reviewability": "Open the build-vs-buy decision and verify current project, standard library, official SDK, open source, recommendation, and self-build reason are reviewable.",
             "limitations": "The recorded decision intentionally permits short-term self-build for the baseline state layer; it also states that later CLI architecture repair must re-evaluate mature CLI libraries.",
             "gate": "accepted",
             "created_at": "2026-06-12T01:30:06.502Z"
+          },
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "Unhealthy build-vs-buy decisions now appear as build_vs_buy review risks in completion and next_recommendation without creating synthetic Product AC or current_gap; tests cover missing reuse candidates and missing self-build reason.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npx vitest run test/core.test.js -t 'build-vs-buy'",
+                "command": "npx vitest run test/core.test.js -t 'build-vs-buy'"
+              },
+              {
+                "type": "artifact",
+                "label": "src/core/report.ts",
+                "path": "src/core/report.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/architecture/build-vs-buy.ts",
+                "path": "src/architecture/build-vs-buy.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills/nori-build-vs-buy/SKILL.md",
+                "path": "plugins/opennori/skills/nori-build-vs-buy/SKILL.md"
+              }
+            ],
+            "reviewability": "Run the build-vs-buy targeted test and inspect the build-vs-buy health plus completion review-risk assertions.",
+            "limitations": "This proves build-vs-buy health reporting and completion confidence semantics, not the quality of every individual future architecture decision.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T01:36:21.106Z"
           }
         ]
       },
@@ -4933,90 +3960,72 @@
         "risk": "high",
         "evidence": [
           {
-            "kind": "review-result",
-            "basis": "artifact-review",
-            "summary": "Dogfood correctly shows the Architecture Baseline is established, but full OpenNori architecture repair is not complete yet because src/cli.js remains the main command/domain god file and the agent-native-cli checks have not been satisfied.",
-            "result": "failing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js status --root . --json",
-                "command": "node ./bin/opennori.js status --root . --json"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/baseline.md",
-                "path": ".opennori/architecture/baseline.md"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md",
-                "path": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": "test/core.test.js",
-                "path": "test/core.test.js"
-              }
-            ],
-            "reviewability": "Inspect the baseline checks, build-vs-buy decision, and src/cli.js concentration before claiming architecture repair complete.",
-            "limitations": "This is an intentional non-completion marker: Architecture Baseline Loop exists, but the later CLI architecture repair remains future work under the baseline.",
-            "gate": "accepted",
-            "created_at": "2026-06-12T01:30:23.095Z"
-          },
-          {
-            "kind": "test-summary",
+            "kind": "architecture-review",
             "basis": "tool-observation",
-            "summary": "OpenNori now dogfoods agent-native-cli by extracting Architecture Baseline domain logic from the CLI entry into src/architecture.js while keeping CLI parsing/output in src/cli.js; tests prove behavior stayed intact.",
+            "summary": "OpenNori now applies the confirmed TypeScript agent state CLI baseline: command definitions live in citty TypeScript modules, active-goal state uses runtime locks and pruning, report/context paths use current evidence views, and tests cover pruning plus command modules.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "npm test",
-                "command": "npm test"
+                "label": "npm run build",
+                "command": "npm run build"
               },
               {
                 "type": "command",
-                "label": "node --check src/cli.js && node --check src/architecture.js",
-                "command": "node --check src/cli.js && node --check src/architecture.js"
+                "label": "npx vitest run test/core.test.js -t 'evidence|context export|report'",
+                "command": "npx vitest run test/core.test.js -t 'evidence|context export|report'"
+              },
+              {
+                "type": "command",
+                "label": "npx vitest run test/cli-commands.test.js -t 'evidence'",
+                "command": "npx vitest run test/cli-commands.test.js -t 'evidence'"
               },
               {
                 "type": "artifact",
-                "label": "src/architecture.js",
-                "path": "src/architecture.js"
+                "label": "src/cli/command-tree.ts",
+                "path": "src/cli/command-tree.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "src/cli/runtime.ts",
+                "path": "src/cli/runtime.ts"
               },
               {
                 "type": "artifact",
-                "label": ".opennori/architecture/baseline.md",
-                "path": ".opennori/architecture/baseline.md"
+                "label": "src/core/evidence.ts",
+                "path": "src/core/evidence.ts"
               },
               {
                 "type": "artifact",
-                "label": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md",
-                "path": ".opennori/architecture/decisions/cli-支持-architecture-baseline-命令入口和-agent-readable-状态.md"
+                "label": "src/core/report.ts",
+                "path": "src/core/report.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/context-export.ts",
+                "path": "src/lifecycle/context-export.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "test/cli-commands.test.js",
+                "path": "test/cli-commands.test.js"
               }
             ],
-            "reviewability": "Inspect src/architecture.js for baseline/profile/challenge/build-vs-buy state logic, inspect src/cli.js for command parsing/output, and rerun npm test.",
-            "limitations": "This is the first architecture repair slice, not a full CLI framework migration; later command-domain splits and CLI parser build-vs-buy decisions may still be needed.",
+            "reviewability": "Inspect current TypeScript command/runtime/evidence/report modules and rerun build plus targeted tests.",
+            "limitations": "This proves the current TS/citty slice and evidence cleanup behavior; full product maturity still depends on future dogfood and release validation.",
             "gate": "accepted",
-            "created_at": "2026-06-12T01:35:27.086Z"
+            "created_at": "2026-06-13T15:03:35.829Z"
           },
           {
             "kind": "review-result",
-            "basis": "artifact-review",
-            "summary": "OpenNori now dogfoods agent-native-cli beyond the first minimal slice: Architecture Baseline state lives in src/architecture.js, Skill Pack product surface lives in src/skills.js, acceptance discovery/brainstorm/quality audit lives in src/acceptance.js, and manifest/install/upgrade/uninstall/doctor/bootstrap lifecycle logic lives in src/lifecycle.js; src/cli.js is reduced to command dispatch, argument parsing, IO, and report/evidence command orchestration.",
+            "basis": "tool-observation",
+            "summary": "OpenNori self-dogfood no longer lets Product AC completion hide architecture risk: missing Architecture Baseline, stale agent guide, challenged baseline, or unhealthy build-vs-buy now prevents confident completion while preserving objective_complete and Product current_gap semantics.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -5027,87 +4036,34 @@
               },
               {
                 "type": "command",
-                "label": "npm pack --dry-run --json",
-                "command": "npm pack --dry-run --json"
-              },
-              {
-                "type": "command",
-                "label": "git diff --check",
-                "command": "git diff --check"
+                "label": "npx vitest run test/core.test.js -t 'missing architecture baseline|build-vs-buy'",
+                "command": "npx vitest run test/core.test.js -t 'missing architecture baseline|build-vs-buy'"
               },
               {
                 "type": "artifact",
-                "label": "src/architecture.js",
-                "path": "src/architecture.js"
+                "label": "src/core/report.ts",
+                "path": "src/core/report.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/skills.js",
-                "path": "src/skills.js"
+                "label": "test/core.test.js",
+                "path": "test/core.test.js"
               },
               {
                 "type": "artifact",
-                "label": "src/acceptance.js",
-                "path": "src/acceptance.js"
+                "label": "README.md",
+                "path": "README.md"
               },
               {
                 "type": "artifact",
-                "label": "src/lifecycle.js",
-                "path": "src/lifecycle.js"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
+                "label": "plugins/opennori/skills/nori-reporting/SKILL.md",
+                "path": "plugins/opennori/skills/nori-reporting/SKILL.md"
               }
             ],
-            "reviewability": "Inspect module boundaries and rerun npm run check, npm pack --dry-run --json, git diff --check, and opennori doctor. Confirm src/cli.js no longer owns Architecture Baseline, Skill Pack, acceptance discovery, or lifecycle domain logic.",
-            "limitations": "This proves a substantial architecture repair under the confirmed baseline, not the end of all possible architecture work. CLI argument parsing and command dispatch are still custom and may warrant a later build-vs-buy decision for a mature CLI parser if command complexity continues to grow.",
+            "reviewability": "Run npm run check and the targeted tests, then inspect README and reporting Skill for the same review-risk language.",
+            "limitations": "This verifies the current self-dogfood boundary; a real non-OpenNori project dogfood remains a separate AC-A-10 adoption proof.",
             "gate": "accepted",
-            "created_at": "2026-06-12T02:25:27.233Z"
-          },
-          {
-            "kind": "architecture-review",
-            "basis": "tool-observation",
-            "summary": "OpenNori applied the confirmed agent-native-cli baseline beyond module extraction by replacing growing ad hoc CLI option scanning with Node.js standard-library parseArgs tokens, preserving the opennori command surface and repeated source flags without adding a new dependency.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "node --test --test-name-pattern 'quickstart|evidence records flexible|evidence can drive|install|upgrade|uninstall|profile check' test/core.test.js",
-                "command": "node --test --test-name-pattern 'quickstart|evidence records flexible|evidence can drive|install|upgrade|uninstall|profile check' test/core.test.js"
-              },
-              {
-                "type": "command",
-                "label": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js --json",
-                "command": "node /Users/jarl/code/jarlone/opennori/bin/opennori.js --json"
-              },
-              {
-                "type": "command",
-                "label": "node --check src/cli.js && node --check src/core.js && node --check src/architecture.js && node --check src/lifecycle.js && node --check src/acceptance.js && node --check src/skills.js",
-                "command": "node --check src/cli.js && node --check src/core.js && node --check src/architecture.js && node --check src/lifecycle.js && node --check src/acceptance.js && node --check src/skills.js"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js architecture show --root . --json | jq '{decision:.data.architecture.decision, parser_decision:(.data.architecture.build_vs_buy_decisions[] | select(.area==\"cli-argument-parsing\"))}'",
-                "command": "node ./bin/opennori.js architecture show --root . --json | jq '{decision:.data.architecture.decision, parser_decision:(.data.architecture.build_vs_buy_decisions[] | select(.area==\"cli-argument-parsing\"))}'"
-              },
-              {
-                "type": "artifact",
-                "label": "src/cli.js",
-                "path": "src/cli.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/decisions/cli-argument-parsing-replace-growing-ad-hoc-option-scanning-with.json",
-                "path": ".opennori/architecture/decisions/cli-argument-parsing-replace-growing-ad-hoc-option-scanning-with.json"
-              }
-            ],
-            "reviewability": "Run the listed parser, syntax, architecture, and quickstart/evidence/lifecycle tests; inspect src/cli.js for node:util parseArgs use and the build-vs-buy decision for the standard-library reuse rationale.",
-            "limitations": "This still keeps a thin compatibility wrapper around parseArgs and does not migrate to a full CLI framework; if command complexity keeps growing, the baseline says to re-evaluate commander/cac/citty with a new build-vs-buy decision.",
-            "gate": "accepted",
-            "created_at": "2026-06-12T03:33:39.275Z"
+            "created_at": "2026-06-14T01:36:38.293Z"
           }
         ]
       },
@@ -5118,16 +4074,16 @@
         "risk": "medium",
         "evidence": [
           {
-            "kind": "review-result",
-            "basis": "artifact-review",
-            "summary": "README, protocol, package Skills, and website now explain OpenNori as Product AC plus Architecture Baseline plus Plugin Skills plus flexible evidence and completion judgment; the current website uses Plugin Skills wording and project pin install shows npm install -D opennori followed by opennori.",
+            "kind": "artifact-review",
+            "basis": "tool-observation",
+            "summary": "README, protocol, package Skills, and website describe OpenNori as Product AC plus Architecture Baseline plus Plugin Skills plus flexible evidence and completion judgment, with natural-language examples for users.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
               {
                 "type": "command",
-                "label": "rg -n 'Skill Pack|install --skill|refresh-skill|skill_pack' README.md .opennori/protocol.md skills .codex-plugin src schemas /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
-                "command": "rg -n 'Skill Pack|install --skill|refresh-skill|skill_pack' README.md .opennori/protocol.md skills .codex-plugin src schemas /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+                "label": "rg -n 'Product AC|Architecture Baseline|Plugin Skills|evidence|completion|npx opennori' README.md .opennori/protocol.md plugins/opennori/skills /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "command": "rg -n 'Product AC|Architecture Baseline|Plugin Skills|evidence|completion|npx opennori' README.md .opennori/protocol.md plugins/opennori/skills /Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
               },
               {
                 "type": "artifact",
@@ -5141,13 +4097,13 @@
               },
               {
                 "type": "artifact",
-                "label": "skills/nori/SKILL.md",
-                "path": "skills/nori/SKILL.md"
+                "label": "plugins/opennori/skills/nori/SKILL.md",
+                "path": "plugins/opennori/skills/nori/SKILL.md"
               },
               {
                 "type": "artifact",
-                "label": "skills/nori-project-health/SKILL.md",
-                "path": "skills/nori-project-health/SKILL.md"
+                "label": "plugins/opennori/skills/nori-architecture-brainstorm/SKILL.md",
+                "path": "plugins/opennori/skills/nori-architecture-brainstorm/SKILL.md"
               },
               {
                 "type": "artifact",
@@ -5155,10 +4111,10 @@
                 "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
               }
             ],
-            "reviewability": "Read README/protocol/Skills and website source, and run the rg command to confirm current user docs no longer present old Skill Pack install paths.",
-            "limitations": "Website source is updated locally; deployment/public site verification is separate.",
+            "reviewability": "Read README/protocol/Skills and website source, then run the rg command to verify current product language.",
+            "limitations": "Website source is local; public deployment verification is separate.",
             "gate": "accepted",
-            "created_at": "2026-06-13T10:26:03.546Z"
+            "created_at": "2026-06-13T15:03:36.060Z"
           }
         ]
       },
@@ -5171,7 +4127,7 @@
           {
             "kind": "dogfood-result",
             "basis": "tool-observation",
-            "summary": "OpenNori was dogfooded in the separate opennori-site repo under the current Plugin-first boundary: a natural-language website goal became Product AC, an Astro Architecture Baseline and build-vs-buy decision were confirmed, homepage content was implemented without project-local OpenNori Skill copies, reviewable evidence was recorded, report/status completed, and the dogfood exposed and validated an active-goal write lock fix for concurrent evidence writes.",
+            "summary": "OpenNori was dogfooded in the separate opennori-site repo under the current Plugin-first boundary: a natural-language website goal became Product AC, an Astro Architecture Baseline and build-vs-buy decision were confirmed, homepage content was implemented, reviewable evidence was recorded, report/status completed, and the dogfood validated active-goal write locking.",
             "result": "passing",
             "confidence": "verified",
             "sources": [
@@ -5187,23 +4143,8 @@
               },
               {
                 "type": "command",
-                "label": "cd /Users/jarl/code/jarlone/opennori-site && node /Users/jarl/code/jarlone/opennori/bin/opennori.js doctor --root . --json",
-                "command": "cd /Users/jarl/code/jarlone/opennori-site && node /Users/jarl/code/jarlone/opennori/bin/opennori.js doctor --root . --json"
-              },
-              {
-                "type": "command",
                 "label": "cd /Users/jarl/code/jarlone/opennori-site && npm run build",
                 "command": "cd /Users/jarl/code/jarlone/opennori-site && npm run build"
-              },
-              {
-                "type": "command",
-                "label": "cd /Users/jarl/code/jarlone/opennori-site && find .agents -maxdepth 3 -type f -print",
-                "command": "cd /Users/jarl/code/jarlone/opennori-site && find .agents -maxdepth 3 -type f -print"
-              },
-              {
-                "type": "command",
-                "label": "cd /Users/jarl/code/jarlone/opennori && npm run check",
-                "command": "cd /Users/jarl/code/jarlone/opennori && npm run check"
               },
               {
                 "type": "command",
@@ -5232,34 +4173,19 @@
               },
               {
                 "type": "artifact",
-                "label": "/Users/jarl/code/jarlone/opennori-site/.opennori/architecture/decisions/astro-static-site-current-stack.md",
-                "path": "/Users/jarl/code/jarlone/opennori-site/.opennori/architecture/decisions/astro-static-site-current-stack.md"
-              },
-              {
-                "type": "artifact",
                 "label": "src/cli/runtime.ts",
                 "path": "src/cli/runtime.ts"
               },
               {
                 "type": "artifact",
-                "label": "src/cli/command-tree.ts",
-                "path": "src/cli/command-tree.ts"
-              },
-              {
-                "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
-              },
-              {
-                "type": "artifact",
-                "label": ".opennori/architecture/decisions/active-goal-write-lock.md",
-                "path": ".opennori/architecture/decisions/active-goal-write-lock.md"
               }
             ],
-            "reviewability": "Review opennori-site status/report/doctor output and the listed .opennori artifacts; rerun npm run check in OpenNori and the concurrent evidence test to verify dogfood and state consistency.",
+            "reviewability": "Review opennori-site status/report/build output and listed .opennori artifacts; rerun the concurrent evidence test for state consistency.",
             "limitations": "Dogfood covered a static Astro website repo and local CLI behavior; it did not validate a third-party production app or remote deployed website.",
             "gate": "accepted",
-            "created_at": "2026-06-13T11:26:10.529Z"
+            "created_at": "2026-06-13T15:03:36.293Z"
           }
         ]
       }

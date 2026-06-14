@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { CommandDef } from "citty";
 import { runCommand } from "citty";
-import { findActivePairs, readJson, syncAcceptanceMarkdown, writeJson } from "../core.ts";
+import { findActivePairs, pruneInvalidEvidence, readJson, syncAcceptanceMarkdown, writeJson } from "../core.ts";
 import { refreshManifest } from "../lifecycle.ts";
 import type { EvidenceLedger, NoriContract, NoriEvidencePayload } from "../types.ts";
 
@@ -41,6 +41,7 @@ export type ActiveGoalPair = {
   acceptancePath: string;
   evidencePath: string;
   root: string;
+  evidencePrune?: ReturnType<typeof pruneInvalidEvidence>;
 };
 
 export type ActiveGoalRuntime = {
@@ -57,6 +58,17 @@ export async function runJsonCommand(command: CliCommand, rawArgs: string[], dat
 export function savePair(acceptancePath: string, evidencePath: string, contract: NoriContract, ledger: EvidenceLedger): void {
   writeJson(evidencePath, { contract, ledger });
   syncAcceptanceMarkdown(acceptancePath, contract, ledger);
+}
+
+function preparePair(pair: Omit<ActiveGoalPair, "evidencePrune">): ActiveGoalPair {
+  const evidencePrune = pruneInvalidEvidence(pair.contract, pair.ledger, { root: pair.root });
+  if (evidencePrune.changed) {
+    savePair(pair.acceptancePath, pair.evidencePath, pair.contract, pair.ledger);
+  }
+  return {
+    ...pair,
+    evidencePrune
+  };
 }
 
 function inferRootFromAcceptancePath(acceptancePath: string): string {
@@ -162,13 +174,13 @@ export function loadPair(args: ActiveGoalArgs = {}): ActiveGoalPair {
     const acceptancePath = path.resolve(explicitAcceptance);
     const evidencePath = path.resolve(explicitEvidence);
     const payload = readJson<NoriEvidencePayload>(evidencePath);
-    return {
+    return preparePair({
       contract: payload.contract,
       ledger: payload.ledger,
       acceptancePath,
       evidencePath,
       root: inferRootFromAcceptancePath(acceptancePath)
-    };
+    });
   }
 
   const root = path.resolve(optionalString(args.root) || process.cwd());
@@ -182,13 +194,13 @@ export function loadPair(args: ActiveGoalArgs = {}): ActiveGoalPair {
     throw new Error("Multiple active OpenNori goals found. Pass --goal <goal-id> or explicit --acceptance/--evidence paths.");
   }
   const payload = readJson<NoriEvidencePayload>(pair.evidencePath);
-  return {
+  return preparePair({
     contract: payload.contract,
     ledger: payload.ledger,
     acceptancePath: pair.acceptancePath,
     evidencePath: pair.evidencePath,
     root
-  };
+  });
 }
 
 export function activeGoalRuntime(): ActiveGoalRuntime {

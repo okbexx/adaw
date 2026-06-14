@@ -43,6 +43,7 @@ function renderArchitectureReportSection(root: string, goalId: string | undefine
 }
 
 export function renderReportWithArchitecture(root: string, contract: NoriContract, ledger: EvidenceLedger): string {
-  const base = renderReport(contract, ledger).trimEnd();
+  const architecture = architectureState(root, contract.goal_id);
+  const base = renderReport(contract, ledger, { root, architecture }).trimEnd();
   return `${base}\n\n${renderArchitectureReportSection(root, contract.goal_id).trimEnd()}\n`;
 }

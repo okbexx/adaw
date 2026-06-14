@@ -21,3 +21,4 @@ When the user has a preferred architecture, save it as a project Architecture Pr
 For OpenNori-like agent CLI products, prefer `typescript-agent-state-cli` unless project evidence clearly points elsewhere.
 Do not treat architecture choices as Product AC. Product AC remains human end-user acceptance; Architecture Checks are maintainer/agent-facing quality gates.
 Ask the user to confirm the baseline before implementation starts.
+If a goal is already objectively complete but the baseline is missing, draft or confirm the baseline as `architecture_review` cleanup; do not change Product AC unless the user says the acceptance target itself was wrong.

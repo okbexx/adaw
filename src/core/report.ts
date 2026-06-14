@@ -1,4 +1,6 @@
 import type {
+  AcceptanceQualityAudit,
+  ArchitectureState,
   CompletionAnswer,
   EvidenceLedger,
   EvidenceRecord,
@@ -10,6 +12,38 @@ import type {
 import { evidenceHealth, currentGap, evidenceView } from "./evidence.ts";
 import { profileCompliance, renderProfileLines } from "./profile.ts";
 import { inferCriterionLayer } from "./shared.ts";
+import { reviewAcceptanceQuality } from "../acceptance.ts";
+
+type CompletionContext = {
+  root?: string;
+  architecture?: ArchitectureState;
+};
+
+function reviewRiskSources(acceptanceReview: AcceptanceQualityAudit, health = { status: "clear" }): string[] {
+  const risks: string[] = [];
+  if (acceptanceReview.status !== "clear") risks.push("acceptance_review");
+  if (health.status !== "clear") risks.push("evidence_health");
+  return risks;
+}
+
+function profileReviewRisks(ledger: EvidenceLedger): string[] {
+  return profileCompliance(ledger).review.length > 0 ? ["profile_review"] : [];
+}
+
+function architectureReviewRisks(architecture: ArchitectureState | undefined): string[] {
+  if (!architecture) return [];
+  const risks: string[] = [];
+  if (architecture.required_for_goal && architecture.decision !== "valid") {
+    risks.push("architecture_review");
+  }
+  if (architecture.agent_surface && (!architecture.agent_surface.guide.installed || !architecture.agent_surface.guide.in_sync)) {
+    risks.push("architecture_review");
+  }
+  if (architecture.build_vs_buy.status !== "clear") {
+    risks.push("build_vs_buy");
+  }
+  return [...new Set(risks)];
+}
 
 export function intervention(contract: NoriContract, ledger: EvidenceLedger): UserIntervention {
   const compliance = profileCompliance(ledger);
@@ -50,31 +84,49 @@ export function intervention(contract: NoriContract, ledger: EvidenceLedger): Us
   };
 }
 
-export function completionAnswer(contract: NoriContract, ledger: EvidenceLedger): CompletionAnswer {
+export function completionAnswer(contract: NoriContract, ledger: EvidenceLedger, { root = process.cwd(), architecture = undefined }: CompletionContext = {}): CompletionAnswer {
   const gap = currentGap(contract, ledger);
-  const health = evidenceHealth(contract, ledger);
-  if (!gap && ledger.status === "complete" && health.status !== "clear") {
-    return {
-      complete: false,
-      answer: `Not confidently complete: ${health.summary}`
-    };
-  }
-  if (!gap && ledger.status === "complete") {
+  const objectiveComplete = !gap && ledger.status === "complete";
+  const acceptanceReview = reviewAcceptanceQuality(contract);
+  const health = evidenceHealth(contract, ledger, { root });
+  const risks = objectiveComplete ? [
+    ...reviewRiskSources(acceptanceReview, health),
+    ...profileReviewRisks(ledger),
+    ...architectureReviewRisks(architecture)
+  ] : [];
+  if (objectiveComplete && risks.length > 0) {
     return {
       complete: true,
+      objective_complete: true,
+      confidence: "review-risk",
+      review_risks: risks,
+      answer: `Objectively complete with review risk: ${risks.join(", ")}.`
+    };
+  }
+  if (objectiveComplete) {
+    return {
+      complete: true,
+      objective_complete: true,
+      confidence: "confident",
+      review_risks: [],
       answer: "Complete: all required acceptance criteria have passing or waived evidence."
     };
   }
   return {
     complete: false,
+    objective_complete: false,
+    confidence: "not-complete",
+    review_risks: [],
     answer: `Not complete: ${gap ? `${gap.id} is ${gap.status}. ${gap.reason}` : `workflow status is ${ledger.status}.`}`
   };
 }
 
-export function nextRecommendation(contract: NoriContract, ledger: EvidenceLedger): NextRecommendation {
+export function nextRecommendation(contract: NoriContract, ledger: EvidenceLedger, { root = process.cwd(), architecture = undefined }: CompletionContext = {}): NextRecommendation {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
-  const health = evidenceHealth(contract, ledger);
+  const acceptanceReview = reviewAcceptanceQuality(contract);
+  const health = evidenceHealth(contract, ledger, { root });
+  const profile = profileCompliance(ledger);
 
   if (needed.required) {
     return {
@@ -111,15 +163,38 @@ export function nextRecommendation(contract: NoriContract, ledger: EvidenceLedge
     };
   }
 
-  if (ledger.status === "complete" && health.status !== "clear") {
+  const reviewRisks = [
+    ...reviewRiskSources(acceptanceReview, health),
+    ...profileReviewRisks(ledger),
+    ...architectureReviewRisks(architecture)
+  ];
+  if (ledger.status === "complete" && reviewRisks.length > 0) {
+    const actions: string[] = [];
+    if (acceptanceReview.status !== "clear") {
+      actions.push("Show acceptance_review findings to the user.");
+      actions.push("Ask the user to revise the affected criteria, confirm assumptions, or accept the remaining review risk.");
+    }
+    if (health.status !== "clear") {
+      actions.push("Review evidence_health findings.");
+      actions.push("Refresh stale, broad, or summary-only evidence with reviewable sources, reviewability, and limitations.");
+    }
+    if (profile.review.length > 0) {
+      actions.push("Review Nori Profile preference risks.");
+      actions.push("Record profile evidence, waive the preference, or ask the user whether the remaining profile risk is acceptable.");
+    }
+    if (architecture && architectureReviewRisks(architecture).includes("architecture_review")) {
+      actions.push("Review architecture_check warnings.");
+      actions.push("Confirm, repair, or challenge the Architecture Baseline before reporting confidently complete.");
+    }
+    if (architecture && architectureReviewRisks(architecture).includes("build_vs_buy")) {
+      actions.push("Review build_vs_buy findings.");
+      actions.push("Record reusable alternatives or the reason self-build is justified before reporting mature architecture completion.");
+    }
     return {
-      status: "evidence-review-required",
+      status: "completion-review-required",
       focus: null,
-      summary: "All required ACs have passing or waived evidence, but evidence health needs review before confidently claiming completion.",
-      actions: [
-        "Review evidence_health findings.",
-        "Refresh stale, broad, or summary-only evidence with reviewable sources, reviewability, and limitations."
-      ]
+      summary: `All required ACs have passing or waived evidence, but completion has review risk: ${reviewRisks.join(", ")}.`,
+      actions
     };
   }
 
@@ -173,27 +248,32 @@ function formatEvidenceSource(source: EvidenceSource | string): string {
   return parts.join(", ") || "<none>";
 }
 
-function formatEvidenceSources(evidence: EvidenceRecord | null | undefined): string {
-  const view = evidenceView(evidence);
+function formatEvidenceSources(evidence: EvidenceRecord | null | undefined, { root = process.cwd() } = {}): string {
+  const view = evidenceView(evidence, { root });
   if (!view) return "<none>";
   if (view.sources.length === 0) return view.path || "<none>";
   return view.sources.map((source) => formatEvidenceSource(source)).join("; ");
 }
 
-export function renderReport(contract: NoriContract, ledger: EvidenceLedger): string {
+export function renderReport(contract: NoriContract, ledger: EvidenceLedger, { root = process.cwd(), architecture = undefined }: CompletionContext = {}): string {
   const gap = currentGap(contract, ledger);
   const needed = intervention(contract, ledger);
-  const completion = completionAnswer(contract, ledger);
-  const health = evidenceHealth(contract, ledger);
+  const completion = completionAnswer(contract, ledger, { root, architecture });
+  const health = evidenceHealth(contract, ledger, { root });
+  const acceptanceReview = reviewAcceptanceQuality(contract);
+  const profile = profileCompliance(ledger);
   const lines = [
     `# ${contract.goal_id} Acceptance Report`,
     "",
     "## Decision Summary",
     "",
     `Completion: ${completion.answer}`,
+    `Objective complete: ${completion.objective_complete ? "yes" : "no"}`,
+    `Confidence: ${completion.confidence}`,
+    `Review risks: ${completion.review_risks.length > 0 ? completion.review_risks.join(", ") : "none"}`,
     `Current gap: ${gap ? `${gap.id} - ${gap.reason}` : "None. All required acceptance criteria have passing or waived evidence."}`,
     `User intervention: ${needed.required ? `${needed.criterion} - ${needed.action}` : needed.action}`,
-    `Recommended next action: ${nextRecommendation(contract, ledger).summary}`,
+    `Recommended next action: ${nextRecommendation(contract, ledger, { root, architecture }).summary}`,
     `Workflow status: ${ledger.status}`,
     "",
     "## Goal",
@@ -209,6 +289,13 @@ export function renderReport(contract: NoriContract, ledger: EvidenceLedger): st
     "",
     ...renderProfileLines(ledger),
     "",
+    ...(profile.review.length > 0
+      ? [
+          "Profile review risks:",
+          ...profile.review.map((item) => `- ${item.id}: ${item.name} is ${item.status} (${item.strength})`),
+          ""
+        ]
+      : []),
     "## Acceptance Status",
     "",
     "| ID | Layer | User acceptance criterion | Status | Confidence | Evidence summary | Basis | Sources | Reviewability | Limitations |",
@@ -218,13 +305,23 @@ export function renderReport(contract: NoriContract, ledger: EvidenceLedger): st
   for (const criterion of contract.criteria) {
     const state = ledger.criteria[criterion.id];
     const latest = state?.evidence?.at(-1);
-    const view = evidenceView(latest);
+    const view = evidenceView(latest, { root });
     const evidence = view ? `${view.kind}: ${view.summary}` : "<none>";
-    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${escapeTableCell(criterion.user_story)} | ${state?.status || "unknown"} | ${state?.confidence || "none"} | ${escapeTableCell(evidence)} | ${view?.basis || "<none>"} | ${escapeTableCell(formatEvidenceSources(latest))} | ${view?.reviewability || "<none>"} | ${escapeTableCell(view?.limitations || "<none>")} |`);
+    lines.push(`| ${criterion.id} | ${criterion.layer || inferCriterionLayer(criterion.id)} | ${escapeTableCell(criterion.user_story)} | ${state?.status || "unknown"} | ${state?.confidence || "none"} | ${escapeTableCell(evidence)} | ${view?.basis || "<none>"} | ${escapeTableCell(formatEvidenceSources(latest, { root }))} | ${view?.reviewability || "<none>"} | ${escapeTableCell(view?.limitations || "<none>")} |`);
   }
 
   lines.push("", "## Current Acceptance Gap", "");
   lines.push(gap ? `${gap.id} - ${gap.reason}` : "None. All required acceptance criteria have passing or waived evidence.");
+  lines.push("", "## Acceptance Review", "");
+  lines.push(`Status: ${acceptanceReview.status}`);
+  lines.push(`Summary: ${acceptanceReview.summary}`);
+  if (acceptanceReview.findings.length > 0) {
+    lines.push("", "| Criterion | Severity | Concern | Question | Agent guidance |");
+    lines.push("| --- | --- | --- | --- | --- |");
+    for (const finding of acceptanceReview.findings) {
+      lines.push(`| ${finding.criterion_id} | ${finding.severity} | ${finding.gap_id} | ${escapeTableCell(finding.question)} | ${escapeTableCell(finding.agent_guidance || "")} |`);
+    }
+  }
   lines.push("", "## Evidence Health", "");
   lines.push(`Status: ${health.status}`);
   lines.push(`Summary: ${health.summary}`);

@@ -190,6 +190,7 @@ export type ProfileCompliance = {
   required: boolean;
   complete: boolean;
   blocking: ProfileStatusRow[];
+  review: ProfileStatusRow[];
   statuses: ProfileStatusRow[];
 };
 
@@ -209,6 +210,9 @@ export type UserIntervention = {
 
 export type CompletionAnswer = {
   complete: boolean;
+  objective_complete: boolean;
+  confidence: "confident" | "review-risk" | "not-complete" | (string & {});
+  review_risks: string[];
   answer: string;
 };
 
@@ -218,6 +222,7 @@ export type NextRecommendation = {
     | "acceptance-approval-required"
     | "work-on-current-gap"
     | "evidence-review-required"
+    | "completion-review-required"
     | "ready-for-next-loop"
     | "reconcile-workflow-state"
     | (string & {});
@@ -238,6 +243,14 @@ export type EvidenceView = {
   path?: string;
   gate?: string;
   created_at?: string;
+};
+
+export type EvidencePruneSummary = {
+  changed: boolean;
+  removed_records: number;
+  removed_sources: number;
+  criteria?: string[];
+  reason?: string;
 };
 
 export type CriterionStatusRow = {
@@ -297,6 +310,9 @@ export type AcceptanceQualityFinding = {
   gap_id: string;
   question: string;
   why: string;
+  message?: string;
+  agent_guidance?: string;
+  source?: "heuristic" | string;
   severity: "needs-user-review" | string;
 };
 
@@ -731,6 +747,7 @@ export type ContextExport = {
   current_gap: CurrentGap | null;
   completion: CompletionAnswer;
   intervention: UserIntervention;
+  acceptance_review: AcceptanceQualityAudit;
   evidence_health: EvidenceHealth;
   next_recommendation: NextRecommendation;
   criteria: CriterionStatusRow[];

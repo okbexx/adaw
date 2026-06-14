@@ -19,4 +19,6 @@ Lead with completion state, current gap, architecture decision, evidence health,
 After reporting, follow `next_recommendation` / `next_actions` when the user has asked to continue, instead of asking the user what the next step is.
 Summarize implementation details only as supporting evidence.
 Report Product decision and Architecture decision separately.
-Never report confidently complete unless all required ACs and blocking Nori Profile items are passing or waived, `evidence_health` is clear, and any active Architecture Challenge is surfaced.
+Never report confidently complete unless all required ACs and blocking Nori Profile items are passing or waived, `profile_review` is clear or accepted by the user, `evidence_health` is clear, `architecture_review` is clear or accepted by the user, and `build_vs_buy` is healthy or accepted as a review risk.
+If completion is `objective_complete: true` with `confidence: review-risk`, say exactly which review risks remain and keep `current_gap` separate from those risks.
+Do not describe Architecture Baseline or build-vs-buy findings as Product AC failures unless they were explicitly written as user-facing criteria by the user.

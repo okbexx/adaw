@@ -13,147 +13,6 @@ import { inferCriterionLayer, nowIso, slugify, PROTOCOL_VERSION } from "./shared
 export const VALID_STATUSES = new Set(["unknown", "failing", "passing", "blocked", "waived"]);
 
 const PLAN_FIELD_NAMES = new Set(["plan", "steps", "tasks", "todos", "next_steps", "implementation_plan"]);
-const FORBIDDEN_USER_STORY_TERMS = [
-  "acceptance.json",
-  "evidence.json",
-  "plan.md",
-  "json",
-  "schema",
-  "script",
-  "field",
-  "file exists",
-  "字段",
-  "脚本",
-  "命令",
-  "计划",
-  "实现步骤"
-];
-const USER_OPERATION_TERMS = [
-  "运行",
-  "打开",
-  "查看",
-  "选择",
-  "阅读",
-  "询问",
-  "确认",
-  "比较",
-  "检查",
-  "审查",
-  "预览",
-  "安装",
-  "卸载",
-  "归档",
-  "添加",
-  "修改",
-  "提出",
-  "触发",
-  "执行",
-  "创建",
-  "run",
-  "open",
-  "view",
-  "select",
-  "read",
-  "ask",
-  "confirm",
-  "compare",
-  "review",
-  "preview",
-  "install",
-  "uninstall",
-  "archive",
-  "add",
-  "update",
-  "check"
-];
-const USER_OUTCOME_TERMS = [
-  "能",
-  "看到",
-  "显示",
-  "输出",
-  "返回",
-  "包含",
-  "结果",
-  "状态",
-  "缺口",
-  "反馈",
-  "报告",
-  "摘要",
-  "入口",
-  "建议",
-  "知道",
-  "判断",
-  "确认",
-  "区分",
-  "理解",
-  "提示",
-  "展示",
-  "保留",
-  "标明",
-  "说明",
-  "指出",
-  "回答",
-  "可复查",
-  "可执行",
-  "不需要",
-  "不会",
-  "不能",
-  "不创建",
-  "can",
-  "see",
-  "show",
-  "output",
-  "include",
-  "result",
-  "status",
-  "gap",
-  "report",
-  "summary",
-  "entry",
-  "action",
-  "return",
-  "understand",
-  "decide",
-  "confirm",
-  "distinguish",
-  "explain",
-  "answer",
-  "review"
-];
-const IMPLEMENTATION_ONLY_PHRASES = [
-  "文件存在",
-  "字段存在",
-  "命令执行成功",
-  "测试通过",
-  "用例通过",
-  "模块实现",
-  "接口实现",
-  "函数实现",
-  "组件实现",
-  "schema 校验通过",
-  "json 字段",
-  "manifest 字段",
-  "file exists",
-  "field exists",
-  "tests pass",
-  "test passes",
-  "module implemented",
-  "function implemented",
-  "schema passes"
-];
-const NEGATION_TERMS = ["不能", "不应", "不是", "不得", "避免", "cannot", "must not", "should not", "reject"];
-
-function includesAny(text: unknown, terms: string[]): boolean {
-  const lowered = String(text || "").toLowerCase();
-  return terms.some((term) => lowered.includes(term.toLowerCase()));
-}
-
-function isImplementationOnly(text: unknown): boolean {
-  const value = String(text || "");
-  if (includesAny(value, NEGATION_TERMS)) return false;
-  if (includesAny(value, USER_OPERATION_TERMS) && includesAny(value, USER_OUTCOME_TERMS)) return false;
-  return includesAny(value, IMPLEMENTATION_ONLY_PHRASES);
-}
 
 export function buildContractFromBrief(brief: NoriBrief): NoriContract {
   const goal = String(brief.goal || "").trim();
@@ -283,7 +142,7 @@ export function parseAcceptanceMarkdown(markdown: string): ParsedAcceptanceMarkd
   return { goal, criteria };
 }
 
-export function validateContract(contract: NoriContract, ledger: EvidenceLedger | null = null): ValidationIssue[] {
+export function validateContractIntegrity(contract: NoriContract, ledger: EvidenceLedger | null = null): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   if (contract.protocol_version !== PROTOCOL_VERSION) {
@@ -318,49 +177,6 @@ export function validateContract(contract: NoriContract, ledger: EvidenceLedger 
       }
     }
 
-    const userStory = String(criterion.user_story || "");
-    if (userStory && !userStory.startsWith("作为用户") && !userStory.toLowerCase().startsWith("as a user")) {
-      issues.push({
-        path: `${prefix}.user_story`,
-        message: "Acceptance criterion must be written from the user's perspective"
-      });
-    }
-
-    const lowered = userStory.toLowerCase();
-    const terms = FORBIDDEN_USER_STORY_TERMS.filter((term) => lowered.includes(term.toLowerCase()));
-    if (terms.length > 0) {
-      issues.push({
-        path: `${prefix}.user_story`,
-        message: "Implementation detail appears in user acceptance criterion",
-        terms
-      });
-    }
-
-    const measurement = String(criterion.measurement || "");
-    if (measurement && !includesAny(measurement, USER_OPERATION_TERMS)) {
-      issues.push({
-        path: `${prefix}.measurement`,
-        message: "Measurement must describe a user operation or review action"
-      });
-    }
-
-    const threshold = String(criterion.threshold || "");
-    if (threshold && !includesAny(threshold, USER_OUTCOME_TERMS)) {
-      issues.push({
-        path: `${prefix}.threshold`,
-        message: "Passing threshold must describe a user-observable outcome or judgment"
-      });
-    }
-
-    for (const [field, value] of Object.entries({ measurement, threshold })) {
-      if (isImplementationOnly(value)) {
-        issues.push({
-          path: `${prefix}.${field}`,
-          message: "Implementation-only completion condition is not a user acceptance criterion"
-        });
-      }
-    }
-
     if (ledger && !ledger.criteria?.[criterion.id]) {
       issues.push({ path: `ledger.criteria.${criterion.id}`, message: "Evidence ledger is missing this criterion" });
     }
@@ -390,3 +206,5 @@ export function validateContract(contract: NoriContract, ledger: EvidenceLedger 
 
   return issues;
 }
+
+export const validateContract = validateContractIntegrity;

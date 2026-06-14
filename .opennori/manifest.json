@@ -3,7 +3,7 @@
   "protocol_version": "opennori/v1",
   "opennori_version": "0.1.8",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-13T13:49:28.026Z",
+  "updated_at": "2026-06-14T01:36:51.555Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -275,7 +275,7 @@
         "recommendation": "self-build",
         "status": "active",
         "summary": "architecture_check 是 OpenNori 自有验收状态语义：它复用现有 architectureState、agent surface 和 active goal 恢复逻辑，把 baseline missing/draft/invalid/challenged/stale surface 作为 check warnings 暴露给 agent 和用户。",
-        "current_project": "已有 src/architecture/state.ts 的 architectureState、src/lifecycle/doctor.ts 与 manifest health、src/acceptance.ts 的 acceptance_quality audit；src/cli/commands/check.ts 聚合 active contract 状态。",
+        "current_project": "已有 src/architecture/state.ts 的 architectureState、src/lifecycle/doctor.ts 与 manifest health、src/acceptance.ts 的 acceptance_review surface；src/cli/commands/check.ts 聚合 active contract 状态。",
         "standard_library": "Node.js 标准库足够读取本地 .opennori/ 与 agent route 文件；不需要额外 runtime。",
         "official_sdk": "无官方 SDK；这是 OpenNori 产品状态语义。",
         "open_source": "通用 schema/validator 库能校验 JSON 形状，但不能表达 OpenNori 的 Product AC 与 Architecture Baseline 分离、challenge、agent surface 恢复建议。",

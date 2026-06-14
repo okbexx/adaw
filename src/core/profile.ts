@@ -94,10 +94,17 @@ export function profileCompliance(ledger: EvidenceLedger): ProfileCompliance {
   });
   const blocking = statuses.filter((item) => item.strength === "must" && (item.status === "unknown" || item.status === "violated"));
   const avoidedViolations = statuses.filter((item) => item.strength === "avoid" && item.status === "violated");
+  const review = statuses.filter((item) => {
+    if (item.status === "satisfied" || item.status === "waived") return false;
+    if (item.strength === "prefer") return item.status === "unknown" || item.status === "violated";
+    if (item.strength === "avoid") return item.status === "unknown";
+    return false;
+  });
   return {
     required: items.length > 0,
     complete: blocking.length === 0 && avoidedViolations.length === 0,
     blocking: [...blocking, ...avoidedViolations],
+    review,
     statuses
   };
 }

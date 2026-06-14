@@ -14,3 +14,4 @@ Preference order: current project dependency, standard library, official SDK, ma
 Do not add a dependency just to avoid writing a few stable product-domain lines.
 If recommending self-build, explain license, maintenance, security, package size, runtime cost, product-domain, or fit reasons.
 Record the decision as architecture evidence, not as Product AC.
+If `opennori status` or `opennori report` shows `build_vs_buy` in `review_risks`, keep the Product AC state unchanged and record the missing reuse candidates or self-build reason before claiming confident architecture completion.

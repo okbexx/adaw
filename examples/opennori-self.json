@@ -100,7 +100,7 @@
       "layer": "protocol",
       "user_story": "作为用户，我运行 opennori check 或让 agent 升级已使用 OpenNori 的项目后，能发现现有 active contract 里过于含糊的 AC，而不是让旧的弱验收标准静默通过。",
       "measurement": "对已有 active goal 中包含“修改字段”“失败时有提示”等空泛完成条件的 Nori Contract 运行 opennori check；再对结构正确且包含具体用户操作、字段范围、反馈和判断方式的 contract 运行 check。",
-      "threshold": "check 在不改写历史 contract/evidence 的前提下输出 acceptance_quality 审计结果、warnings 和下一步建议；弱 AC 会标出缺少的字段范围、校验规则、成功反馈、失败场景或范围边界；具体 AC 不产生质量告警。",
+      "threshold": "check 在不改写历史 contract/evidence 的前提下输出 acceptance_review findings、warnings 和下一步建议；弱 AC 会标出缺少的字段范围、校验规则、成功反馈、失败场景或范围边界；具体 AC 不产生 review finding。",
       "risk": "high"
     },
     {

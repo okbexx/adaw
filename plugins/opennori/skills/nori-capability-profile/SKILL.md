@@ -14,4 +14,4 @@ Use when the user says a task must use a Skill, prefers a technology stack, want
 ## Rules
 Do not turn Skills or stack preferences into user ACs.
 `must` and violated `avoid` items block completion unless satisfied or waived.
-`prefer` should be reported but should not block completion by itself.
+`prefer` should not block objective completion by itself, but unknown or violated preferences are `profile_review` risks. Record profile evidence, waive the preference, or ask the user whether the remaining risk is acceptable before reporting confidently complete.

@@ -4,6 +4,7 @@ import {
   criterionStatusRows,
   currentGap,
   ok,
+  pruneInvalidEvidence,
   syncAcceptanceMarkdown,
   writeJson
 } from "../../../core.ts";
@@ -98,6 +99,7 @@ export const evidenceAddCommand = defineCommand({
     };
     if (!evidence.summary) throw new Error("--summary is required");
     addEvidence(contract, ledger, criterionId, evidence);
+    pruneInvalidEvidence(contract, ledger, { root });
     writeJson(evidencePath, { contract, ledger });
     syncAcceptanceMarkdown(acceptancePath, contract, ledger);
     refreshManifest(root);
@@ -106,7 +108,7 @@ export const evidenceAddCommand = defineCommand({
       criterion: criterionId,
       criterion_status: ledger.criteria[criterionId].status,
       confidence: ledger.criteria[criterionId].confidence,
-      latest_evidence: criterionStatusRows(contract, ledger).find((row) => row.id === criterionId)?.latest_evidence,
+      latest_evidence: criterionStatusRows(contract, ledger, { root }).find((row) => row.id === criterionId)?.latest_evidence,
       gate: ledger.criteria[criterionId].evidence.at(-1)?.gate,
       workflow_status: ledger.status,
       current_gap: currentGap(contract, ledger)

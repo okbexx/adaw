@@ -37,5 +37,12 @@ user natural-language goal
 
 Do not turn architecture choices, Skills, technology stacks, hooks, AW exports, or implementation tasks into user AC. They can influence Nori Profile, Architecture Baseline, evidence risk, or recovery guidance, but Product AC must remain human-visible operations or judgments.
 
+Keep hard validation and subjective review separate:
+
+- Code may hard-fail objective integrity problems: schema shape, protocol version, required fields, duplicate ids, contract/ledger mismatch, invalid enums, stale managed files, missing local artifacts, or destructive actions without explicit confirmation.
+- Code must not hard-fail subjective product judgments such as "this AC feels like implementation detail", "this evidence may be weak", or "this architecture may not be ideal".
+- Subjective findings belong in `acceptance_review`, `evidence_health`, `review_risks`, questions, assumptions, waivers, or human confirmation prompts.
+- The agent decides how to act on those review signals; the user remains the final judge of whether the goal is accepted.
+
 When changing Skill behavior, update package-local `plugins/opennori/skills/nori*/SKILL.md`, `plugins/opennori/.codex-plugin/plugin.json`, and marketplace metadata first.
 Do not add compatibility shims for old `adaw`, `nori`, `opennori skill export`, `install --skill`, or `refresh-skill` entry points.

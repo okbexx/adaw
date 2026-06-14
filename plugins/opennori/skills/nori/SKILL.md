@@ -25,5 +25,6 @@ If `opennori` is not on PATH, use the installed package binary such as `node ./n
 Progress is determined by acceptance evidence, not implementation steps.
 Architecture Baseline is sticky after user confirmation. Challenge it with evidence; do not silently replace it.
 Do not make the user remember CLI syntax or internal Skill names.
-Do not answer confidently complete while the acceptance basis is draft, required AC/profile evidence is missing, `architecture_check` has warnings, or `evidence_health` needs review.
+Do not answer confidently complete while the acceptance basis is draft, required AC/profile evidence is missing, `acceptance_review` has findings, `architecture_check` has warnings, `evidence_health` needs review, or `profile_review` risks remain. If all required ACs have passing evidence but review findings remain, say the goal is objectively complete with review risk and ask the user how to handle the risk.
+If active evidence is missing, stale, invalid, obsolete, or no longer proves the current AC, route to `nori-evidence` and prune it before reporting completion.
 Do not suggest project-local OpenNori Skill installation or sync. OpenNori Skills come from the package Plugin; CLI commands only manage `.opennori` state.

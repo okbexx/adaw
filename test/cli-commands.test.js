@@ -10,7 +10,7 @@ import { runCheckCommand } from "../src/cli/commands/check.ts";
 import { runChangesCommand } from "../src/cli/commands/changes.ts";
 import { runContextExportCommand } from "../src/cli/commands/context.ts";
 import { runDoctorCommand } from "../src/cli/commands/doctor.ts";
-import { runEvidenceAddCommand } from "../src/cli/commands/evidence.ts";
+import { runEvidenceAddCommand, runEvidencePruneCommand } from "../src/cli/commands/evidence.ts";
 import { runBootstrapCommand } from "../src/cli/commands/bootstrap.ts";
 import { runInstallCommand } from "../src/cli/commands/install.ts";
 import { runListCommand } from "../src/cli/commands/list.ts";
@@ -19,6 +19,7 @@ import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporti
 import { runUninstallCommand } from "../src/cli/commands/uninstall.ts";
 import { runUpgradeCommand } from "../src/cli/commands/upgrade.ts";
 import { buildArchitectureBaseline, writeArchitectureBaseline } from "../src/architecture.ts";
+import { loadPair } from "../src/cli/runtime.ts";
 import { addEvidence, buildEvidenceLedger, writeJson } from "../src/core.ts";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -287,7 +288,7 @@ test("check command module reports acceptance architecture and evidence health",
   });
   assert.equal(checked.ok, true);
   assert.equal(checked.data.goal_id, "module-goal");
-  assert.equal(checked.data.acceptance_quality.status, "clear");
+  assert.equal(checked.data.acceptance_review.status, "clear");
   assert.equal(checked.data.architecture_check.status, "needs-action");
   assert.equal(checked.data.architecture_check.decision, "missing");
   assert.equal(checked.data.evidence_health.status, "clear");
@@ -435,7 +436,7 @@ test("context export command module can write a review artifact", async () => {
   writeActiveGoal(root);
   const outputPath = path.join(root, "context.json");
 
-  const exported = await runContextExportCommand(["--root", root, "--output", outputPath, "--json"]);
+  const exported = await runContextExportCommand(["--root", root, "--output", outputPath, "--json"], { loadPair });
   assert.equal(exported.ok, true);
   assert.equal(exported.data.goal_id, "module-goal");
   assert.equal(exported.data.output_path, outputPath);
@@ -556,10 +557,15 @@ test("resume command module includes completion, health, architecture, and next 
   assert.equal(resume.ok, true);
   assert.equal(resume.data.goal_id, "module-goal");
   assert.equal(resume.data.completion.complete, true);
+  assert.equal(resume.data.completion.objective_complete, true);
+  assert.equal(resume.data.completion.confidence, "review-risk");
+  assert.equal(resume.data.completion.review_risks.includes("architecture_review"), true);
+  assert.equal(resume.data.acceptance_review.status, "clear");
   assert.equal(resume.data.evidence_health.status, "clear");
   assert.equal(resume.data.architecture.decision, "missing");
+  assert.equal(resume.data.next_recommendation.status, "completion-review-required");
   assert.equal(resume.data.acceptance_path, acceptancePath);
-  assert.equal(resume.next_actions.some((action) => /next human-facing project goal/.test(action)), true);
+  assert.equal(resume.next_actions.some((action) => /architecture_check/.test(action)), true);
 });
 
 test("status command module includes criteria and completion state", async () => {
@@ -583,6 +589,8 @@ test("status command module includes criteria and completion state", async () =>
   assert.equal(status.data.goal_id, "module-goal");
   assert.equal(status.data.workflow_status, "active");
   assert.equal(status.data.completion.complete, false);
+  assert.equal(status.data.completion.objective_complete, false);
+  assert.equal(status.data.acceptance_review.status, "clear");
   assert.equal(status.data.evidence_health.status, "clear");
   assert.equal(status.data.architecture.decision, "missing");
   assert.equal(status.data.criteria.length, 1);
@@ -608,7 +616,13 @@ test("report command module renders a report artifact", async () => {
   assert.equal(report.data.goal_id, "module-goal");
   assert.equal(report.data.report_path, outputPath);
   assert.equal(report.data.completion.complete, true);
+  assert.equal(report.data.completion.objective_complete, true);
+  assert.equal(report.data.completion.confidence, "review-risk");
+  assert.equal(report.data.completion.review_risks.includes("architecture_review"), true);
+  assert.equal(report.data.acceptance_review.status, "clear");
   assert.equal(report.data.evidence_health.status, "clear");
+  assert.equal(report.data.architecture.decision, "missing");
+  assert.equal(report.data.next_recommendation.status, "completion-review-required");
   assert.equal(report.artifacts[0].kind, "acceptance_report");
   assert.match(fs.readFileSync(outputPath, "utf8"), /## Decision Summary/);
 });
@@ -852,11 +866,61 @@ test("evidence add command module records flexible reviewable sources", async ()
   });
   assert.equal(added.ok, true);
   assert.equal(added.data.criterion_status, "passing");
-  assert.equal(added.data.latest_evidence.sources.length, 5);
+  assert.equal(added.data.latest_evidence.sources.length, 4);
   assert.equal(added.data.latest_evidence.sources[0].command, "npm run check");
   assert.equal(added.data.latest_evidence.sources[1].label, "screenshots/reviewable-flow.png");
   assert.equal(added.data.latest_evidence.sources[2].type, "command");
-  assert.equal(added.data.latest_evidence.sources[3].type, "artifact");
-  assert.equal(added.data.latest_evidence.sources[4].type, "url");
+  assert.equal(added.data.latest_evidence.sources[3].type, "url");
   assert.equal(JSON.parse(fs.readFileSync(evidencePath, "utf8")).ledger.criteria["AC-1"].status, "passing");
+});
+
+test("evidence prune command module removes obsolete criterion evidence", async () => {
+  const root = tempRoot();
+  const acceptancePath = path.join(root, ".opennori", "active", "module-goal.acceptance.md");
+  const evidencePath = path.join(root, ".opennori", "active", "module-goal.evidence.json");
+  const contract = {
+    schema_version: "opennori/contract-v1",
+    protocol_version: "opennori/v1",
+    goal_id: "module-goal",
+    goal: "Refresh obsolete evidence",
+    criteria: [
+      {
+        id: "AC-1",
+        user_story: "As a user, I can see only current evidence in the report.",
+        measurement: "Open the report.",
+        threshold: "Obsolete proof no longer appears."
+      }
+    ],
+    acceptance_basis: { status: "approved" }
+  };
+  const ledger = buildEvidenceLedger(contract);
+  addEvidence(contract, ledger, "AC-1", {
+    kind: "review-result",
+    basis: "tool-observation",
+    summary: "Old proof was valid before the product changed.",
+    result: "passing",
+    sources: [{ type: "command", label: "old check", command: "npm test" }],
+    reviewability: "Rerun the old check.",
+    limitations: "It no longer proves the current behavior."
+  });
+  fs.mkdirSync(path.dirname(acceptancePath), { recursive: true });
+  fs.writeFileSync(acceptancePath, "# Module goal\n");
+  writeJson(evidencePath, { contract, ledger });
+
+  const pruned = await runEvidencePruneCommand([
+    "--criterion", "AC-1",
+    "--reason", "Product behavior changed and this proof is obsolete.",
+    "--json"
+  ], {
+    loadPair: () => ({ contract, ledger, acceptancePath, evidencePath, root })
+  });
+
+  assert.equal(pruned.ok, true);
+  assert.equal(pruned.data.evidence_prune.removed_records, 1);
+  assert.equal(pruned.data.criterion_status, "unknown");
+  assert.equal(pruned.data.latest_evidence, null);
+  assert.equal(pruned.data.current_gap.id, "AC-1");
+  const written = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  assert.equal(written.ledger.criteria["AC-1"].evidence.length, 0);
+  assert.equal(written.ledger.criteria["AC-1"].status, "unknown");
 });

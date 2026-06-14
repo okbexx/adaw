@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { defineCommand } from "citty";
+import { reviewAcceptanceQuality } from "../../acceptance.ts";
 import { completionAnswer, currentGap, evidenceHealth, fail, intervention, nextRecommendation, ok, pathsForGoal, recomputeWorkflowStatus, syncAcceptanceMarkdown, writeJson } from "../../core.ts";
 import { architectureState, renderReportWithArchitecture } from "../../architecture.ts";
 import { refreshManifest } from "../../lifecycle.ts";
@@ -25,21 +26,23 @@ export const reportCommand = defineCommand({
   },
   run({ args, data }) {
     const { contract, ledger, root } = data.loadPair(args);
+    const architecture = architectureState(root, contract.goal_id);
     const output = path.resolve(args.output || pathsForGoal(root, contract.goal_id).reportPath);
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, renderReportWithArchitecture(root, contract, ledger));
     refreshManifest(root);
-    const recommendation = nextRecommendation(contract, ledger);
+    const recommendation = nextRecommendation(contract, ledger, { root, architecture });
     return ok(
       {
         goal_id: contract.goal_id,
         report_path: output,
         workflow_status: ledger.status,
         current_gap: currentGap(contract, ledger),
-        completion: completionAnswer(contract, ledger),
+        completion: completionAnswer(contract, ledger, { root, architecture }),
         intervention: intervention(contract, ledger),
-        evidence_health: evidenceHealth(contract, ledger),
-        architecture: architectureState(root, contract.goal_id),
+        acceptance_review: reviewAcceptanceQuality(contract),
+        evidence_health: evidenceHealth(contract, ledger, { root }),
+        architecture,
         next_recommendation: recommendation
       },
       [{ kind: "acceptance_report", path: output }],

@@ -30,6 +30,7 @@ OpenNori Skills are package assets exposed by `plugins/opennori/.codex-plugin/pl
 Use `--merge-agent-route` only as an explicit optional fallback when the user wants AGENTS.md or CLAUDE.md to point new sessions at `.opennori/architecture/baseline.md`.
 Default uninstall preserves active goals, evidence, reports, archives, brainstorms, protocol, guide, and architecture state.
 Doctor output includes packaged Plugin Skill health, Architecture Baseline health, and active goal recoverability.
-`opennori check` output includes `acceptance_quality`, `architecture_check`, and `evidence_health`; resolve architecture warnings and review evidence-health findings before treating a goal as confidently complete.
-Upgrade must preserve existing active contracts, evidence, and architecture baselines. After upgrade, run `opennori check` and route `acceptance_quality` warnings to `nori-acceptance`, `architecture_check` warnings to the architecture Skills, and `evidence_health` findings to `nori-evidence` for user-approved revision.
+`opennori check` output includes hard contract integrity validation plus soft `acceptance_review`, `architecture_check`, `build_vs_buy`, and `evidence_health` findings. Treat review findings as agent/user discussion input, not protocol rejection.
+When status/report show `objective_complete: true` with `confidence: review-risk`, do not reopen Product AC just because architecture or build-vs-buy needs review. Route `architecture_review` to architecture Skills, `build_vs_buy` to `nori-build-vs-buy`, `evidence_health` to `nori-evidence`, and `acceptance_review` to `nori-acceptance`.
+Upgrade must preserve existing active contracts, evidence, and architecture baselines. After upgrade, run `opennori check` and route findings for user-approved revision, assumption confirmation, waiver, recovery, or accepted review risk.
 Do not suggest `opennori skill export`, `install --skill`, `refresh-skill`, or project-local `.agents/skills` sync.

@@ -7,7 +7,7 @@ import { changesCommand } from "./commands/changes.ts";
 import { checkCommand } from "./commands/check.ts";
 import { contextExportCommand } from "./commands/context.ts";
 import { doctorCommand } from "./commands/doctor.ts";
-import { evidenceAddCommand } from "./commands/evidence.ts";
+import { evidenceAddCommand, evidencePruneCommand } from "./commands/evidence.ts";
 import { installCommand } from "./commands/install.ts";
 import { listCommand } from "./commands/list.ts";
 import { profileAddCommand, profileCheckCommand, profileEvidenceCommand, profileShowCommand } from "./commands/profile.ts";
@@ -84,11 +84,12 @@ const profileCommand = groupCommand("profile", "Manage Nori Profile execution pr
 });
 
 const evidenceCommand = groupCommand("evidence", "Record OpenNori acceptance evidence.", {
-  add: withPolicy(asCommand(evidenceAddCommand), { activeGoal: true, activeGoalWrite: true })
+  add: withPolicy(asCommand(evidenceAddCommand), { activeGoal: true, activeGoalWrite: true }),
+  prune: withPolicy(asCommand(evidencePruneCommand), { activeGoal: true, activeGoalWrite: true })
 });
 
 const contextCommand = groupCommand("context", "Export OpenNori context for review tools.", {
-  export: asCommand(contextExportCommand)
+  export: withPolicy(asCommand(contextExportCommand), { activeGoal: true })
 });
 
 export const rootCommand = defineCommand({
@@ -264,7 +265,7 @@ export async function runCliCommand(resolved: Extract<ResolvedCliCommand, { ok: 
     });
     return result;
   };
-  return resolved.policy.activeGoalWrite
+  return resolved.policy.activeGoal
     ? withActiveGoalWriteLock(resolved.rawArgs, execute)
     : execute();
 }

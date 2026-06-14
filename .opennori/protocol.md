@@ -180,13 +180,15 @@ The manifest records `plugin` state, and `opennori doctor` checks whether packag
 present and whether the manifest Plugin state is stale.
 
 When upgrading an existing OpenNori project, upgrade entry assets first, then run `opennori check`.
-`check` validates active Nori Contracts, reports `acceptance_quality` warnings for vague ACs
-such as "modify profile fields" or "show an error", and reports `architecture_check` warnings when
-the active goal has no confirmed Architecture Baseline, stale agent-readable surface, or unresolved
-Architecture Challenges. It also reports `evidence_health` warnings when a complete-looking goal
-relies on stale, broad, source-free, or non-reviewable evidence. It does not rewrite existing
-contracts, evidence, reports, archives, brainstorms, or baselines. The user decides whether to
-revise affected criteria, architecture, or evidence.
+`check` validates active Nori Contract integrity as hard state structure, then reports
+`acceptance_review` findings for vague or possibly implementation-centered ACs such as "modify
+profile fields" or "show an error". These review findings are questions for the agent and user,
+not hard protocol rejection. `check` also reports `architecture_check` warnings when the active goal
+has no confirmed Architecture Baseline, stale agent-readable surface, or unresolved Architecture
+Challenges. It reports `evidence_health` warnings when a complete-looking goal relies on stale,
+broad, source-free, or non-reviewable evidence. It does not rewrite existing contracts, evidence,
+reports, archives, brainstorms, or baselines. The user decides whether to revise affected criteria,
+confirm assumptions, accept review risk, revise architecture, or refresh evidence.
 
 ## Nori Profile
 
@@ -209,7 +211,7 @@ Profile items have:
 Completion rules:
 
 - `must` blocks completion until satisfied or waived.
-- `prefer` is reported but does not block completion.
+- `prefer` does not block objective completion, but unknown or violated preferences become `profile_review` risk before confident completion.
 - `avoid` blocks completion if violated.
 
 Agents translate the user's natural-language preferences into profile records. Users should not
@@ -272,6 +274,13 @@ open-source libraries, and documented reference projects:
 opennori architecture build-vs-buy --root <project> --area "<area>" --need "<need>" --recommendation <reuse|buy|self-build> --summary "<decision>" --json
 ```
 
+Architecture state affects completion confidence, not Product AC shape. When every required Product
+AC is `passing` or `waived` but the active goal has a missing/draft/invalid/challenged baseline,
+stale agent-readable architecture surface, or unhealthy build-vs-buy decisions, OpenNori reports
+`objective_complete: true` with `confidence: review-risk`. It must not create synthetic ARCH
+acceptance criteria or replace `current_gap` unless a real Product AC or blocking Profile item is
+still incomplete.
+
 ## Status Model
 
 - `unknown`: no user-understandable evidence exists
@@ -282,7 +291,8 @@ opennori architecture build-vs-buy --root <project> --area "<area>" --need "<nee
 
 The workflow ledger is complete only when every required criterion is `passing` or `waived`.
 The user-facing completion answer is not confidently complete while `evidence_health` has review
-findings, even if the ledger status is already `complete`.
+findings, `profile_review` is unresolved, `architecture_review` remains, or `build_vs_buy` is
+unhealthy, even if the ledger status is already `complete`.
 
 ## Risk Gate
 
@@ -350,10 +360,10 @@ On every turn:
 13. Before self-building infrastructure, record a build-vs-buy decision.
 14. If project evidence conflicts with the baseline, run `opennori architecture challenge`; do not silently replace the baseline.
 15. If the user revises a criterion later, run `opennori criterion update --root <repo> --criterion <id> ... --json`; old evidence for the changed criterion is cleared.
-16. If the user asks to update an existing OpenNori project, run `opennori doctor`, use `opennori upgrade --dry-run/--confirm` for manifest/protocol/guide refreshes, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_quality`. If packaged Plugin Skills are missing, reinstall or update the OpenNori package instead of copying Skills into the project.
+16. If the user asks to update an existing OpenNori project, run `opennori doctor`, use `opennori upgrade --dry-run/--confirm` for manifest/protocol/guide refreshes, then run `opennori check`; ask the user before revising any existing AC flagged by `acceptance_review`. If packaged Plugin Skills are missing, reinstall or update the OpenNori package instead of copying Skills into the project.
 17. Run `opennori resume --root <repo>` or `opennori next --root <repo>` to recover the active goal and current acceptance gap from repository files.
 18. Work only to produce evidence for that gap under the confirmed Architecture Baseline.
-19. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
+19. Add acceptance evidence with `opennori evidence add`; choose any suitable verification method, but record basis, sources, reviewability, confidence, and limitations. If existing evidence is invalid or obsolete, run `opennori evidence prune` first so stale proof does not occupy active context. Add profile compliance evidence with `opennori profile evidence` when profile items exist.
 15. Run `opennori evaluate`.
 16. Report acceptance state, profile compliance, and evidence, not implementation steps.
 
@@ -366,6 +376,7 @@ Useful commands:
 - `opennori approve --root <repo>`: mark the acceptance basis as approved so completion can be decided.
 - `opennori criterion update --root <repo> --criterion <id> ...`: preserve a user revision as the new acceptance basis.
 - `opennori evidence add --root <repo> --criterion <id> --kind <kind> --summary "<summary>" --result <passing|failing|blocked|waived> --basis <basis> --source '<json-or-label>' --reviewability "<how to review>" --limitations "<known limits>"`: attach user-understandable, reviewable evidence without forcing a fixed adapter.
+- `opennori evidence prune --root <repo> --criterion <id> --reason "<reason>"`: remove invalid or obsolete evidence from an active criterion so reports and context exports only carry current proof.
 - `opennori profile add --root <repo> --type <skill|stack|constraint> --name "<name>" --strength <must|prefer|avoid>`: record user execution preferences separately from ACs.
 - `opennori profile evidence --root <repo> --item <item-id> --result <satisfied|violated|waived>`: record whether the agent followed the profile.
 - `opennori profile show --root <repo>`: show profile compliance and blocking items.

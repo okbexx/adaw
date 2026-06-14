@@ -7,6 +7,7 @@ import type {
   EvidenceHealthFinding,
   EvidenceInput,
   EvidenceLedger,
+  EvidencePruneSummary,
   EvidenceRecord,
   EvidenceResult,
   EvidenceSource,
@@ -16,6 +17,8 @@ import type {
   RiskGateResult,
   RiskLevel
 } from "../types.ts";
+import fs from "node:fs";
+import path from "node:path";
 import { profileCompliance } from "./profile.ts";
 import { inferCriterionLayer, nowIso } from "./shared.ts";
 
@@ -224,27 +227,11 @@ export function gapReason(status: string): string {
   return "This user acceptance criterion has no user-understandable evidence yet.";
 }
 
-export function evidenceView(evidence: EvidenceRecord | null | undefined): EvidenceView | null {
-  if (!evidence) return null;
-  const sources = Array.isArray(evidence.sources) ? evidence.sources : [];
-  const kind = evidence.kind || "manual";
-  const basis = evidence.basis || basisForEvidenceKind(kind) || "agent-observation";
-  return {
-    kind,
-    basis,
-    summary: evidence.summary || "<none>",
-    result: evidence.result || "unknown",
-    confidence: evidence.confidence,
-    sources,
-    reviewability: evidence.reviewability || (sources.length > 0 || evidence.path ? "source-provided" : "summary-only"),
-    limitations: evidence.limitations || "",
-    path: evidence.path,
-    gate: evidence.gate,
-    created_at: evidence.created_at
-  };
+export function evidenceView(evidence: EvidenceRecord | null | undefined, { root = process.cwd() } = {}): EvidenceView | null {
+  return prunedEvidenceView(evidence, root);
 }
 
-export function criterionStatusRows(contract: NoriContract, ledger: EvidenceLedger): CriterionStatusRow[] {
+export function criterionStatusRows(contract: NoriContract, ledger: EvidenceLedger, { root = process.cwd() } = {}): CriterionStatusRow[] {
   return contract.criteria.map((criterion) => {
     const state = ledger.criteria[criterion.id];
     return {
@@ -253,9 +240,92 @@ export function criterionStatusRows(contract: NoriContract, ledger: EvidenceLedg
       user_story: criterion.user_story,
       status: state?.status || "unknown",
       confidence: state?.confidence || "none",
-      latest_evidence: evidenceView(state?.evidence?.at(-1))
+      latest_evidence: evidenceView(state?.evidence?.at(-1), { root })
     };
   });
+}
+
+export function pruneInvalidEvidence(contract: NoriContract, ledger: EvidenceLedger, { root = process.cwd() } = {}): EvidencePruneSummary {
+  let changed = false;
+  let removedRecords = 0;
+  let removedSources = 0;
+
+  for (const criterion of contract.criteria || []) {
+    const state = ledger.criteria?.[criterion.id];
+    if (!state || !Array.isArray(state.evidence)) continue;
+    const nextEvidence: EvidenceRecord[] = [];
+    for (const evidence of state.evidence) {
+      const originalSources = Array.isArray(evidence.sources) ? evidence.sources : [];
+      const sources = originalSources.filter((source) => sourceIsStillReviewable(source, root));
+      const pathStillExists = evidence.path ? evidencePathExists(root, evidence.path) : true;
+      const pathRemoved = Boolean(evidence.path && !pathStillExists);
+      const removedForRecord = originalSources.length - sources.length + (pathRemoved ? 1 : 0);
+      removedSources += removedForRecord;
+      const view = evidenceView(evidence, { root });
+      if (!view) {
+        changed = true;
+        removedRecords += 1;
+        continue;
+      }
+      const nextRecord: EvidenceRecord = {
+        ...evidence,
+        path: pathStillExists ? evidence.path : undefined,
+        sources
+      };
+      if (removedForRecord > 0) changed = true;
+      nextEvidence.push(nextRecord);
+    }
+
+    if (nextEvidence.length !== state.evidence.length) changed = true;
+    state.evidence = nextEvidence;
+    const latest = nextEvidence.at(-1);
+    if (latest) {
+      state.status = latest.result as AcceptanceStatus;
+      state.confidence = latest.confidence || confidenceForEvidence(criterion.risk, latest.result);
+    } else {
+      if (state.status !== "unknown" || state.confidence !== "none") changed = true;
+      state.status = "unknown";
+      state.confidence = "none";
+    }
+  }
+
+  if (changed) {
+    ledger.updated_at = nowIso();
+    recomputeWorkflowStatus(contract, ledger);
+  }
+
+  return {
+    changed,
+    removed_records: removedRecords,
+    removed_sources: removedSources
+  };
+}
+
+export function pruneCriterionEvidence(
+  contract: NoriContract,
+  ledger: EvidenceLedger,
+  criterionId: string,
+  { reason = "Evidence no longer proves the current acceptance criterion." } = {}
+): EvidencePruneSummary {
+  const criterion = contract.criteria.find((item) => item.id === criterionId);
+  if (!criterion) throw new Error(`Criterion not found: ${criterionId}`);
+  const state = ledger.criteria?.[criterionId];
+  if (!state) throw new Error(`Evidence ledger state not found: ${criterionId}`);
+  const removedRecords = Array.isArray(state.evidence) ? state.evidence.length : 0;
+  state.status = "unknown";
+  state.confidence = "none";
+  state.required = criterion.required !== false;
+  state.risk = criterion.risk || "medium";
+  state.evidence = [];
+  ledger.updated_at = nowIso();
+  recomputeWorkflowStatus(contract, ledger);
+  return {
+    changed: removedRecords > 0,
+    removed_records: removedRecords,
+    removed_sources: 0,
+    criteria: [criterionId],
+    reason
+  };
 }
 
 function evidenceAgeDays(evidence: EvidenceRecord | null | undefined, now = Date.now()): number | null {
@@ -270,6 +340,52 @@ function evidenceHasReviewableSource(evidence: EvidenceRecord | null | undefined
   return sources.some((source) => REVIEWABLE_SOURCE_TYPES.has(source.type || "")) || Boolean(evidence?.path);
 }
 
+function isLocalEvidencePath(sourcePath: string): boolean {
+  return Boolean(sourcePath) && !/^[a-z][a-z0-9+.-]*:/i.test(sourcePath);
+}
+
+function evidencePathExists(root: string | undefined, sourcePath: unknown): boolean {
+  const rawPath = String(sourcePath || "").trim();
+  if (!rawPath || !isLocalEvidencePath(rawPath)) return true;
+  const absolutePath = path.isAbsolute(rawPath)
+    ? rawPath
+    : path.resolve(root || process.cwd(), rawPath);
+  return fs.existsSync(absolutePath);
+}
+
+function sourceIsStillReviewable(source: EvidenceSource, root: string | undefined): boolean {
+  if ((source.type === "artifact" || source.path) && source.path) {
+    return evidencePathExists(root, source.path);
+  }
+  return true;
+}
+
+function prunedEvidenceView(evidence: EvidenceRecord | null | undefined, root: string | undefined): EvidenceView | null {
+  if (!evidence) return null;
+  const originalSources = Array.isArray(evidence.sources) ? evidence.sources : [];
+  const sources = originalSources.filter((source) => sourceIsStillReviewable(source, root));
+  const evidencePath = evidence.path && evidencePathExists(root, evidence.path) ? evidence.path : undefined;
+  const hadLocalPath = Boolean(evidence.path) || originalSources.some((source) => Boolean(source.path));
+  const hasReviewableAfterPrune = sources.some((source) => REVIEWABLE_SOURCE_TYPES.has(source.type || "")) || Boolean(evidencePath);
+  if (hadLocalPath && !hasReviewableAfterPrune) return null;
+
+  const kind = evidence.kind || "manual";
+  const basis = evidence.basis || basisForEvidenceKind(kind) || "agent-observation";
+  return {
+    kind,
+    basis,
+    summary: evidence.summary || "<none>",
+    result: evidence.result || "unknown",
+    confidence: evidence.confidence,
+    sources,
+    reviewability: evidence.reviewability || (sources.length > 0 || evidencePath ? "source-provided" : "summary-only"),
+    limitations: evidence.limitations || "",
+    path: evidencePath,
+    gate: evidence.gate,
+    created_at: evidence.created_at
+  };
+}
+
 function evidenceHasReviewability(evidence: EvidenceRecord | null | undefined): boolean {
   const value = String(evidence?.reviewability || "").trim();
   return value.length > 0 && value !== "summary-only";
@@ -280,7 +396,7 @@ function evidenceSummaryLooksBulk(evidence: EvidenceRecord | null | undefined): 
   return BULK_EVIDENCE_PATTERNS.some((pattern) => pattern.test(summary));
 }
 
-export function evidenceHealth(contract: NoriContract, ledger: EvidenceLedger, { now = Date.now(), staleDays = EVIDENCE_HEALTH_STALE_DAYS } = {}): EvidenceHealth {
+export function evidenceHealth(contract: NoriContract, ledger: EvidenceLedger, { now = Date.now(), staleDays = EVIDENCE_HEALTH_STALE_DAYS, root = process.cwd() } = {}): EvidenceHealth {
   const findings: EvidenceHealthFinding[] = [];
   for (const criterion of contract.criteria || []) {
     if (criterion.required === false) continue;
@@ -308,7 +424,23 @@ export function evidenceHealth(contract: NoriContract, ledger: EvidenceLedger, {
       });
     }
 
-    if (!evidenceHasReviewableSource(latest)) {
+    const missingSources = [
+      ...(latest.path && !evidencePathExists(root, latest.path) ? [latest.path] : []),
+      ...(Array.isArray(latest.sources) ? latest.sources
+        .filter((source) => (source.type === "artifact" || source.path) && source.path && !evidencePathExists(root, source.path))
+        .map((source) => source.path || source.label || "<unknown>") : [])
+    ];
+    for (const missing of missingSources) {
+      findings.push({
+        criterion_id: criterion.id,
+        severity: "broken",
+        issue: "missing-evidence-source",
+        message: `Latest passing evidence references a missing local artifact: ${missing}.`,
+        recovery: "Remove the stale evidence source and record fresh reviewable evidence."
+      });
+    }
+
+    if (!evidenceHasReviewableSource(latest) || !evidenceView(latest, { root })) {
       findings.push({
         criterion_id: criterion.id,
         severity: "review",

@@ -125,14 +125,17 @@ A Nori Contract combines:
 - current acceptance gap
 - completion judgment
 
-Acceptance checks describe user-visible operations and judgments, not files,
-commands, modules, tests, Skills, or technology choices.
+Acceptance checks should describe user-visible operations and judgments, not
+implementation files, modules, tests, Skills, or technology choices. OpenNori
+surfaces likely mistakes as review questions for the agent and user; it does
+not reject a contract just because a heuristic sees a technical word.
 
 ### Acceptance Discovery
 
-Nori should not accept vague criteria such as "modify fields" or "show an
-error". Before drafting a contract, OpenNori helps the agent ask the questions
-that decide whether the user can accept the result:
+Nori should review vague criteria such as "modify fields" or "show an error"
+with the user instead of silently treating them as done. Before drafting or
+claiming confident completion, OpenNori helps the agent ask the questions that
+decide whether the user can accept the result:
 
 - which fields can be changed
 - what validation rules apply
@@ -153,6 +156,11 @@ project evidence conflicts with it, the agent creates an Architecture Challenge
 instead of silently changing the technology stack, state model, dependency
 policy, or directory boundary.
 
+Missing, challenged, or stale architecture state is reported as
+`architecture_review`: the Product AC can be objectively complete, but OpenNori
+will not report confident completion until the agent or user reviews the
+architecture risk.
+
 ### Evidence Record
 
 Evidence can come from tests, screenshots, URLs, artifacts, logs, human
@@ -166,6 +174,11 @@ Nori Profile records execution preferences such as required Skills, preferred
 stacks, avoided tools, and install policy. These preferences influence
 completion risk and blocking status, but they are not user acceptance checks.
 
+Build-vs-buy findings work the same way. They are architecture review risks,
+not Product AC. If self-built infrastructure lacks reuse research or a
+self-build reason, status/report say `build_vs_buy` review is required before
+claiming mature completion.
+
 ## Example Uses
 
 ### Frontend Feature
@@ -176,10 +189,11 @@ User prompt:
 Use OpenNori for a settings page where users edit profile details.
 ```
 
-Nori should reject vague acceptance checks like "modify fields" and ask which
-fields, validation rules, save feedback, persistence behavior, failed-save
-states, and out-of-scope boundaries matter. The final contract should describe
-what the user opens, edits, saves, refreshes, and expects to see.
+Nori should flag vague acceptance checks like "modify fields" as
+`acceptance_review` findings and ask which fields, validation rules, save
+feedback, persistence behavior, failed-save states, and out-of-scope boundaries
+matter. The final contract should describe what the user opens, edits, saves,
+refreshes, and expects to see.
 
 ### Skill And Stack Preference
 
@@ -191,7 +205,9 @@ and avoid adding another UI framework.
 ```
 
 Nori records these as Profile items, not acceptance checks. A violated `must` or
-`avoid` item can block completion unless the user waives it.
+`avoid` item can block completion unless the user waives it. An unknown or
+violated `prefer` item becomes `profile_review`: objectively complete work can
+still require user or agent review before it is reported as confidently complete.
 
 ### Architecture Baseline
 
@@ -205,6 +221,10 @@ before self-building infrastructure.
 Nori lists available architecture profiles, previews the baseline, and asks the
 user to confirm before implementation. Status and report then show Product
 decision and Architecture decision separately.
+
+If all Product ACs pass while the Architecture Baseline is missing, challenged,
+or build-vs-buy is unhealthy, status/report answer: objectively complete with
+review risk, not confidently complete.
 
 ### Existing OpenNori Project
 
@@ -237,6 +257,7 @@ opennori draft --goal "Ship a user-visible result" --root .
 opennori approve --root . --summary "User approved the acceptance checks."
 opennori status --root .
 opennori evidence add --root . --criterion AC-1 --kind review-result --summary "..." --result passing
+opennori evidence prune --root . --criterion AC-1 --reason "Evidence no longer proves the current AC"
 opennori report --root .
 ```
 
