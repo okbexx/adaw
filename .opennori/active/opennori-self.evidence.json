@@ -6,8 +6,8 @@
     "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
-      "summary": "User refined AC-Z-14 to require next-loop candidate goals, not only a generic next action.",
-      "approved_at": "2026-06-14T01:51:01.794Z"
+      "summary": "User refined AC-Z-12 to require mature agent behavior protocols for the packaged Skill Pack.",
+      "approved_at": "2026-06-14T07:33:10.872Z"
     },
     "criteria": [
       {
@@ -301,9 +301,9 @@
       {
         "id": "AC-Z-12",
         "layer": "productization",
-        "user_story": "作为用户，我安装或获取 OpenNori 后，agent 能获得一组职责清晰的 OpenNori Plugin Skills 来处理验收、证据、能力偏好、架构、项目健康和报告，而我不需要记住这些 Skill 名。",
-        "measurement": "查看 .codex-plugin/plugin.json、skills/nori*/SKILL.md、opennori install 输出、.opennori/manifest.json 和 opennori doctor 结果。",
-        "threshold": "OpenNori Plugin 包含总入口和 acceptance、evidence、capability-profile、architecture、build-vs-buy、project-health、reporting 子 Skill；install 不把 Skills 复制进用户项目；manifest 记录 plugin；doctor 能发现 packaged Plugin Skills 是否缺失或 manifest plugin state 是否 stale。",
+        "user_story": "作为用户，我安装或获取 OpenNori 后，agent 能通过一组职责清晰的 OpenNori Plugin Skills，把自然语言请求稳定映射到验收发现、架构基线、证据、能力偏好、项目健康、报告和下一轮候选目标，而不需要我记住 Skill 名或 CLI 参数。",
+        "measurement": "查看 .codex-plugin/plugin.json、plugins/opennori/skills/nori*/SKILL.md、opennori doctor、opennori status/report/context export，以及典型自然语言场景下的 Skill 路由说明。",
+        "threshold": "Skill Pack 不只是命令清单：每个 Skill 都包含触发语义、agent 应先读取的状态、用户回复形态、状态写入边界、handoff 到其他 Skill 的条件和误用防护；总入口能处理继续、完成判断、记录证据、能力偏好、架构优先、项目健康和 candidate_goals；所有 Skill 都保持 Plugin-first，不要求项目内 Skill copy/sync，不把 architecture/profile/build-vs-buy/candidate_goals 写成 Product AC 或过程计划。",
         "required": true,
         "risk": "high"
       },
@@ -448,7 +448,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-14T02:01:34.843Z",
+    "updated_at": "2026-06-14T07:50:48.355Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -3128,30 +3128,7 @@
           {
             "kind": "review-result",
             "basis": "protocol-check",
-            "summary": "OpenNori Plugin Skills now cover nori, acceptance, evidence, capability-profile, architecture brainstorm/apply/challenge, build-vs-buy, project-health, and reporting; install does not copy Skills into projects, manifest records plugin, and doctor validates packaged Skills.",
-            "result": "passing",
-            "confidence": "verified",
-            "sources": [
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js doctor --root . --json",
-                "command": "node ./bin/opennori.js doctor --root . --json"
-              },
-              {
-                "type": "command",
-                "label": "node ./bin/opennori.js install --root . --dry-run --json",
-                "command": "node ./bin/opennori.js install --root . --dry-run --json"
-              }
-            ],
-            "reviewability": "Inspect package Skill files and plugin manifest, then run doctor and install dry-run to confirm plugin state and absence of project Skill copy actions.",
-            "limitations": "This validates the local package asset layout; external Codex Plugin installation should be smoke-tested after publishing.",
-            "gate": "accepted",
-            "created_at": "2026-06-13T10:25:31.054Z"
-          },
-          {
-            "kind": "review-result",
-            "basis": "tool-observation",
-            "summary": "OpenNori Plugin now bundles the full Skill set under plugins/opennori/skills and installs through Codex as opennori@opennori. Doctor reports plugin_manifest, plugin_marketplace, plugin_skills, and manifest_plugin_state passing; npm run check passes 73 tests; plugin-creator validation passes for plugins/opennori.",
+            "summary": "OpenNori packaged Skills were redesigned from command lists into agent behavior protocols. All 10 Skill files now include trigger-oriented descriptions plus Mission, Start Here, Natural-Language Mapping, State Writes, Handoffs, User Reply Shape, and Misuse Guards; README, protocol, plugin metadata, website copy, and tests now describe and enforce this boundary.",
             "result": "passing",
             "confidence": "high",
             "sources": [
@@ -3162,18 +3139,13 @@
               },
               {
                 "type": "command",
-                "label": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori",
-                "command": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori"
-              },
-              {
-                "type": "command",
                 "label": "node ./bin/opennori.js doctor --root . --json",
                 "command": "node ./bin/opennori.js doctor --root . --json"
               },
               {
                 "type": "command",
-                "label": "codex plugin add opennori@opennori",
-                "command": "codex plugin add opennori@opennori"
+                "label": "rg -c '^## (Mission|Start Here|Natural-Language Mapping|State Writes|Handoffs|User Reply Shape|Misuse Guards)$' plugins/opennori/skills/*/SKILL.md",
+                "command": "rg -c '^## (Mission|Start Here|Natural-Language Mapping|State Writes|Handoffs|User Reply Shape|Misuse Guards)$' plugins/opennori/skills/*/SKILL.md"
               },
               {
                 "type": "artifact",
@@ -3182,14 +3154,34 @@
               },
               {
                 "type": "artifact",
+                "label": "plugins/opennori/.codex-plugin/plugin.json",
+                "path": "plugins/opennori/.codex-plugin/plugin.json"
+              },
+              {
+                "type": "artifact",
                 "label": "test/core.test.js",
                 "path": "test/core.test.js"
+              },
+              {
+                "type": "artifact",
+                "label": "README.md",
+                "path": "README.md"
+              },
+              {
+                "type": "artifact",
+                "label": ".opennori/protocol.md",
+                "path": ".opennori/protocol.md"
+              },
+              {
+                "type": "artifact",
+                "label": "../opennori-site/src/pages/index.astro",
+                "path": "../opennori-site/src/pages/index.astro"
               }
             ],
-            "reviewability": "Run check, doctor, plugin validation, and Codex plugin install; inspect the Skill directory and package tests for nested plugin asset assertions.",
-            "limitations": "The current thread cannot hot-load newly installed Skills; OpenAI guidance requires opening a new Codex session after plugin install.",
+            "reviewability": "Inspect the packaged Skill files to verify the behavior-protocol sections and natural-language routing; inspect test/core.test.js for regression assertions; rerun npm run check, doctor, and the rg section-count command to confirm packaged Plugin Skill health.",
+            "limitations": "This validates packaged Skill content, local package health, and website/README copy. A newly opened Codex session is still the correct way to observe live plugin-trigger behavior after installation.",
             "gate": "accepted",
-            "created_at": "2026-06-13T13:48:05.422Z"
+            "created_at": "2026-06-14T07:50:48.355Z"
           }
         ]
       },

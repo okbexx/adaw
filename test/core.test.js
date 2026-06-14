@@ -1012,10 +1012,28 @@ test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => 
   assert.match(evidenceAsset, /Do not force evidence into a fixed adapter taxonomy/);
   assert.match(evidenceAsset, /basis, sources, reviewability, confidence, and limitations/);
 
+  const behaviorProtocolSections = [
+    "## Mission",
+    "## Start Here",
+    "## Natural-Language Mapping",
+    "## State Writes",
+    "## Handoffs",
+    "## User Reply Shape",
+    "## Misuse Guards"
+  ];
   for (const name of names) {
     const asset = fs.readFileSync(path.join(pluginRoot, "skills", name, "SKILL.md"), "utf8");
     assert.match(asset, /^---\nname: /);
     assert.match(asset, /\ndescription: /);
+    for (const section of behaviorProtocolSections) {
+      assert.match(asset, new RegExp(section.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+    assert.match(asset, /natural-language|Natural-Language|natural language/);
+    assert.match(asset, /state/i);
+    assert.match(asset, /handoff|hand off/i);
+    assert.doesNotMatch(asset, /install --skill/);
+    assert.doesNotMatch(asset, /refresh-skill/);
+    assert.doesNotMatch(asset, /skill export/);
   }
 });
 

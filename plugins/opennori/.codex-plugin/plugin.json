@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "OpenNori",
     "shortDescription": "Acceptance contracts and evidence for coding agents.",
-    "longDescription": "OpenNori gives Codex Skills for drafting human-centered acceptance criteria, tracking evidence, checking project health, and reporting whether a goal is complete.",
+    "longDescription": "OpenNori ships Codex Skills as agent behavior protocols for turning natural-language goals into human-centered acceptance contracts, architecture baselines, reviewable evidence, project health checks, and completion reports without making users memorize CLI flags.",
     "developerName": "okbexx",
     "category": "Productivity",
     "capabilities": [

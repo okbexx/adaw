@@ -1,13 +1,13 @@
 {
   "schema_version": "opennori/context-export-v1",
-  "exported_at": "2026-06-14T02:05:44.562Z",
+  "exported_at": "2026-06-14T07:52:24.802Z",
   "root": "/Users/jarl/code/jarlone/opennori",
   "goal_id": "opennori-self",
   "goal": "让 OpenNori 从只保存目标、AC、证据、报告的验收工具，升级为能先确立 Architecture Baseline，并让 agent 在后续实现 AC 时持续沿用该技术架构的验收驱动产品；用户不仅能判断产品目标是否完成，也能判断交付物是否按确认过的优秀技术架构完成。",
   "acceptance_basis": {
     "status": "approved",
-    "summary": "User refined AC-Z-14 to require next-loop candidate goals, not only a generic next action.",
-    "approved_at": "2026-06-14T01:51:01.794Z"
+    "summary": "User refined AC-Z-12 to require mature agent behavior protocols for the packaged Skill Pack.",
+    "approved_at": "2026-06-14T07:33:10.872Z"
   },
   "workflow_status": "complete",
   "current_gap": null,
@@ -1404,13 +1404,13 @@
     {
       "id": "AC-Z-12",
       "layer": "productization",
-      "user_story": "作为用户，我安装或获取 OpenNori 后，agent 能获得一组职责清晰的 OpenNori Plugin Skills 来处理验收、证据、能力偏好、架构、项目健康和报告，而我不需要记住这些 Skill 名。",
+      "user_story": "作为用户，我安装或获取 OpenNori 后，agent 能通过一组职责清晰的 OpenNori Plugin Skills，把自然语言请求稳定映射到验收发现、架构基线、证据、能力偏好、项目健康、报告和下一轮候选目标，而不需要我记住 Skill 名或 CLI 参数。",
       "status": "passing",
       "confidence": "high",
       "latest_evidence": {
         "kind": "review-result",
-        "basis": "tool-observation",
-        "summary": "OpenNori Plugin now bundles the full Skill set under plugins/opennori/skills and installs through Codex as opennori@opennori. Doctor reports plugin_manifest, plugin_marketplace, plugin_skills, and manifest_plugin_state passing; npm run check passes 73 tests; plugin-creator validation passes for plugins/opennori.",
+        "basis": "protocol-check",
+        "summary": "OpenNori packaged Skills were redesigned from command lists into agent behavior protocols. All 10 Skill files now include trigger-oriented descriptions plus Mission, Start Here, Natural-Language Mapping, State Writes, Handoffs, User Reply Shape, and Misuse Guards; README, protocol, plugin metadata, website copy, and tests now describe and enforce this boundary.",
         "result": "passing",
         "confidence": "high",
         "sources": [
@@ -1421,18 +1421,13 @@
           },
           {
             "type": "command",
-            "label": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori",
-            "command": "python3 /Users/jarl/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py /Users/jarl/code/jarlone/opennori/plugins/opennori"
-          },
-          {
-            "type": "command",
             "label": "node ./bin/opennori.js doctor --root . --json",
             "command": "node ./bin/opennori.js doctor --root . --json"
           },
           {
             "type": "command",
-            "label": "codex plugin add opennori@opennori",
-            "command": "codex plugin add opennori@opennori"
+            "label": "rg -c '^## (Mission|Start Here|Natural-Language Mapping|State Writes|Handoffs|User Reply Shape|Misuse Guards)$' plugins/opennori/skills/*/SKILL.md",
+            "command": "rg -c '^## (Mission|Start Here|Natural-Language Mapping|State Writes|Handoffs|User Reply Shape|Misuse Guards)$' plugins/opennori/skills/*/SKILL.md"
           },
           {
             "type": "artifact",
@@ -1441,14 +1436,34 @@
           },
           {
             "type": "artifact",
+            "label": "plugins/opennori/.codex-plugin/plugin.json",
+            "path": "plugins/opennori/.codex-plugin/plugin.json"
+          },
+          {
+            "type": "artifact",
             "label": "test/core.test.js",
             "path": "test/core.test.js"
+          },
+          {
+            "type": "artifact",
+            "label": "README.md",
+            "path": "README.md"
+          },
+          {
+            "type": "artifact",
+            "label": ".opennori/protocol.md",
+            "path": ".opennori/protocol.md"
+          },
+          {
+            "type": "artifact",
+            "label": "../opennori-site/src/pages/index.astro",
+            "path": "../opennori-site/src/pages/index.astro"
           }
         ],
-        "reviewability": "Run check, doctor, plugin validation, and Codex plugin install; inspect the Skill directory and package tests for nested plugin asset assertions.",
-        "limitations": "The current thread cannot hot-load newly installed Skills; OpenAI guidance requires opening a new Codex session after plugin install.",
+        "reviewability": "Inspect the packaged Skill files to verify the behavior-protocol sections and natural-language routing; inspect test/core.test.js for regression assertions; rerun npm run check, doctor, and the rg section-count command to confirm packaged Plugin Skill health.",
+        "limitations": "This validates packaged Skill content, local package health, and website/README copy. A newly opened Codex session is still the correct way to observe live plugin-trigger behavior after installation.",
         "gate": "accepted",
-        "created_at": "2026-06-13T13:48:05.422Z"
+        "created_at": "2026-06-14T07:50:48.355Z"
       }
     },
     {
@@ -2436,7 +2451,7 @@
     "protocol_version": "opennori/v1",
     "opennori_version": "0.1.8",
     "created_at": "2026-06-10T09:12:16.646Z",
-    "updated_at": "2026-06-14T02:05:44.305Z",
+    "updated_at": "2026-06-14T07:52:24.756Z",
     "capabilities": [
       "acceptance-contract",
       "evidence-ledger",
@@ -2589,61 +2604,61 @@
       "skills": [
         {
           "name": "nori",
-          "description": "Route OpenNori work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
+          "description": "Root OpenNori router for natural-language agent work. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to choose the right OpenNori Skill without exposing CLI parameters.",
           "path": "plugins/opennori/skills/nori/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-acceptance",
-          "description": "Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.",
+          "description": "Discover, draft, approve, and revise human-centered OpenNori acceptance criteria from natural-language goals, fuzzy ideas, brainstorm candidates, or user corrections. Use when completion meaning is unclear, AC quality is being discussed, or candidate goals need to become a Nori Contract.",
           "path": "plugins/opennori/skills/nori-acceptance/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-evidence",
-          "description": "Record and judge OpenNori evidence while preserving agent freedom to choose verification methods.",
+          "description": "Record, prune, and judge reviewable OpenNori evidence for acceptance criteria while preserving agent freedom to choose verification methods. Use when the user says to attach a validation, confirms behavior, waives a gap, asks why an AC is passing, or says evidence is stale, invalid, or insufficient.",
           "path": "plugins/opennori/skills/nori-evidence/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-capability-profile",
-          "description": "Record and report OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
+          "description": "Capture and check OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, install policy, and user-declared implementation constraints. Use when the user says a task must use a specific Skill, prefers a library or stack, wants to avoid a tool, or requires approval before installs.",
           "path": "plugins/opennori/skills/nori-capability-profile/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-architecture-brainstorm",
-          "description": "Create and confirm an OpenNori Architecture Baseline before non-trivial implementation.",
+          "description": "Establish a reviewable OpenNori Architecture Baseline before non-trivial implementation. Use when the user wants a good architecture first, asks for built-in or project architecture profiles, prefers a stack that should shape implementation, or expects future agent work to follow a confirmed technical baseline.",
           "path": "plugins/opennori/skills/nori-architecture-brainstorm/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-architecture-apply",
-          "description": "Apply the confirmed OpenNori Architecture Baseline before implementing acceptance gaps.",
+          "description": "Apply a confirmed OpenNori Architecture Baseline while implementing acceptance gaps. Use before non-trivial code changes when an active goal has architecture state, when resuming implementation in a new session, or when the agent must ensure Product AC work stays aligned with the baseline.",
           "path": "plugins/opennori/skills/nori-architecture-apply/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-architecture-challenge",
-          "description": "Create reviewable Architecture Challenges when project evidence conflicts with the confirmed baseline.",
+          "description": "Create reviewable Architecture Challenges when evidence conflicts with a confirmed OpenNori Architecture Baseline. Use when the baseline appears too heavy, too weak, incompatible with project conventions, blocked by license/security/runtime constraints, or contradicted by implementation evidence.",
           "path": "plugins/opennori/skills/nori-architecture-challenge/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-build-vs-buy",
-          "description": "Record build-vs-buy decisions so agents prefer existing libraries and avoid repeating solved infrastructure.",
+          "description": "Record OpenNori build-vs-buy decisions before infrastructure or platform work so agents prefer existing project code, standard libraries, official SDKs, and mature open-source libraries before self-building. Use when implementation touches CLI parsing, schemas, storage, rendering, routing, auth, installers, validators, adapters, UI primitives, or other reusable infrastructure.",
           "path": "plugins/opennori/skills/nori-build-vs-buy/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-project-health",
-          "description": "Install, upgrade, uninstall, diagnose, and recover project-local OpenNori state, manifest, Plugin health, and active goals.",
+          "description": "Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
           "path": "plugins/opennori/skills/nori-project-health/SKILL.md",
           "source": "package"
         },
         {
           "name": "nori-reporting",
-          "description": "Summarize OpenNori status, reports, current gaps, user intervention, and acceptance evidence for humans.",
+          "description": "Explain OpenNori status, current gaps, completion decisions, user intervention, reports, changes, and context export in human terms. Use when the user asks whether work is complete, what remains, what changed, what they need to do, or how to continue after a completed goal.",
           "path": "plugins/opennori/skills/nori-reporting/SKILL.md",
           "source": "package"
         }

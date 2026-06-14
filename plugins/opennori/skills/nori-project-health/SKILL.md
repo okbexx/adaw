@@ -1,36 +1,75 @@
 ---
 name: nori-project-health
-description: Install, upgrade, uninstall, diagnose, and recover project-local OpenNori state, manifest, Plugin health, and active goals.
+description: Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.
 ---
 
-## When to use
-Use when the user asks to install OpenNori, upgrade OpenNori project state, uninstall OpenNori, check whether OpenNori is ready, diagnose broken `.opennori` state, inspect manifest, or recover active goals.
+## Mission
 
-## Commands
-- Short readiness / first-time preview: `opennori bootstrap --root <repo> --json`.
-- Confirm first-time setup after user approval: `opennori bootstrap --root <repo> --confirm --json`.
-- Preview install: `opennori install --root <repo> --dry-run --json`.
-- Confirm install after user approval: `opennori install --root <repo> --confirm --json`.
-- Preview optional agent route merge: `opennori install --root <repo> --merge-agent-route --dry-run --json`.
-- Confirm optional agent route merge after user approval: `opennori install --root <repo> --merge-agent-route --confirm --json`.
-- Preview destructive overwrite only when preservation is not enough: `opennori install --root <repo> --force --dry-run --json`.
-- Confirm destructive overwrite only after explicit user approval: `opennori install --root <repo> --force --confirm --json`.
-- Preview protocol/manifest/guide upgrade: `opennori upgrade --root <repo> --dry-run --json`.
-- Confirm protocol/manifest/guide upgrade after user approval: `opennori upgrade --root <repo> --confirm --json`.
-- Doctor: `opennori doctor --root <repo> --json`.
-- Existing contract check after upgrade: `opennori check --root <repo> --json`.
-- Preview uninstall: `opennori uninstall --root <repo> --dry-run --json`.
-- Remove manifest while preserving state: `opennori uninstall --root <repo> --confirm --json`.
-- Remove all OpenNori state only after explicit user acceptance: `opennori uninstall --root <repo> --include-state --confirm --json`.
+Keep OpenNori project state usable and recoverable without making lifecycle commands the user's workflow.
 
-## Rules
-Always show dry-run plans before destructive writes.
-Install and upgrade manage `.opennori` project state. They do not copy OpenNori Skills into the user's project.
-OpenNori Skills are package assets exposed by `plugins/opennori/.codex-plugin/plugin.json`; if doctor reports missing Plugin Skills, reinstall or update the OpenNori package.
-Use `--merge-agent-route` only as an explicit optional fallback when the user wants AGENTS.md or CLAUDE.md to point new sessions at `.opennori/architecture/baseline.md`.
-Default uninstall preserves active goals, evidence, reports, archives, brainstorms, protocol, guide, and architecture state.
-Doctor output includes packaged Plugin Skill health, Architecture Baseline health, and active goal recoverability.
-`opennori check` output includes hard contract integrity validation plus soft `acceptance_review`, `architecture_check`, `build_vs_buy`, and `evidence_health` findings. Treat review findings as agent/user discussion input, not protocol rejection.
-When status/report show `objective_complete: true` with `confidence: review-risk`, do not reopen Product AC just because architecture or build-vs-buy needs review. Route `architecture_review` to architecture Skills, `build_vs_buy` to `nori-build-vs-buy`, `evidence_health` to `nori-evidence`, and `acceptance_review` to `nori-acceptance`.
-Upgrade must preserve existing active contracts, evidence, and architecture baselines. After upgrade, run `opennori check` and route findings for user-approved revision, assumption confirmation, waiver, recovery, or accepted review risk.
-Do not suggest `opennori skill export`, `install --skill`, `refresh-skill`, or project-local `.agents/skills` sync.
+Health work protects `.opennori/` integrity, manifest freshness, packaged Plugin Skill visibility, and active-goal recoverability. It should not decide subjective product acceptance.
+
+## Start Here
+
+1. Run `opennori doctor --root <repo> --json` when the project may already use OpenNori.
+2. Run `opennori bootstrap --root <repo> --json` for first contact or unknown readiness.
+3. For lifecycle writes, show preview first and ask for explicit confirmation when the action writes, overwrites, upgrades, uninstalls, or deletes state.
+4. After upgrade or repair, run `opennori check --root <repo> --json` and route soft review findings to the relevant Skill.
+
+Useful state commands:
+
+- `opennori bootstrap --root <repo> --json`
+- `opennori bootstrap --root <repo> --confirm --json`
+- `opennori install --root <repo> --dry-run --json`
+- `opennori install --root <repo> --confirm --json`
+- `opennori upgrade --root <repo> --dry-run --json`
+- `opennori upgrade --root <repo> --confirm --json`
+- `opennori uninstall --root <repo> --dry-run --json`
+- `opennori uninstall --root <repo> --confirm --json`
+- `opennori uninstall --root <repo> --include-state --confirm --json`
+- `opennori doctor --root <repo> --json`
+- `opennori check --root <repo> --json`
+
+## Natural-Language Mapping
+
+- "Set up OpenNori here" -> bootstrap preview, then confirm only after the user approves.
+- "Is OpenNori healthy" -> doctor and summarize ready, needs-action, or broken with recovery actions.
+- "Upgrade this project" -> upgrade dry run, confirm if approved, then check.
+- "Remove OpenNori" -> uninstall dry run; preserve `.opennori` state unless the user explicitly asks to delete it.
+- "State is broken" -> doctor, identify hard integrity failures, and propose recovery actions.
+- "Doctor shows review risks" -> route acceptance, evidence, profile, architecture, or build-vs-buy review to the responsible Skill.
+
+## State Writes
+
+May write manifest, protocol, agent guide, lifecycle-managed `.opennori/` assets, and uninstall removals after confirmation. It may not silently rewrite active Product AC, evidence, profile, architecture decisions, or reports as a side effect of health checks.
+
+## Handoffs
+
+- `acceptance_review` -> `nori-acceptance`.
+- `evidence_health` -> `nori-evidence`.
+- `profile_review` -> `nori-capability-profile`.
+- `architecture_check` or stale baseline surface -> `nori-architecture-brainstorm`, `nori-architecture-apply`, or `nori-architecture-challenge`.
+- `build_vs_buy` findings -> `nori-build-vs-buy`.
+- Healthy status or user-facing summary -> `nori-reporting`.
+
+## User Reply Shape
+
+For health responses, use:
+
+```text
+Status: ready / needs-action / broken
+Problem: ...
+Recovery: ...
+Writes needed: none / previewed / needs confirmation
+Next: ...
+```
+
+For previews, list create/skip/update/overwrite/remove and whether the action is destructive.
+
+## Misuse Guards
+
+- Do not copy OpenNori Skills into the user project; packaged Plugin Skills are the agent discovery surface.
+- Do not perform destructive lifecycle writes without preview and explicit confirmation.
+- Do not treat soft review findings as hard protocol rejection.
+- Do not reopen Product AC just because architecture, build-vs-buy, evidence health, or profile review needs user attention.
+- Do not use health commands as a substitute for acceptance evidence.

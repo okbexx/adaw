@@ -1,23 +1,85 @@
 ---
 name: nori-acceptance
-description: Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.
+description: Discover, draft, approve, and revise human-centered OpenNori acceptance criteria from natural-language goals, fuzzy ideas, brainstorm candidates, or user corrections. Use when completion meaning is unclear, AC quality is being discussed, or candidate goals need to become a Nori Contract.
 ---
 
-## When to use
-Use when the user gives a goal, wants to discover real acceptance criteria, wants to brainstorm acceptance directions, approves criteria, revises completion criteria, or says the AC is wrong.
+## Mission
 
-## Commands
-- Before drafting from a fuzzy goal: `opennori discover --goal "<goal>" --root <repo> --json`.
-- Fuzzy idea or discussion: `opennori brainstorm --idea "<idea>" --root <repo> --json`.
-- Start from a goal: `opennori draft --goal "<goal>" --root <repo> --json`.
-- Start from a chosen brainstorm candidate: `opennori draft --from-brainstorm <brainstorm-id> --candidate <A|B|C> --root <repo> --json`.
-- User approves criteria: `opennori approve --root <repo> --summary "<approval>" --json`.
-- User revises a criterion: `opennori criterion update --root <repo> --criterion <id> --user-story ... --measurement ... --threshold ... --json`.
+Help the agent and user define what "done" means from the human user's point of view.
 
-## Rules
-Run discovery before draft when the goal or candidate AC contains vague verbs such as modify, save, support, show an error, or improve.
-Discovery gaps are questions for the user, not implementation tasks and not completion evidence.
-Do not treat generic ACs like 'modify fields' or 'show failure prompt' as confidently complete until field scope, validation rules, success signal, persistence scope, failure cases, and out-of-scope boundaries are clear enough for the user to judge.
-ACs should describe user actions or judgments, not implementation files, commands, modules, fields, tests, Skills, or technology choices. If `acceptance_review` flags a possible issue, explain it as a review question and ask the user to revise, confirm an assumption, waive, or accept the remaining review risk.
-Capability preferences belong in the Nori Profile, not user ACs.
-Do not treat brainstorm output as a Nori Contract or completion evidence.
+Good AC says what entry the user uses, what operation or judgment they perform, what result they see, and how they can decide it is acceptable. It does not describe the agent's implementation path.
+
+## Start Here
+
+1. Read current OpenNori state with resume/status when a goal already exists.
+2. If the user is still exploring an idea, create brainstorm candidates before drafting a contract.
+3. If the user has a goal but the completion surface is vague, run discovery before draft.
+4. If a draft or active contract exists, inspect `acceptance_review` before claiming the AC is good enough.
+5. If the user has approved or revised AC, persist that decision before implementation continues.
+
+Useful state commands:
+
+- `opennori brainstorm --idea "<idea>" --root <repo> --json`
+- `opennori discover --goal "<goal>" --root <repo> --json`
+- `opennori draft --goal "<goal>" --root <repo> --json`
+- `opennori draft --from-brainstorm <id> --candidate <candidate> --root <repo> --json`
+- `opennori approve --root <repo> --summary "<approval>" --json`
+- `opennori criterion update --root <repo> --criterion <id> --user-story "..." --measurement "..." --threshold "..." --json`
+
+## Natural-Language Mapping
+
+- "I want to build X" -> discover missing acceptance details, then draft Product AC.
+- "Brainstorm this idea" -> produce selectable acceptance directions; ask which direction should become the contract.
+- "This AC is too vague" -> ask only questions that change completion judgment.
+- "Approve these AC" -> write approval and make the contract the source of truth for the loop.
+- "Change AC-2 to mean..." -> update that criterion and treat older evidence for it as stale.
+- Complete goal with `candidate_goals` -> use the chosen candidate as a draft source, not as approved AC.
+
+## Discovery Questions
+
+Ask questions that affect user acceptance:
+
+- Scope: which user role, screen, command, data object, or workflow is included.
+- Operation: what exact user action or judgment happens.
+- Field or input rules: editable fields, validation, defaults, limits, and excluded fields.
+- Success signal: what the user sees after success.
+- Persistence: what should still be true after refresh, restart, rerun, or reopening.
+- Failure behavior: what the user sees when the operation cannot complete.
+- Boundaries: what is intentionally out of scope.
+- Review method: how the user or reviewer can verify the behavior.
+
+Do not turn these questions into implementation tasks or evidence.
+
+## State Writes
+
+May write brainstorms, draft contracts, approved acceptance basis, and criterion revisions under `.opennori/`. Do not write evidence, profile, architecture decisions, or reports except through the responsible Skill.
+
+## Handoffs
+
+- After AC approval for non-trivial work, hand off to `nori-architecture-brainstorm`.
+- After implementation needs evidence, hand off to `nori-evidence`.
+- If the user states required Skills, stacks, or avoided tools while defining AC, hand off that part to `nori-capability-profile`.
+- If `acceptance_review` remains after required AC are objectively passing, hand off to `nori-reporting` to present review risk separately.
+
+## User Reply Shape
+
+Show the draft as a compact list of user-facing checks:
+
+```text
+Goal: ...
+Acceptance checks:
+- AC-1: As a user, ...
+  Measure: ...
+  Passes when: ...
+Open questions:
+- ...
+```
+
+Ask for approval or specific revision. Do not include implementation steps unless the user explicitly asks for implementation detail.
+
+## Misuse Guards
+
+- Do not accept generic criteria such as "modify fields" or "show an error" until field scope, validation, success, persistence, failure, and review method are clear enough for the user to judge.
+- Do not make tests, modules, files, commands, Skills, libraries, architecture, or build-vs-buy decisions into Product AC.
+- Do not treat brainstorm output, discovery questions, candidate goals, or agent assumptions as a Nori Contract.
+- Do not claim completion from AC quality alone; completion still requires reviewable evidence.

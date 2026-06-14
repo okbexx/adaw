@@ -88,7 +88,7 @@ a durable workflow asset.
 | AC-Z-9 | CLI | Preview install with `opennori install --dry-run` | The user can judge what OpenNori would create, skip, update, or overwrite before writing to the project. | Install plan lists action, kind, managed status, write intent, destructive flag, and reason; dry-run reports zero actual writes. |
 | AC-Z-10 | CLI | Apply force install | The user must preview and explicitly confirm destructive install actions before files are overwritten. | Real `opennori install --force` fails without confirmation; dry-run previews destructive overwrites; confirmed force install may write. |
 | AC-Z-11 | CLI | Preview and apply uninstall | The user can uninstall OpenNori entry assets without losing acceptance state by default. | Uninstall plan shows removals and preserved state; real uninstall requires confirmation; `.opennori` state is deleted only with `--include-state --confirm`. |
-| AC-Z-12 | Codex Plugin / Codex Skills | Use OpenNori Plugin Skills | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, architecture, project health, and reporting while the user keeps using natural language. | The npm package ships `.agents/plugins/marketplace.json`, `plugins/opennori/.codex-plugin/plugin.json`, and `plugins/opennori/skills/nori*/SKILL.md`; install does not copy Skills into the project; manifest records `plugin`; doctor detects missing packaged Plugin Skills. |
+| AC-Z-12 | Codex Plugin / Codex Skills | Use OpenNori Plugin Skills | The agent gets focused OpenNori Skills for acceptance, evidence, Nori Profile, architecture, project health, reporting, and next-loop candidates while the user keeps using natural language. | The npm package ships `.agents/plugins/marketplace.json`, `plugins/opennori/.codex-plugin/plugin.json`, and `plugins/opennori/skills/nori*/SKILL.md`; each Skill is an agent behavior protocol with trigger semantics, state reading, natural-language mapping, state write boundaries, handoffs, user reply shape, and misuse guards; install does not copy Skills into the project; manifest records `plugin`; doctor detects missing packaged Plugin Skills. |
 | AC-Z-13 | CLI / project file browser | Establish an Architecture Baseline | The user can see what architecture the agent must follow while implementing Product AC. | `.opennori/architecture/baseline.json`, `.opennori/architecture/baseline.md`, and `.opennori/agent-guide.md` expose the baseline to agents and reviewers. |
 | AC-Z-14 | CLI / project file browser | Add a project Architecture Profile | The user can extend built-in profiles with a reviewed project profile. | `opennori architecture profile --from <profile.json>` writes `.opennori/architecture/profiles/<id>.json`; `architecture profiles` lists it before built-ins. |
 | AC-Z-15 | CLI / report | Challenge a baseline | The user can review evidence before an agent changes architecture. | `opennori architecture challenge` records current baseline, conflict evidence, recommendation, and user confirmation requirement. |
@@ -159,8 +159,9 @@ directory requires both `--include-state` and `--confirm`.
 
 ## OpenNori Plugin Skills
 
-OpenNori exposes Codex Skills through its Plugin and package assets. The user should not need to
-remember these Skill names; the root `nori` Skill routes natural-language requests to focused Skills:
+OpenNori exposes Codex Skills through its Plugin and package assets. These Skills are agent
+behavior protocols, not CLI manuals for users. The user should not need to remember Skill names or
+command flags; the root `nori` Skill routes natural-language requests to focused Skills:
 
 - `nori`: root router for OpenNori turns
 - `nori-acceptance`: discover AC gaps, brainstorm, draft, approve, and revise human-facing ACs
@@ -171,7 +172,11 @@ remember these Skill names; the root `nori` Skill routes natural-language reques
 - `nori-architecture-challenge`: raise evidence-backed requests to revise a baseline
 - `nori-build-vs-buy`: record dependency/library/self-build decisions before infrastructure work
 - `nori-project-health`: install, upgrade, uninstall, doctor, manifest, Plugin health, and project recoverability
-- `nori-reporting`: status, report, current gap, user intervention, and changes
+- `nori-reporting`: status, report, current gap, user intervention, changes, and context export
+
+Each packaged Skill states its mission, starting state reads, natural-language mapping, allowed
+state writes, handoff rules, user-facing reply shape, and misuse guards. This lets agents use
+OpenNori from natural language while the CLI remains a deterministic state layer.
 
 The package ships `.agents/plugins/marketplace.json` pointing to `./plugins/opennori`, where
 `plugins/opennori/.codex-plugin/plugin.json` declares `skills: "./skills/"`. `opennori install`

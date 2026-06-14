@@ -82,8 +82,8 @@ say whether it is complete.
 ```
 
 Users do not need to memorize CLI flags. OpenNori ships Codex Plugin Skills and
-a Codex marketplace entry; those Skills map natural language to the
-deterministic `opennori` state layer.
+a Codex marketplace entry; those Skills are agent behavior protocols that map
+natural language to the deterministic `opennori` state layer.
 
 ## What It Creates
 
@@ -278,8 +278,8 @@ opennori report --root .
   preview.
 - `install`, `upgrade`, and `uninstall` support preview-first workflows;
   destructive writes require explicit confirmation.
-- OpenNori Plugin Skills are package assets. Install and upgrade write project
-  state, not project-local copies of OpenNori Skills.
+- OpenNori Plugin Skills are package behavior protocols for agents. Install and
+  upgrade write project state, not project-local copies of OpenNori Skills.
 - In a human terminal, `opennori` is interactive. With `--json` or
   non-interactive stdio it returns structured JSON.
 - `discover` finds underspecified acceptance gaps before draft, so vague ACs

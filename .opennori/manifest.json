@@ -3,7 +3,7 @@
   "protocol_version": "opennori/v1",
   "opennori_version": "0.1.8",
   "created_at": "2026-06-10T09:12:16.646Z",
-  "updated_at": "2026-06-14T02:05:44.305Z",
+  "updated_at": "2026-06-14T07:52:24.756Z",
   "capabilities": [
     "acceptance-contract",
     "evidence-ledger",
@@ -156,61 +156,61 @@
     "skills": [
       {
         "name": "nori",
-        "description": "Route OpenNori work through user-centered acceptance criteria, evidence, project health, and reporting Skills.",
+        "description": "Root OpenNori router for natural-language agent work. Use when the user says to use or continue OpenNori, asks whether a goal is complete, wants evidence recorded, states required Skills or stack preferences, asks for project health, wants architecture decided first, or expects the agent to choose the right OpenNori Skill without exposing CLI parameters.",
         "path": "plugins/opennori/skills/nori/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-acceptance",
-        "description": "Create, review, approve, and revise OpenNori human-centered acceptance criteria from natural language goals.",
+        "description": "Discover, draft, approve, and revise human-centered OpenNori acceptance criteria from natural-language goals, fuzzy ideas, brainstorm candidates, or user corrections. Use when completion meaning is unclear, AC quality is being discussed, or candidate goals need to become a Nori Contract.",
         "path": "plugins/opennori/skills/nori-acceptance/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-evidence",
-        "description": "Record and judge OpenNori evidence while preserving agent freedom to choose verification methods.",
+        "description": "Record, prune, and judge reviewable OpenNori evidence for acceptance criteria while preserving agent freedom to choose verification methods. Use when the user says to attach a validation, confirms behavior, waives a gap, asks why an AC is passing, or says evidence is stale, invalid, or insufficient.",
         "path": "plugins/opennori/skills/nori-evidence/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-capability-profile",
-        "description": "Record and report OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, and install policy.",
+        "description": "Capture and check OpenNori execution preferences such as required Skills, preferred stacks, avoided tools, install policy, and user-declared implementation constraints. Use when the user says a task must use a specific Skill, prefers a library or stack, wants to avoid a tool, or requires approval before installs.",
         "path": "plugins/opennori/skills/nori-capability-profile/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-brainstorm",
-        "description": "Create and confirm an OpenNori Architecture Baseline before non-trivial implementation.",
+        "description": "Establish a reviewable OpenNori Architecture Baseline before non-trivial implementation. Use when the user wants a good architecture first, asks for built-in or project architecture profiles, prefers a stack that should shape implementation, or expects future agent work to follow a confirmed technical baseline.",
         "path": "plugins/opennori/skills/nori-architecture-brainstorm/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-apply",
-        "description": "Apply the confirmed OpenNori Architecture Baseline before implementing acceptance gaps.",
+        "description": "Apply a confirmed OpenNori Architecture Baseline while implementing acceptance gaps. Use before non-trivial code changes when an active goal has architecture state, when resuming implementation in a new session, or when the agent must ensure Product AC work stays aligned with the baseline.",
         "path": "plugins/opennori/skills/nori-architecture-apply/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-architecture-challenge",
-        "description": "Create reviewable Architecture Challenges when project evidence conflicts with the confirmed baseline.",
+        "description": "Create reviewable Architecture Challenges when evidence conflicts with a confirmed OpenNori Architecture Baseline. Use when the baseline appears too heavy, too weak, incompatible with project conventions, blocked by license/security/runtime constraints, or contradicted by implementation evidence.",
         "path": "plugins/opennori/skills/nori-architecture-challenge/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-build-vs-buy",
-        "description": "Record build-vs-buy decisions so agents prefer existing libraries and avoid repeating solved infrastructure.",
+        "description": "Record OpenNori build-vs-buy decisions before infrastructure or platform work so agents prefer existing project code, standard libraries, official SDKs, and mature open-source libraries before self-building. Use when implementation touches CLI parsing, schemas, storage, rendering, routing, auth, installers, validators, adapters, UI primitives, or other reusable infrastructure.",
         "path": "plugins/opennori/skills/nori-build-vs-buy/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-project-health",
-        "description": "Install, upgrade, uninstall, diagnose, and recover project-local OpenNori state, manifest, Plugin health, and active goals.",
+        "description": "Diagnose, initialize, upgrade, uninstall, and recover project-local OpenNori state, manifest, packaged Plugin Skill health, and active-goal integrity. Use when the user asks whether OpenNori is ready, wants setup, sees broken `.opennori` state, or needs safe lifecycle actions with preview and explicit confirmation.",
         "path": "plugins/opennori/skills/nori-project-health/SKILL.md",
         "source": "package"
       },
       {
         "name": "nori-reporting",
-        "description": "Summarize OpenNori status, reports, current gaps, user intervention, and acceptance evidence for humans.",
+        "description": "Explain OpenNori status, current gaps, completion decisions, user intervention, reports, changes, and context export in human terms. Use when the user asks whether work is complete, what remains, what changed, what they need to do, or how to continue after a completed goal.",
         "path": "plugins/opennori/skills/nori-reporting/SKILL.md",
         "source": "package"
       }
