@@ -6,8 +6,8 @@
     "created_at": "2026-06-11T09:50:03.223Z",
     "acceptance_basis": {
       "status": "approved",
-      "summary": "User clarified OpenNori must be presented and operated as one coupled capability bundle, not split into Plugin, Skills, and CLI as separable user paths.",
-      "approved_at": "2026-06-14T08:22:24.971Z"
+      "summary": "Clarify AC-Z-19 as a first-time user installation criterion.",
+      "approved_at": "2026-06-14T09:17:47.678Z"
     },
     "criteria": [
       {
@@ -450,6 +450,15 @@
         "threshold": "用户主路径表达为安装和使用 OpenNori capability bundle；CLI 被说明为 Skills 使用的 deterministic state layer 和高级/CI 入口，而不是与 Plugin 并列的替代使用方式；文档和 Skill 明确不要继续使用半残模式，缺 Plugin/Skills/CLI/state 任一关键能力时应通过 doctor/health 引导补齐；测试防止重新出现 Choose one path、Try CLI once、Pin CLI to this project 这类拆分心智。",
         "required": true,
         "risk": "high"
+      },
+      {
+        "id": "AC-Z-19",
+        "layer": "productization",
+        "user_story": "作为用户，我第一次安装 OpenNori 时，只需要运行一个明确的 OpenNori setup 入口，就能预览并确认安装完整 capability bundle：Codex Plugin、packaged Skills、全局 opennori CLI 和当前项目 .opennori 状态；安装后我可以用 opennori init 初始化任意项目，而不需要分别理解插件安装、npm 全局安装和项目状态参数。",
+        "measurement": "在临时项目中运行 opennori setup 的 preview/confirm 路径，查看 README、官网 Start 区域、nori-project-health Skill 和 doctor 输出。",
+        "threshold": "setup 默认先展示将执行的 Codex Plugin 注册、packaged Skills 检查、全局 CLI 安装、项目初始化和 doctor 检查；未确认不写入；确认后使用官方 codex plugin CLI 注册 Plugin、使用 npm 全局安装 opennori、创建 .opennori 状态并跑 doctor；README/官网把 npx opennori setup 作为首次安装主路径，把手动 codex/npm 命令放在高级或恢复说明中。",
+        "required": true,
+        "risk": "medium"
       }
     ]
   },
@@ -457,7 +466,7 @@
     "protocol_version": "opennori/v1",
     "goal_id": "opennori-self",
     "status": "complete",
-    "updated_at": "2026-06-14T08:29:10.361Z",
+    "updated_at": "2026-06-14T09:18:09.079Z",
     "criteria": {
       "AC-P-1": {
         "status": "passing",
@@ -4235,6 +4244,77 @@
             "limitations": "This proves source, packaged assets, tests, and local website source. Live Codex plugin behavior still depends on installing the updated package/plugin in a new session after publish.",
             "gate": "accepted",
             "created_at": "2026-06-14T08:29:10.361Z"
+          }
+        ]
+      },
+      "AC-Z-19": {
+        "status": "passing",
+        "confidence": "verified",
+        "required": true,
+        "risk": "medium",
+        "evidence": [
+          {
+            "kind": "review-result",
+            "basis": "tool-observation",
+            "summary": "OpenNori now provides one first-time setup path and a simple project init path: setup plan previews Codex Plugin marketplace/add, packaged Skills, global CLI install, project .opennori initialization, and doctor; init previews/creates project state; README, website, Plugin metadata, nori/project-health Skills, protocol, and tests use npx opennori setup plus opennori init as the user-facing path.",
+            "result": "passing",
+            "confidence": "verified",
+            "sources": [
+              {
+                "type": "command",
+                "label": "npm run test",
+                "command": "npm run test"
+              },
+              {
+                "type": "command",
+                "label": "tmp=$(mktemp -d); node ./bin/opennori.js setup --root \"$tmp\" --json; node ./bin/opennori.js init --root \"$tmp\" --confirm --json; node ./bin/opennori.js doctor --root \"$tmp\" --json",
+                "command": "tmp=$(mktemp -d); node ./bin/opennori.js setup --root \"$tmp\" --json; node ./bin/opennori.js init --root \"$tmp\" --confirm --json; node ./bin/opennori.js doctor --root \"$tmp\" --json"
+              },
+              {
+                "type": "command",
+                "label": "cd /Users/jarl/code/jarlone/opennori-site && pnpm build",
+                "command": "cd /Users/jarl/code/jarlone/opennori-site && pnpm build"
+              },
+              {
+                "type": "artifact",
+                "label": "src/lifecycle/setup.ts",
+                "path": "src/lifecycle/setup.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/setup.ts",
+                "path": "src/cli/setup.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/init.ts",
+                "path": "src/cli/init.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "src/cli/commands/setup.ts",
+                "path": "src/cli/commands/setup.ts"
+              },
+              {
+                "type": "artifact",
+                "label": "README.md",
+                "path": "README.md"
+              },
+              {
+                "type": "artifact",
+                "label": "plugins/opennori/skills/nori-project-health/SKILL.md",
+                "path": "plugins/opennori/skills/nori-project-health/SKILL.md"
+              },
+              {
+                "type": "artifact",
+                "label": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+                "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+              }
+            ],
+            "reviewability": "Run npm run test, run setup/init in a temporary project, inspect setup_plan actions for codex plugin, packaged_skills, global_cli, project_state, and doctor, then read README/website/Skills for the same user path.",
+            "limitations": "Tests mock confirmed external Codex/npm setup writes; the temp smoke verifies preview and project init without mutating global Codex/npm state. A real first-time user will still need to approve setup in their own environment.",
+            "gate": "accepted",
+            "created_at": "2026-06-14T09:18:09.079Z"
           }
         ]
       }

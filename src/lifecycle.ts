@@ -19,3 +19,4 @@ export {
 } from "./lifecycle/profile-checks.ts";
 export { applyUninstallActions, buildUninstallActions } from "./lifecycle/uninstall.ts";
 export { applyUpgradeActions, upgradeActions } from "./lifecycle/upgrade.ts";
+export { buildSetupPlan, setup } from "./lifecycle/setup.ts";

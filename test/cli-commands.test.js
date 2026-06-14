@@ -16,6 +16,7 @@ import { runInstallCommand } from "../src/cli/commands/install.ts";
 import { runListCommand } from "../src/cli/commands/list.ts";
 import { runProfileAddCommand, runProfileEvidenceCommand, runProfileShowCommand } from "../src/cli/commands/profile.ts";
 import { runArchiveCommand, runReportCommand } from "../src/cli/commands/reporting.ts";
+import { runSetupCommand } from "../src/cli/commands/setup.ts";
 import { runUninstallCommand } from "../src/cli/commands/uninstall.ts";
 import { runUpgradeCommand } from "../src/cli/commands/upgrade.ts";
 import { buildArchitectureBaseline, renderAgentGuideMarkdown, writeArchitectureBaseline } from "../src/architecture.ts";
@@ -49,6 +50,40 @@ function writeActiveGoal(root) {
   writeJson(path.join(paths, "module-goal.evidence.json"), { contract, ledger });
 }
 
+function setupRunner({ marketplace = false, plugin = false, globalVersion = null, failCommand = "" } = {}) {
+  const calls = [];
+  const runner = (command, args) => {
+    calls.push([command, ...args]);
+    const display = [command, ...args].join(" ");
+    if (failCommand && display.includes(failCommand)) {
+      return { status: 1, stdout: "", stderr: `failed ${display}` };
+    }
+    if (display === "codex plugin marketplace list") {
+      return {
+        status: 0,
+        stdout: marketplace ? "MARKETPLACE ROOT\nopennori /tmp/opennori\n" : "MARKETPLACE ROOT\n",
+        stderr: ""
+      };
+    }
+    if (display === "codex plugin list") {
+      return {
+        status: 0,
+        stdout: plugin ? "PLUGIN STATUS VERSION PATH\nopennori@opennori installed, enabled 0.1.8 /tmp/opennori\n" : "PLUGIN STATUS VERSION PATH\n",
+        stderr: ""
+      };
+    }
+    if (display === "npm ls -g opennori --depth=0 --json") {
+      return {
+        status: globalVersion ? 0 : 1,
+        stdout: JSON.stringify(globalVersion ? { dependencies: { opennori: { version: globalVersion } } } : {}),
+        stderr: ""
+      };
+    }
+    return { status: 0, stdout: `ok ${display}`, stderr: "" };
+  };
+  return { calls, runner };
+}
+
 test("citty command modules preserve agent-readable JSON payloads", async () => {
   const profiles = await runArchitectureProfilesCommand(["--root", ROOT, "--json"]);
   assert.equal(profiles.ok, true);
@@ -79,6 +114,56 @@ test("bootstrap command module previews before confirmed setup", async () => {
   assert.equal(confirmed.data.install_plan.summary.will_write > 0, true);
   assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
+});
+
+test("setup command previews one complete capability bundle without writing", async () => {
+  const root = tempRoot();
+  const { calls, runner } = setupRunner();
+  const preview = await runSetupCommand(["--root", root, "--json"], { runner });
+
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.status, "needs_confirm");
+  assert.equal(preview.data.setup_plan.schema_version, "opennori/setup-plan-v1");
+  assert.equal(preview.data.setup_plan.dry_run, true);
+  assert.equal(preview.data.setup_plan.summary.will_write, 0);
+  assert.equal(preview.data.setup_plan.actions.some((action) => action.command_display === "codex plugin marketplace add okbexx/opennori --ref main"), true);
+  assert.equal(preview.data.setup_plan.actions.some((action) => action.command_display === "codex plugin add opennori@opennori"), true);
+  assert.equal(preview.data.setup_plan.actions.some((action) => action.id === "packaged_skills" && action.action === "exists"), true);
+  assert.equal(preview.data.setup_plan.actions.some((action) => /^npm install -g opennori@/.test(action.command_display)), true);
+  assert.equal(preview.data.setup_plan.actions.some((action) => action.command_display === "opennori init"), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+  assert.equal(calls.some((call) => call.join(" ") === "codex plugin marketplace add okbexx/opennori --ref main"), false);
+});
+
+test("setup command confirm applies external commands through official CLIs and initializes project state", async () => {
+  const root = tempRoot();
+  const { calls, runner } = setupRunner();
+  const confirmed = await runSetupCommand(["--root", root, "--confirm", "--json"], { runner });
+
+  assert.equal(confirmed.ok, true);
+  assert.equal(confirmed.data.confirmed, true);
+  assert.equal(calls.some((call) => call.join(" ") === "codex plugin marketplace add okbexx/opennori --ref main"), true);
+  assert.equal(calls.some((call) => call.join(" ") === "codex plugin add opennori@opennori"), true);
+  assert.equal(calls.some((call) => /^npm install -g opennori@/.test(call.join(" "))), true);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
+});
+
+test("setup command does not rerun already installed bundle parts", async () => {
+  const root = tempRoot();
+  const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const { calls, runner } = setupRunner({
+    marketplace: true,
+    plugin: true,
+    globalVersion: packageJson.version
+  });
+  const confirmed = await runSetupCommand(["--root", root, "--confirm", "--json"], { runner });
+
+  assert.equal(confirmed.ok, true);
+  assert.equal(calls.some((call) => call.join(" ") === "codex plugin marketplace add okbexx/opennori --ref main"), false);
+  assert.equal(calls.some((call) => call.join(" ") === "codex plugin add opennori@opennori"), false);
+  assert.equal(calls.some((call) => /^npm install -g opennori@/.test(call.join(" "))), false);
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
 });
 
 test("install command module preserves preview and confirm safety", async () => {
@@ -239,7 +324,21 @@ test("draft command module creates active Nori Contracts from goals and brainsto
   assert.equal(fromBrainstorm.data.criteria.every((criterion) => criterion.user_story.startsWith("作为用户")), true);
 });
 
-test("init command module creates active Nori Contracts from brief files", async () => {
+test("init command module initializes project state with preview safety", async () => {
+  const root = tempRoot();
+  const preview = await runInitCommand(["--root", root, "--json"]);
+  assert.equal(preview.ok, true);
+  assert.equal(preview.data.status, "needs_confirm");
+  assert.equal(preview.data.install_plan.summary.will_write, 0);
+  assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
+
+  const initialized = await runInitCommand(["--root", root, "--confirm", "--json"]);
+  assert.equal(initialized.ok, true);
+  assert.equal(initialized.data.status, "installed");
+  assert.equal(fs.existsSync(path.join(root, ".opennori", "manifest.json")), true);
+});
+
+test("draft command module creates active Nori Contracts from brief files", async () => {
   const root = tempRoot();
   const briefPath = path.join(root, "brief.json");
   writeJson(briefPath, {
@@ -255,13 +354,13 @@ test("init command module creates active Nori Contracts from brief files", async
     ]
   });
 
-  const initialized = await runInitCommand([briefPath, "--root", root, "--json"]);
-  assert.equal(initialized.ok, true);
-  assert.equal(initialized.data.goal_id, "module-brief-goal");
-  assert.equal(initialized.data.current_gap.id, "ACCEPTANCE-BASIS");
-  assert.equal(fs.existsSync(initialized.data.acceptance_path), true);
-  assert.equal(fs.existsSync(initialized.data.evidence_path), true);
-  assert.equal(initialized.artifacts.some((artifact) => artifact.kind === "acceptance_contract"), true);
+  const drafted = await runDraftCommand(["--brief", briefPath, "--root", root, "--json"]);
+  assert.equal(drafted.ok, true);
+  assert.equal(drafted.data.goal_id, "module-brief-goal");
+  assert.equal(drafted.data.current_gap.id, "ACCEPTANCE-BASIS");
+  assert.equal(fs.existsSync(drafted.data.acceptance_path), true);
+  assert.equal(fs.existsSync(drafted.data.evidence_path), true);
+  assert.equal(drafted.artifacts.some((artifact) => artifact.kind === "draft_acceptance_contract"), true);
 });
 
 test("check command module reports acceptance architecture and evidence health", async () => {

@@ -10,6 +10,15 @@ layers separated by responsibility but coupled as one product:
 - `opennori` CLI: deterministic state reads/writes and JSON/report output.
 - `.opennori/`: project-local contracts, evidence, profiles, architecture, and reports.
 
+The user-facing install shape is:
+
+- `npx opennori setup` for first-time machine setup of the complete bundle.
+- `opennori init` for project-local `.opennori/` initialization after setup.
+
+Do not present manual `codex plugin ...`, `npm install -g ...`, or
+`opennori bootstrap` as parallel main user paths. They may exist only as
+advanced recovery, automation, or source-checkout development details.
+
 Do not implement project-local Skill copying, Skill Pack install/sync, or `.agents/skills` as product behavior. The product goal is for a user agent to get OpenNori through Codex Plugin/Skill discovery, then use the CLI only as the deterministic state layer. If Plugin discovery, packaged Skills, CLI access, or `.opennori` state is missing, route through doctor/project-health and recover the missing bundle part instead of continuing a half-installed workflow.
 
 Before implementing a non-trivial change, read:

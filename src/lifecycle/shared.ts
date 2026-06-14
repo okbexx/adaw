@@ -12,6 +12,7 @@ export const NORI_CAPABILITIES = [
   "reviewable-evidence",
   "codex-plugin",
   "opennori-skills",
+  "setup",
   "brainstorm",
   "acceptance-discovery",
   "acceptance-quality-audit",
@@ -54,7 +55,7 @@ export function protocolTemplate(): string {
     "",
     "Progress is determined by human-centered acceptance evidence, not by implementation steps.",
     "",
-    "Use `opennori init`, `opennori resume`, `opennori next`, `opennori evidence add`, `opennori evaluate`, `opennori status`, and `opennori report`.",
+    "Use `npx opennori setup` for first-time bundle installation, `opennori init` for project state, and `opennori resume`, `opennori next`, `opennori evidence add`, `opennori evaluate`, `opennori status`, and `opennori report` for deterministic state operations.",
     ""
   ].join("\n");
 }

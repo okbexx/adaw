@@ -27,7 +27,7 @@ export function projectHealthChecks(root: string): DoctorCheck[] {
     "opennori_directory",
     fs.existsSync(noriDir),
     fs.existsSync(noriDir) ? ".opennori directory exists." : ".opennori directory is missing.",
-    "Run opennori bootstrap --root <project> --json."
+    "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
   ));
 
   for (const dir of REQUIRED_NORI_DIRS) {
@@ -36,7 +36,7 @@ export function projectHealthChecks(root: string): DoctorCheck[] {
       `dir_${dir}`,
       fs.existsSync(dirPath),
       fs.existsSync(dirPath) ? `.opennori/${dir} exists.` : `.opennori/${dir} is missing.`,
-      "Run opennori bootstrap --root <project> --json."
+      "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
     ));
   }
 
@@ -45,7 +45,7 @@ export function projectHealthChecks(root: string): DoctorCheck[] {
     "dir_architecture",
     fs.existsSync(architectureRoot),
     fs.existsSync(architectureRoot) ? ".opennori/architecture exists." : ".opennori/architecture is missing.",
-    "Run opennori bootstrap --root <project> --json."
+    "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
   ));
   for (const dir of REQUIRED_ARCHITECTURE_DIRS) {
     const dirPath = path.join(architectureRoot, dir);
@@ -53,7 +53,7 @@ export function projectHealthChecks(root: string): DoctorCheck[] {
       `dir_architecture_${dir}`,
       fs.existsSync(dirPath),
       fs.existsSync(dirPath) ? `.opennori/architecture/${dir} exists.` : `.opennori/architecture/${dir} is missing.`,
-      "Run opennori bootstrap --root <project> --json."
+      "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
     ));
   }
 
@@ -61,7 +61,7 @@ export function projectHealthChecks(root: string): DoctorCheck[] {
     "protocol_file",
     fs.existsSync(protocolPath),
     fs.existsSync(protocolPath) ? ".opennori/protocol.md exists." : ".opennori/protocol.md is missing.",
-    "Run opennori bootstrap --root <project> --json."
+    "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
   ));
 
   return checks;
@@ -76,7 +76,7 @@ export function architectureHealthChecks(architecture: ArchitectureState, baseli
     guideState.installed
       ? (guideState.in_sync ? ".opennori/agent-guide.md is installed and in sync." : ".opennori/agent-guide.md is stale.")
       : ".opennori/agent-guide.md is missing.",
-    "Run opennori bootstrap --root <project> --json, or preview opennori install --root <project> --merge-agent-route --dry-run --json before confirming a refresh."
+    "Run opennori init --root <project> --json to preview project initialization, then rerun with --confirm if the planned refresh is acceptable."
   ));
   checks.push(doctorCheck(
     "architecture_agent_surface",

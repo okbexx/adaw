@@ -88,7 +88,7 @@ a durable workflow asset.
 | ID | Tool / entrypoint | User operation | User acceptance criterion | Passing threshold |
 | --- | --- | --- | --- | --- |
 | AC-Z-1 | Codex Plugin / package assets | Install or inspect the OpenNori package | The user's agent can discover focused OpenNori Skills without the user memorizing CLI flags. | `.agents/plugins/marketplace.json` points to `./plugins/opennori`; `plugins/opennori/.codex-plugin/plugin.json` points to package-local `skills/`; the `nori` Skill routes natural-language work through acceptance, evidence, profile, architecture, health, and reporting. |
-| AC-Z-2 | CLI | Run `opennori install` | The user can install OpenNori into a project without unexpected overwrites. | Install shows created/skipped assets; existing user content is not overwritten by default. |
+| AC-Z-2 | CLI | Run `opennori init` or `opennori install` | The user can initialize OpenNori project state without unexpected overwrites. | Init/install shows created/skipped assets; existing user content is not overwritten by default. |
 | AC-Z-3 | Git / PR diff | Review the agent's changes | The user can separate acceptance evidence changes from implementation noise. | Summary defaults to AC status changes, evidence changes, and user impact. |
 | AC-Z-4 | CLI | Run `opennori list` and select a goal | The user can see multiple active goals and choose one explicitly. | Multiple active goals are listed with status, gap, and paths; `--goal` selects the target. |
 | AC-Z-5 | CLI | Archive a completed or blocked goal | The user removes it from active work while preserving evidence and report. | Active no longer lists the goal; contract, ledger, and report remain recoverable. |
@@ -104,6 +104,7 @@ a durable workflow asset.
 | AC-Z-15 | CLI / report | Challenge a baseline | The user can review evidence before an agent changes architecture. | `opennori architecture challenge` records current baseline, conflict evidence, recommendation, and user confirmation requirement. |
 | AC-Z-16 | CLI / report | Record build-vs-buy decisions | The user can see whether existing dependencies, standard libraries, official SDKs, and mature OSS were checked before self-building infrastructure. | `opennori architecture build-vs-buy` records the decision under `.opennori/architecture/decisions/` and status/report summarize it. |
 | AC-Z-18 | README / website / Plugin description | First read the OpenNori entry material | The user understands OpenNori as one agent capability bundle: Plugin discovery, packaged Skills, deterministic CLI state layer, and `.opennori` project state work together. | README Install/Quick Start, website Start, Plugin longDescription, and nori/project-health Skills do not present Plugin, Skills, or CLI as separate user paths; they explain that missing bundle parts should be recovered through doctor/health rather than used as a half-installed workflow. |
+| AC-Z-19 | CLI / Codex / npm | Run `npx opennori setup`, then use `opennori init` in projects | The user installs the complete OpenNori capability bundle from one explicit setup entry and can initialize projects with the global CLI. | Setup previews Codex Plugin registration, packaged Skill availability, global CLI install, project `.opennori` initialization, and doctor; unconfirmed setup writes nothing; confirmed setup uses official `codex plugin` and npm commands plus OpenNori project initialization. |
 
 ## Required Artifact Pair
 
@@ -145,7 +146,9 @@ Each active goal has:
 - Architecture Baseline, profile, challenge, build-vs-buy, and agent-readable surface state
 - protocol capabilities exposed by this CLI
 
-`opennori install` creates or refreshes the manifest. State-changing OpenNori commands refresh it when
+`opennori init` creates project state through the same preview-first lifecycle used by install.
+`opennori install` remains a deterministic project-asset command for agents and automation.
+State-changing OpenNori commands refresh the manifest when
 `.opennori/` already exists.
 
 `opennori install --dry-run` returns an install plan. The plan uses deterministic action semantics:

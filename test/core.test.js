@@ -29,13 +29,13 @@ function tempRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "nori-test-"));
 }
 
-function runInteractiveBootstrap(root, answer) {
+function runInteractiveSetup(root, answer) {
   const script = `
 import { main } from ${JSON.stringify(CLI_MODULE)};
 Object.defineProperty(process.stdin, "isTTY", { value: true });
 Object.defineProperty(process.stdout, "isTTY", { value: true });
 queueMicrotask(() => process.stdin.emit("data", ${JSON.stringify(`${answer}\n`)}));
-await main(["bootstrap", "--root", ${JSON.stringify(root)}]);
+await main(["setup", "--root", ${JSON.stringify(root)}]);
 `;
   return spawnSync(process.execPath, ["--input-type=module", "-e", script], {
     cwd: ROOT,
@@ -159,20 +159,20 @@ test("built dist bin runs when invoked through a package-manager symlink", () =>
   assert.match(payload.data.usage, /opennori/);
 });
 
-test("opennori quickstart previews bootstrap without requiring install flags", () => {
+test("opennori quickstart previews setup without requiring install flags", () => {
   const root = tempRoot();
   const preview = run([], { cwd: root });
 
   assert.equal(preview.ok, true);
   assert.equal(preview.data.status, "needs_confirm");
-  assert.equal(preview.data.install_plan.schema_version, "opennori/install-plan-v1");
-  assert.equal(preview.data.install_plan.dry_run, true);
-  assert.equal("requested_skill" in preview.data.install_plan, false);
-  assert.equal(preview.data.install_plan.summary.would_write > 0, true);
-  assert.equal(preview.data.install_plan.summary.will_write, 0);
+  assert.equal(preview.data.setup_plan.schema_version, "opennori/setup-plan-v1");
+  assert.equal(preview.data.setup_plan.dry_run, true);
+  assert.equal("requested_skill" in preview.data.setup_plan, false);
+  assert.equal(preview.data.setup_plan.summary.would_write > 0, true);
+  assert.equal(preview.data.setup_plan.summary.will_write, 0);
   assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
 
-  const confirmed = run(["bootstrap", "--root", root, "--confirm", "--json"]);
+  const confirmed = run(["init", "--root", root, "--confirm", "--json"]);
   assert.equal(confirmed.ok, true);
   assert.equal(confirmed.data.status, "installed");
   assert.equal(confirmed.data.install_plan.dry_run, false);
@@ -182,9 +182,9 @@ test("opennori quickstart previews bootstrap without requiring install flags", (
   assert.equal(fs.existsSync(path.join(root, "AGENTS.md")), false);
 
   const ready = run([], { cwd: root });
-  assert.equal(ready.data.status, "ready");
-  assert.equal(ready.data.side_effect, "none");
-  assert.equal(ready.data.doctor.status, "ready");
+  assert.equal(ready.data.status, "needs_confirm");
+  assert.equal(ready.data.setup_plan.actions.some((action) => action.id === "project_state" && action.command_display === "opennori init"), true);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "nori", "SKILL.md")), false);
 });
 
 test("opennori quickstart accepts top-level json for agents", () => {
@@ -193,35 +193,26 @@ test("opennori quickstart accepts top-level json for agents", () => {
 
   assert.equal(preview.ok, true);
   assert.equal(preview.data.status, "needs_confirm");
-  assert.equal(preview.data.install_plan.schema_version, "opennori/install-plan-v1");
-  assert.equal(preview.data.install_plan.summary.will_write, 0);
+  assert.equal(preview.data.setup_plan.schema_version, "opennori/setup-plan-v1");
+  assert.equal(preview.data.setup_plan.summary.will_write, 0);
   assert.equal(fs.existsSync(path.join(root, ".opennori")), false);
 });
 
 test("opennori quickstart is interactive for human terminals", () => {
   const declinedRoot = tempRoot();
-  const declined = runInteractiveBootstrap(declinedRoot, "n");
+  const declined = runInteractiveSetup(declinedRoot, "n");
 
   assert.equal(declined.status, 0);
-  assert.match(declined.stdout, /OpenNori project setup/);
-  assert.match(declined.stdout, /No files have been written yet/);
-  assert.match(declined.stdout, /Install OpenNori here\? \[y\/N\]/);
+  assert.match(declined.stdout, /OpenNori setup/);
+  assert.match(declined.stdout, /No project files or user-level Codex\/npm settings have been changed yet/);
+  assert.match(declined.stdout, /Install OpenNori capability bundle\? \[y\/N\]/);
   assert.match(declined.stdout, /No changes made/);
   assert.equal(fs.existsSync(path.join(declinedRoot, ".opennori")), false);
-
-  const confirmedRoot = tempRoot();
-  const confirmed = runInteractiveBootstrap(confirmedRoot, "y");
-
-  assert.equal(confirmed.status, 0);
-  assert.match(confirmed.stdout, /OpenNori installed/);
-  assert.match(confirmed.stdout, /Next: tell your agent the goal/);
-  assert.equal(fs.existsSync(path.join(confirmedRoot, ".opennori", "manifest.json")), true);
-  assert.equal(fs.existsSync(path.join(confirmedRoot, ".agents", "skills", "nori", "SKILL.md")), false);
 });
 
 test("init creates markdown contract and evidence record", () => {
   const root = tempRoot();
-  const payload = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const payload = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   assert.equal(payload.ok, true);
   assert.equal(payload.data.goal_id, "opennori-self");
@@ -238,7 +229,7 @@ test("init creates markdown contract and evidence record", () => {
 
 test("next returns the current acceptance gap, not a process step", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
   const payload = run([
     "next",
     "--acceptance", init.data.acceptance_path,
@@ -253,7 +244,7 @@ test("next returns the current acceptance gap, not a process step", () => {
 
 test("resume and status recover active goal from repository files", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const resume = run(["resume", "--root", root, "--json"]);
   assert.equal(resume.ok, true);
@@ -505,7 +496,7 @@ test("preferred profile items create review risk without blocking objective comp
 
 test("evidence can drive the workflow to complete and render a human report", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
   run(["install", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
 
@@ -611,7 +602,7 @@ test("evidence can drive the workflow to complete and render a human report", ()
 
 test("blocked criteria produce a concrete intervention answer", () => {
   const root = tempRoot();
-  run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const blocked = run([
     "evidence", "add",
@@ -632,7 +623,7 @@ test("blocked criteria produce a concrete intervention answer", () => {
 
 test("high-risk criteria require strong evidence before passing", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const weak = run([
     "evidence", "add",
@@ -968,8 +959,9 @@ test("Codex Plugin manifest exposes OpenNori Skills for agent discovery", () => 
   assert.equal(plugin.name, "opennori");
   assert.equal(plugin.skills, "./skills/");
   assert.equal(plugin.interface.displayName, "OpenNori");
-  assert.equal(plugin.interface.defaultPrompt.length, 3);
-  assert.match(plugin.interface.defaultPrompt[0], /acceptance criteria/);
+  assert.equal(plugin.interface.defaultPrompt.length, 4);
+  assert.equal(plugin.interface.defaultPrompt.some((prompt) => /Set up OpenNori/.test(prompt)), true);
+  assert.equal(plugin.interface.defaultPrompt.some((prompt) => /acceptance criteria/.test(prompt)), true);
   assert.equal(marketplace.name, "opennori");
   assert.equal(marketplace.interface.displayName, "OpenNori");
   assert.equal(marketplace.plugins.length, 1);
@@ -1049,15 +1041,21 @@ test("public product surfaces present OpenNori as one capability bundle", () => 
   }
   assert.match(readme, /deterministic state layer/);
   assert.match(readme, /not a separate product\s+path/);
+  assert.match(readme, /npx opennori setup/);
+  assert.match(readme, /opennori init/);
+  assert.match(plugin.interface.longDescription, /npx opennori setup installs/);
   assert.match(plugin.interface.longDescription, /Do not treat Plugin, Skills, and CLI as separate user paths/);
   assert.match(nori, /Do not split OpenNori into separate Plugin, Skill, and CLI user paths/);
+  assert.match(nori, /npx opennori setup/);
   assert.match(health, /half-installed/);
+  assert.match(health, /opennori init/);
   assert.match(protocol, /Direct CLI use\s+is an advanced, automation, or debugging route/);
 
   for (const text of [readme, protocol]) {
     assert.doesNotMatch(text, /Choose one path/);
     assert.doesNotMatch(text, /Try the CLI once/);
     assert.doesNotMatch(text, /Pin the CLI to a project/);
+    assert.doesNotMatch(text, /npm install -D opennori/);
   }
 });
 
@@ -1279,8 +1277,8 @@ test("doctor reports ready, needs-action, and broken project health", () => {
   const needsAction = run(["doctor", "--root", missingManifestRoot, "--json"]);
   assert.equal(needsAction.data.status, "needs-action");
   assert.equal(needsAction.data.checks.find((check) => check.name === "manifest_file").ok, false);
-  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /opennori bootstrap/);
-  assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /opennori bootstrap/.test(action.action)), true);
+  assert.match(needsAction.data.checks.find((check) => check.name === "manifest_file").recovery, /opennori init/);
+  assert.equal(needsAction.data.recovery_actions.some((action) => action.check === "manifest_file" && /opennori init/.test(action.action)), true);
 
   const staleManifestRoot = tempRoot();
   run(["install", "--root", staleManifestRoot, "--json"]);
@@ -1332,7 +1330,7 @@ test("doctor reports ready, needs-action, and broken project health", () => {
 
 test("uninstall previews removals and preserves OpenNori state by default", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
   run(["install", "--root", root, "--json"]);
   run(["report", "--root", root, "--json"]);
 
@@ -1363,7 +1361,7 @@ test("uninstall previews removals and preserves OpenNori state by default", () =
 
 test("uninstall include-state requires confirmation before removing OpenNori state", () => {
   const root = tempRoot();
-  run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
   run(["install", "--root", root, "--json"]);
 
   const dryRun = run(["uninstall", "--root", root, "--include-state", "--dry-run", "--json"]);
@@ -1904,8 +1902,8 @@ test("list shows multiple active goals and resume requires explicit selection", 
   fs.writeFileSync(firstBrief, JSON.stringify(makeBrief("first-goal", "First goal")));
   fs.writeFileSync(secondBrief, JSON.stringify(makeBrief("second-goal", "Second goal")));
 
-  run(["init", firstBrief, "--root", root, "--json"]);
-  run(["init", secondBrief, "--root", root, "--json"]);
+  run(["draft", "--brief", firstBrief, "--root", root, "--json"]);
+  run(["draft", "--brief", secondBrief, "--root", root, "--json"]);
 
   const list = run(["list", "--root", root, "--json"]);
   assert.deepEqual(list.data.active_goals.map((goal) => goal.goal_id), ["first-goal", "second-goal"]);
@@ -1923,7 +1921,7 @@ test("list shows multiple active goals and resume requires explicit selection", 
 
 test("archive moves complete goals out of active and preserves report", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
   const ledger = JSON.parse(fs.readFileSync(init.data.evidence_path, "utf8"));
 
   for (const criterion of Object.keys(ledger.ledger.criteria)) {
@@ -1953,7 +1951,7 @@ test("archive moves complete goals out of active and preserves report", () => {
 
 test("archive can preserve blocked goals outside active work", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   run([
     "evidence", "add",
@@ -1980,7 +1978,7 @@ test("archive can preserve blocked goals outside active work", () => {
 
 test("criterion update preserves the revised acceptance basis and clears stale evidence", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   run([
     "evidence", "add",
@@ -2014,7 +2012,7 @@ test("criterion update preserves the revised acceptance basis and clears stale e
 
 test("criterion add preserves contract and ledger consistency", () => {
   const root = tempRoot();
-  const init = run(["init", "examples/opennori-self.json", "--root", root, "--json"]);
+  const init = run(["draft", "--brief", "examples/opennori-self.json", "--root", root, "--json"]);
 
   const added = run([
     "criterion", "add",
@@ -2071,7 +2069,7 @@ test("check reviews possible implementation details without rejecting the contra
     ]
   }));
 
-  const payload = run(["init", reviewBrief, "--root", root, "--json"]);
+  const payload = run(["draft", "--brief", reviewBrief, "--root", root, "--json"]);
   assert.equal(payload.ok, true);
 
   const check = run(["check", "--root", root, "--json"]);
@@ -2097,7 +2095,7 @@ test("check reviews weak measurement and threshold semantics without hard failur
     ]
   }));
 
-  const reviewPayload = run(["init", reviewBrief, "--root", reviewRoot, "--json"]);
+  const reviewPayload = run(["draft", "--brief", reviewBrief, "--root", reviewRoot, "--json"]);
   assert.equal(reviewPayload.ok, true);
   const reviewCheck = run(["check", "--root", reviewRoot, "--json"]);
   assert.equal(reviewCheck.data.acceptance_review.status, "needs-user-review");
@@ -2120,7 +2118,7 @@ test("check reviews weak measurement and threshold semantics without hard failur
     ]
   }));
 
-  const goodPayload = run(["init", goodBrief, "--root", goodRoot, "--json"]);
+  const goodPayload = run(["draft", "--brief", goodBrief, "--root", goodRoot, "--json"]);
   assert.equal(goodPayload.ok, true);
   assert.equal(goodPayload.data.current_gap.id, "ACCEPTANCE-BASIS");
 });
@@ -2142,7 +2140,7 @@ test("check audits existing active contracts for underspecified acceptance quali
     ]
   }));
 
-  const init = run(["init", weakBrief, "--root", weakRoot, "--json"]);
+  const init = run(["draft", "--brief", weakBrief, "--root", weakRoot, "--json"]);
   const before = fs.readFileSync(init.data.evidence_path, "utf8");
   const check = run(["check", "--root", weakRoot, "--json"]);
   const after = fs.readFileSync(init.data.evidence_path, "utf8");
@@ -2172,7 +2170,7 @@ test("check audits existing active contracts for underspecified acceptance quali
     ]
   }));
 
-  run(["init", goodBrief, "--root", goodRoot, "--json"]);
+  run(["draft", "--brief", goodBrief, "--root", goodRoot, "--json"]);
   const goodCheck = run(["check", "--root", goodRoot, "--json"]);
   assert.equal(goodCheck.data.acceptance_review.status, "clear");
   assert.equal(goodCheck.warnings.some((warning) => warning.type === "acceptance_review"), false);

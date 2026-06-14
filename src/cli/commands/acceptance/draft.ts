@@ -14,7 +14,7 @@ import {
   validateContract,
   writeJson
 } from "../../../core.ts";
-import { refreshManifest } from "../../../lifecycle.ts";
+import { bootstrap, refreshManifest } from "../../../lifecycle.ts";
 import { runJsonCommand } from "../../runtime.ts";
 import type { Brainstorm, NoriBrief } from "../../../types.ts";
 import { brainstormPaths, jsonArg, resolveRoot, rootArg } from "./shared.ts";
@@ -37,6 +37,10 @@ export const draftCommand = defineCommand({
       type: "string",
       description: "Optional stable goal id."
     },
+    brief: {
+      type: "string",
+      description: "Brief JSON file to draft from."
+    },
     fromBrainstorm: {
       type: "string",
       description: "Brainstorm id to draft from."
@@ -51,7 +55,9 @@ export const draftCommand = defineCommand({
     const root = resolveRoot(args.root);
     const brainstormId = args.fromBrainstorm;
     let brief;
-    if (brainstormId) {
+    if (args.brief) {
+      brief = readJson<NoriBrief>(path.resolve(String(args.brief)));
+    } else if (brainstormId) {
       const candidateId = args.candidate;
       if (!candidateId) throw new Error("--candidate is required with --from-brainstorm");
       brief = briefFromBrainstormForCommand(readJson<Brainstorm>(brainstormPaths(root, brainstormId).jsonPath), String(candidateId));
@@ -97,44 +103,20 @@ export async function runDraftCommand(rawArgs: string[]) {
 export const initCommand = defineCommand({
   meta: {
     name: "init",
-    description: "Create a Nori Contract from a brief JSON file."
+    description: "Initialize OpenNori project state in the current project."
   },
   args: {
     root: rootArg,
+    confirm: {
+      type: "boolean",
+      description: "Apply initialization actions after preview.",
+      default: false
+    },
     json: jsonArg
   },
   run({ args }) {
-    const briefPath = path.resolve(String(args._?.[0] || ""));
     const root = resolveRoot(args.root);
-    const brief = readJson<NoriBrief>(briefPath);
-    const contract = buildContractFromBrief(brief);
-    const ledger = buildEvidenceLedger(contract);
-    const issues = validateContract(contract, ledger);
-    if (issues.length > 0) {
-      return { ...fail("invalid_acceptance", "Brief does not produce a valid OpenNori contract", "Rewrite ACs from the user's perspective"), issues };
-    }
-
-    const paths = pathsForGoal(root, contract.goal_id);
-    const evidencePayload = { contract, ledger };
-    fs.mkdirSync(path.dirname(paths.acceptancePath), { recursive: true });
-    fs.writeFileSync(paths.acceptancePath, renderAcceptanceMarkdown(contract, ledger));
-    writeJson(paths.evidencePath, evidencePayload);
-    refreshManifest(root);
-
-    return ok(
-      {
-        goal_id: contract.goal_id,
-        acceptance_path: paths.acceptancePath,
-        evidence_path: paths.evidencePath,
-        current_gap: currentGap(contract, ledger)
-      },
-      [
-        { kind: "acceptance_contract", path: paths.acceptancePath },
-        { kind: "evidence_ledger", path: paths.evidencePath }
-      ],
-      [],
-      ["Run opennori next --acceptance <path> --evidence <path> --json before choosing implementation work."]
-    );
+    return bootstrap(root, { confirmed: Boolean(args.confirm) });
   }
 });
 

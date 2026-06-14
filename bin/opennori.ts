@@ -7,7 +7,7 @@ import { main } from "../src/cli.ts";
 export function commandArgsFromProcessArgs(args: string[]): string[] {
   const firstArg = args[0];
   return args.length === 0 || (firstArg !== undefined && firstArg.startsWith("-") && !["--help", "-h"].includes(firstArg))
-    ? ["bootstrap", ...args]
+    ? ["setup", ...args]
     : args;
 }
 

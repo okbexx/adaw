@@ -23,21 +23,24 @@ OpenNori is one agent capability bundle, not three separate products:
 - `opennori` is the deterministic state layer those Skills call.
 - `.opennori/` stores project contracts, evidence, profile, architecture, health, and reports.
 
-Install the Codex Plugin so Codex can discover the Skills:
+First-time setup installs the complete bundle with preview and explicit
+confirmation:
 
 ```bash
-codex plugin marketplace add okbexx/opennori --ref main
-codex plugin add opennori@opennori
+npx opennori setup
 ```
 
-Pin the state-layer CLI version in projects that should carry OpenNori with
-their dev tooling:
+Setup previews the Codex Plugin registration, packaged Skill availability,
+global `opennori` CLI installation, current project `.opennori/` initialization,
+and final doctor check before it writes anything.
+
+After setup, initialize any project from that project directory:
 
 ```bash
-npm install -D opennori
+opennori init
 ```
 
-For local development from a checkout:
+For local OpenNori development from a checkout:
 
 ```bash
 codex plugin marketplace add .
@@ -50,10 +53,13 @@ After installing the capability bundle, open a new Codex session and say:
 Use OpenNori for this goal.
 ```
 
-For a quick terminal smoke test or CI job, use the same state layer directly:
+For advanced recovery, the setup command is equivalent to previewing and then
+confirming the same official Codex and npm actions:
 
 ```bash
-npx opennori
+codex plugin marketplace add okbexx/opennori --ref main
+codex plugin add opennori@opennori
+npm install -g opennori@latest
 ```
 
 Direct CLI use is an advanced or automation path, not a separate product path
@@ -61,16 +67,15 @@ from the Plugin and Skills.
 
 ## Quick Start
 
-If you are in a terminal, run OpenNori once in the project:
+If OpenNori is already installed on this machine, run the project initializer:
 
 ```bash
-opennori
+opennori init
 ```
 
-The interactive entry previews the `.opennori/` state it would create and asks
-before writing. If your shell does not expose project-local `node_modules/.bin`,
-use `npx opennori` or `npm exec opennori`. Agents and CI can use `--json` for
-deterministic machine-readable output.
+The initializer previews the `.opennori/` state it would create and asks before
+writing. Agents and CI can use `--json` for deterministic machine-readable
+output.
 
 Then talk to your agent:
 
@@ -256,7 +261,8 @@ Users should start with natural language through an agent. These commands are
 the deterministic state layer for agents and automation:
 
 ```bash
-opennori bootstrap
+opennori setup
+opennori init
 opennori doctor --root .
 opennori check --root .
 opennori architecture profiles --root . --json
@@ -273,14 +279,15 @@ opennori report --root .
 
 ## Product Boundaries
 
-- `bootstrap` gives agents one short entry for readiness checks and first-time
-  preview.
+- `setup` is the first-time machine installer for the complete capability
+  bundle: Codex Plugin, packaged Skills, global CLI, project state, and doctor.
+- `init` prepares or refreshes `.opennori/` state in the current project.
 - `install`, `upgrade`, and `uninstall` support preview-first workflows;
   destructive writes require explicit confirmation.
 - OpenNori Plugin Skills are package behavior protocols for agents. Install and
   upgrade write project state, not project-local copies of OpenNori Skills.
-- In a human terminal, `opennori` is interactive. With `--json` or
-  non-interactive stdio it returns structured JSON.
+- In a human terminal, `opennori setup` and `opennori init` are interactive.
+  With `--json` or non-interactive stdio they return structured JSON.
 - `discover` finds underspecified acceptance gaps before draft, so vague ACs
   become user questions instead of weak contracts.
 - `doctor` reports whether project state is `ready`, `needs-action`, or

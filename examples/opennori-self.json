@@ -298,9 +298,9 @@
     {
       "id": "AC-Z-16",
       "layer": "productization",
-      "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能用 opennori 或 npx opennori 这个短入口开始，而不需要理解 install、root、dry-run、confirm 或内部 Skill 参数。",
-      "measurement": "在全新临时项目中运行 npx opennori 或本地等价 opennori bin，再确认 bootstrap 后运行 opennori doctor。",
-      "threshold": "npm 包只提供 opennori 这个 bin；短入口默认展示首次接入 preview 且不写入项目；显式确认后只创建 .opennori 状态；不会把 OpenNori Skills 复制进用户项目；doctor 为 ready。",
+      "user_story": "作为用户，我通过 npm 获取 OpenNori 后，能用 npx opennori setup 完成首次能力包安装，再用 opennori init 初始化项目，而不需要理解 install、root、dry-run、confirm 或内部 Skill 参数。",
+      "measurement": "在全新临时项目中运行 npx opennori setup 或本地等价 setup preview，再运行 opennori init preview/confirm 和 opennori doctor。",
+      "threshold": "setup 预览 Codex Plugin、packaged Skills、全局 CLI、项目 .opennori 状态和 doctor；未确认不写入；init 显式确认后只创建 .opennori 状态；不会把 OpenNori Skills 复制进用户项目；doctor 为 ready。",
       "risk": "high"
     },
     {
@@ -308,7 +308,7 @@
       "layer": "productization",
       "user_story": "作为用户，我第一次打开 README 或官网 Quick Start 时，能看到短到可以直接复制的 OpenNori 入口，同时理解它是能力包的状态层入口，而不是独立于 Plugin 和 Skills 的另一条产品路径。",
       "measurement": "阅读 README Install/Quick Start 和官网首屏 Quick Start / Start 区域。",
-      "threshold": "README 和官网展示 opennori、npx opennori 或 npm install -D opennori 这类短入口时，明确把它们放在 OpenNori capability bundle 语境中；更详细的 bootstrap、install、dry-run、confirm 只作为 agent、高级用户或 CI 的底层安全路径出现。",
+      "threshold": "README 和官网把 npx opennori setup 作为首次安装主入口，把 opennori init 作为项目初始化入口；手动 codex plugin、npm install、bootstrap、install、dry-run、confirm 只作为 agent、高级用户、恢复或 CI 的底层安全路径出现。",
       "risk": "high"
     },
     {

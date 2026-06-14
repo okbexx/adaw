@@ -1,0 +1,17 @@
+{
+  "schema_version": "opennori/build-vs-buy-v1",
+  "id": "setup-capability-bundle-installer",
+  "created_at": "2026-06-14T08:51:18.183Z",
+  "area": "install-distribution",
+  "need": "Provide one explicit OpenNori setup entry that installs the Codex Plugin, packaged Skills, global opennori CLI, project .opennori state, and doctor check without making users understand separate plugin/npm/bootstrap paths.",
+  "recommendation": "reuse",
+  "status": "active",
+  "summary": "Use the official codex plugin marketplace/add commands for Plugin registration, npm global install for the CLI binary, and existing OpenNori lifecycle install/doctor modules for project state. Self-built code is limited to preview/confirm orchestration and command generation.",
+  "current_project": "OpenNori already has citty command modules, lifecycle install plans, doctor checks, Plugin package assets, and preview/confirm semantics for project writes.",
+  "standard_library": "Node child_process can run confirmed external commands and fs/path can inspect package.json and .opennori state, but Node does not provide Codex Plugin registration or npm package installation semantics.",
+  "official_sdk": "Codex exposes codex plugin marketplace add and codex plugin add as the official registration surface; npm/npx provide package execution and global CLI installation instead of postinstall side effects.",
+  "open_source": "TK references show plugin/skill bundle distribution and manifest-managed install boundaries; no extra installer framework is needed for this narrow explicit setup orchestration.",
+  "self_build_reason": "Only the OpenNori-specific setup plan schema and preview/confirm orchestration are self-built; plugin registration and CLI installation are delegated to official CLIs.",
+  "superseded_by": "",
+  "superseded_reason": ""
+}

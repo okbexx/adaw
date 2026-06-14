@@ -12,6 +12,7 @@ import { installCommand } from "./commands/install.ts";
 import { listCommand } from "./commands/list.ts";
 import { profileAddCommand, profileCheckCommand, profileEvidenceCommand, profileShowCommand } from "./commands/profile.ts";
 import { archiveCommand, reportCommand } from "./commands/reporting.ts";
+import { setupCommand } from "./commands/setup.ts";
 import { uninstallCommand } from "./commands/uninstall.ts";
 import { upgradeCommand } from "./commands/upgrade.ts";
 import { activeGoalRuntime, withActiveGoalWriteLock } from "./runtime.ts";
@@ -99,6 +100,7 @@ export const rootCommand = defineCommand({
     description: "OpenNori acceptance-driven agent state CLI."
   },
   subCommands: {
+    setup: withPolicy(asCommand(setupCommand), { commandResult: true }),
     bootstrap: asCommand(bootstrapCommand),
     doctor: asCommand(doctorCommand),
     list: asCommand(listCommand),

@@ -21,11 +21,12 @@ Do not present those pieces as optional standalone product paths.
 ## Start Here
 
 1. Identify the project root from the current workspace or the user's explicit path.
-2. If readiness is unknown, run `opennori bootstrap --root <repo> --json`.
+2. If readiness is unknown, run `opennori doctor --root <repo> --json`.
 3. If the project is already initialized, run `opennori list --root <repo> --json`, then `opennori resume --root <repo> --goal <goal-id> --json` or `opennori status --root <repo> --goal <goal-id> --json`.
 4. If multiple active goals exist and the user did not identify one, summarize the choices and ask for a target instead of guessing.
-5. If bootstrap returns a preview that needs confirmation, show the user what would be created and wait for explicit approval before rerunning with confirmation.
-6. If `opennori` is not on PATH, use the local package binary available in the project or this repository's `node ./bin/opennori.js`; if the Plugin, packaged Skills, CLI, or `.opennori` state is missing, route to `nori-project-health` instead of continuing in a half-installed mode.
+5. If doctor reports missing Plugin discovery, packaged Skills, CLI access, manifest, or project state, route to `nori-project-health`.
+6. For first-time machine setup, `nori-project-health` should use `npx opennori setup` preview/confirm; for an installed machine and a new project, use `opennori init` preview/confirm.
+7. If `opennori` is not on PATH, route to `nori-project-health` instead of continuing in a half-installed mode. Only use `node ./bin/opennori.js` while developing the OpenNori source checkout itself.
 
 ## Natural-Language Mapping
 
@@ -41,7 +42,7 @@ Do not present those pieces as optional standalone product paths.
 
 ## State Writes
 
-This root Skill should avoid direct writes except for safe readiness/bootstrap actions. Let child Skills mutate `.opennori/active`, `.opennori/architecture`, `.opennori/reports`, `.opennori/brainstorms`, `.opennori/completed`, `.opennori/blocked`, or `.opennori/manifest.json`.
+This root Skill should avoid direct writes except for safe readiness checks and setup/init previews. Let child Skills mutate `.opennori/active`, `.opennori/architecture`, `.opennori/reports`, `.opennori/brainstorms`, `.opennori/completed`, `.opennori/blocked`, or `.opennori/manifest.json`.
 
 ## Handoffs
 

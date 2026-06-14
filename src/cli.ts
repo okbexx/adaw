@@ -1,6 +1,8 @@
 import { fail, ok } from "./core.ts";
 import { runBootstrap } from "./cli/bootstrap.ts";
 import { CLI_NAME, commandLabelFor, resolveCliCommand, runCliCommand, usageFor } from "./cli/command-tree.ts";
+import { runInit } from "./cli/init.ts";
+import { runSetup } from "./cli/setup.ts";
 
 type CommandPayload = {
   ok?: boolean;
@@ -23,13 +25,28 @@ function wantsHelp(args: string[]): boolean {
 
 export async function main(args: string[]): Promise<void> {
   const command = args[0];
-  if (!command || command === "--help" || command === "-h") {
+  if (command === "--help" || command === "-h") {
     printJson(ok({ usage: await usageFor([]), side_effect: "none" }));
+    return;
+  }
+
+  if (!command) {
+    await runSetup(["setup"], { printJson } as { printJson: JsonPrinter });
     return;
   }
 
   if (wantsHelp(args)) {
     printJson(ok({ command: await commandLabelFor(args), usage: await usageFor(args), side_effect: "none" }));
+    return;
+  }
+
+  if (command === "setup") {
+    await runSetup(args, { printJson } as { printJson: JsonPrinter });
+    return;
+  }
+
+  if (command === "init") {
+    await runInit(args, { printJson } as { printJson: JsonPrinter });
     return;
   }
 

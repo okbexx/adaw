@@ -40,7 +40,7 @@ export function inspectManifestHealth(root: string, activeGoals: ActiveGoalSumma
       "manifest_file",
       false,
       fs.existsSync(manifestFile) ? `.opennori/manifest.json is unreadable: ${errorMessage(error)}` : ".opennori/manifest.json is missing.",
-      "Run opennori bootstrap --root <project> --json to preview setup or refresh the OpenNori manifest.",
+      "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle.",
       fs.existsSync(manifestFile) ? "broken" : "needs-action"
     ));
   }
@@ -54,34 +54,34 @@ export function inspectManifestHealth(root: string, activeGoals: ActiveGoalSumma
       manifestSchema.valid
         ? ".opennori/manifest.json matches the public manifest schema."
         : `.opennori/manifest.json does not match the public manifest schema: ${schemaErrorSummary(manifestSchema)}.`,
-      "Refresh the manifest with opennori bootstrap --root <project> --json.",
+      "Refresh the manifest with opennori init --root <project> --confirm --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_file",
       readableManifest.schema_version === MANIFEST_SCHEMA_VERSION,
       `.opennori/manifest.json uses schema ${readableManifest.schema_version || "<missing>"}.`,
-      "Refresh the manifest with opennori bootstrap --root <project> --json.",
+      "Refresh the manifest with opennori init --root <project> --confirm --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_protocol",
       readableManifest.protocol_version === PROTOCOL_VERSION,
       `.opennori/manifest.json records protocol ${readableManifest.protocol_version || "<missing>"}.`,
-      "Refresh the manifest with opennori bootstrap --root <project> --json.",
+      "Refresh the manifest with opennori init --root <project> --confirm --json.",
       "broken"
     ));
     checks.push(doctorCheck(
       "manifest_cli_version",
       readableManifest.opennori_version === PACKAGE_JSON.version,
       `.opennori/manifest.json records OpenNori version ${readableManifest.opennori_version || "<missing>"}.`,
-      "Refresh the manifest with opennori bootstrap --root <project> --json."
+      "Refresh the manifest with opennori init --root <project> --confirm --json."
     ));
     checks.push(doctorCheck(
       "manifest_capabilities",
       sameStringSet(readableManifest.capabilities, NORI_CAPABILITIES),
       Array.isArray(readableManifest.capabilities) ? "Manifest protocol capabilities are readable." : "Manifest protocol capabilities are missing.",
-      "Refresh the manifest with opennori bootstrap --root <project> --json."
+      "Refresh the manifest with opennori init --root <project> --confirm --json."
     ));
 
     const currentGoals = new Set(activeGoals.filter((goal) => goal.recoverable).map((goal) => goal.goal_id));
@@ -94,7 +94,7 @@ export function inspectManifestHealth(root: string, activeGoals: ActiveGoalSumma
       "manifest_active_goals",
       staleGoals.length === 0,
       staleGoals.length === 0 ? "Manifest active goals match recoverable active goals." : `Manifest active goals differ: ${staleGoals.join(", ")}.`,
-      "Run any OpenNori state-changing command, or run opennori bootstrap --root <project> --json, to refresh the manifest."
+      "Run any OpenNori state-changing command, or run opennori init --root <project> --confirm --json, to refresh the manifest."
     ));
 
     const missingManaged = (readableManifest.managed_files || [])
@@ -105,7 +105,7 @@ export function inspectManifestHealth(root: string, activeGoals: ActiveGoalSumma
       "managed_files",
       missingManaged.length === 0,
       missingManaged.length === 0 ? "Required OpenNori managed files are present." : `Missing managed files: ${missingManaged.join(", ")}.`,
-      "Run opennori bootstrap --root <project> --json."
+      "Run opennori init --root <project> --json to preview project initialization, or npx opennori setup to install the full capability bundle."
     ));
   }
 

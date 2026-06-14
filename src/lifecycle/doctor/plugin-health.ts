@@ -53,7 +53,7 @@ export function inspectPluginHealth(manifest: Manifest | null, manifestReadable:
     "manifest_plugin_state",
     manifestMatches,
     manifestMatches ? "Manifest Plugin state matches package Skill assets." : "Manifest Plugin state is stale or missing.",
-    "Refresh the manifest with opennori bootstrap --root <project> --json."
+    "Refresh the manifest with opennori init --root <project> --confirm --json."
   ));
 
   return { checks, plugin };

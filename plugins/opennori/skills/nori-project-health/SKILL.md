@@ -14,15 +14,18 @@ Treat OpenNori readiness as bundle readiness. Plugin discovery, packaged Skills,
 ## Start Here
 
 1. Run `opennori doctor --root <repo> --json` when the project may already use OpenNori.
-2. Run `opennori bootstrap --root <repo> --json` for first contact or unknown readiness.
-3. If doctor/bootstrap reports missing Plugin assets, packaged Skills, CLI access, manifest, or active state, present the missing bundle part and the recovery action.
-4. For lifecycle writes, show preview first and ask for explicit confirmation when the action writes, overwrites, upgrades, uninstalls, or deletes state.
-5. After upgrade or repair, run `opennori check --root <repo> --json` and route soft review findings to the relevant Skill.
+2. Run `opennori init --root <repo> --json` when the machine already has OpenNori and only project `.opennori` state is missing.
+3. Run `npx opennori setup` for first-time machine setup, missing global CLI, missing Codex Plugin discovery, missing packaged Skills, or unclear bundle readiness.
+4. If doctor/setup/init reports missing Plugin assets, packaged Skills, CLI access, manifest, or active state, present the missing bundle part and the recovery action.
+5. For lifecycle writes, show preview first and ask for explicit confirmation when the action writes, overwrites, upgrades, uninstalls, or deletes state.
+6. After upgrade or repair, run `opennori check --root <repo> --json` and route soft review findings to the relevant Skill.
 
 Useful state commands:
 
-- `opennori bootstrap --root <repo> --json`
-- `opennori bootstrap --root <repo> --confirm --json`
+- `npx opennori setup`
+- `npx opennori setup --confirm`
+- `opennori init --root <repo> --json`
+- `opennori init --root <repo> --confirm --json`
 - `opennori install --root <repo> --dry-run --json`
 - `opennori install --root <repo> --confirm --json`
 - `opennori upgrade --root <repo> --dry-run --json`
@@ -35,7 +38,8 @@ Useful state commands:
 
 ## Natural-Language Mapping
 
-- "Set up OpenNori here" -> bootstrap preview, then confirm only after the user approves.
+- "Install OpenNori" or "set up OpenNori on this machine" -> setup preview, then confirm only after the user approves.
+- "Initialize OpenNori in this project" -> init preview, then confirm only after the user approves.
 - "Is OpenNori healthy" -> doctor and summarize ready, needs-action, or broken with recovery actions.
 - "The CLI works but Plugin/Skills are missing" or "Plugin is installed but .opennori is missing" -> diagnose bundle readiness and recover the missing part instead of treating the remainder as a separate user path.
 - "Upgrade this project" -> upgrade dry run, confirm if approved, then check.

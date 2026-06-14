@@ -1,13 +1,13 @@
 {
   "schema_version": "opennori/context-export-v1",
-  "exported_at": "2026-06-14T08:29:25.033Z",
+  "exported_at": "2026-06-14T09:18:33.559Z",
   "root": "/Users/jarl/code/jarlone/opennori",
   "goal_id": "opennori-self",
   "goal": "让 OpenNori 从只保存目标、AC、证据、报告的验收工具，升级为能先确立 Architecture Baseline，并让 agent 在后续实现 AC 时持续沿用该技术架构的验收驱动产品；用户不仅能判断产品目标是否完成，也能判断交付物是否按确认过的优秀技术架构完成。",
   "acceptance_basis": {
     "status": "approved",
-    "summary": "User clarified OpenNori must be presented and operated as one coupled capability bundle, not split into Plugin, Skills, and CLI as separable user paths.",
-    "approved_at": "2026-06-14T08:22:24.971Z"
+    "summary": "Clarify AC-Z-19 as a first-time user installation criterion.",
+    "approved_at": "2026-06-14T09:17:47.678Z"
   },
   "workflow_status": "complete",
   "current_gap": null,
@@ -2255,6 +2255,76 @@
         "gate": "accepted",
         "created_at": "2026-06-14T08:29:10.361Z"
       }
+    },
+    {
+      "id": "AC-Z-19",
+      "layer": "productization",
+      "user_story": "作为用户，我第一次安装 OpenNori 时，只需要运行一个明确的 OpenNori setup 入口，就能预览并确认安装完整 capability bundle：Codex Plugin、packaged Skills、全局 opennori CLI 和当前项目 .opennori 状态；安装后我可以用 opennori init 初始化任意项目，而不需要分别理解插件安装、npm 全局安装和项目状态参数。",
+      "status": "passing",
+      "confidence": "verified",
+      "latest_evidence": {
+        "kind": "review-result",
+        "basis": "tool-observation",
+        "summary": "OpenNori now provides one first-time setup path and a simple project init path: setup plan previews Codex Plugin marketplace/add, packaged Skills, global CLI install, project .opennori initialization, and doctor; init previews/creates project state; README, website, Plugin metadata, nori/project-health Skills, protocol, and tests use npx opennori setup plus opennori init as the user-facing path.",
+        "result": "passing",
+        "confidence": "verified",
+        "sources": [
+          {
+            "type": "command",
+            "label": "npm run test",
+            "command": "npm run test"
+          },
+          {
+            "type": "command",
+            "label": "tmp=$(mktemp -d); node ./bin/opennori.js setup --root \"$tmp\" --json; node ./bin/opennori.js init --root \"$tmp\" --confirm --json; node ./bin/opennori.js doctor --root \"$tmp\" --json",
+            "command": "tmp=$(mktemp -d); node ./bin/opennori.js setup --root \"$tmp\" --json; node ./bin/opennori.js init --root \"$tmp\" --confirm --json; node ./bin/opennori.js doctor --root \"$tmp\" --json"
+          },
+          {
+            "type": "command",
+            "label": "cd /Users/jarl/code/jarlone/opennori-site && pnpm build",
+            "command": "cd /Users/jarl/code/jarlone/opennori-site && pnpm build"
+          },
+          {
+            "type": "artifact",
+            "label": "src/lifecycle/setup.ts",
+            "path": "src/lifecycle/setup.ts"
+          },
+          {
+            "type": "artifact",
+            "label": "src/cli/setup.ts",
+            "path": "src/cli/setup.ts"
+          },
+          {
+            "type": "artifact",
+            "label": "src/cli/init.ts",
+            "path": "src/cli/init.ts"
+          },
+          {
+            "type": "artifact",
+            "label": "src/cli/commands/setup.ts",
+            "path": "src/cli/commands/setup.ts"
+          },
+          {
+            "type": "artifact",
+            "label": "README.md",
+            "path": "README.md"
+          },
+          {
+            "type": "artifact",
+            "label": "plugins/opennori/skills/nori-project-health/SKILL.md",
+            "path": "plugins/opennori/skills/nori-project-health/SKILL.md"
+          },
+          {
+            "type": "artifact",
+            "label": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro",
+            "path": "/Users/jarl/code/jarlone/opennori-site/src/pages/index.astro"
+          }
+        ],
+        "reviewability": "Run npm run test, run setup/init in a temporary project, inspect setup_plan actions for codex plugin, packaged_skills, global_cli, project_state, and doctor, then read README/website/Skills for the same user path.",
+        "limitations": "Tests mock confirmed external Codex/npm setup writes; the temp smoke verifies preview and project init without mutating global Codex/npm state. A real first-time user will still need to approve setup in their own environment.",
+        "gate": "accepted",
+        "created_at": "2026-06-14T09:18:09.079Z"
+      }
     }
   ],
   "capability_profile": {
@@ -2455,6 +2525,24 @@
         "path": ".opennori/architecture/decisions/protocol-state-validation-ajv-runtime-public-json-schema.json"
       },
       {
+        "id": "setup-capability-bundle-installer",
+        "schema_valid": true,
+        "schema_errors": [],
+        "area": "install-distribution",
+        "need": "Provide one explicit OpenNori setup entry that installs the Codex Plugin, packaged Skills, global opennori CLI, project .opennori state, and doctor check without making users understand separate plugin/npm/bootstrap paths.",
+        "recommendation": "reuse",
+        "status": "active",
+        "summary": "Use the official codex plugin marketplace/add commands for Plugin registration, npm global install for the CLI binary, and existing OpenNori lifecycle install/doctor modules for project state. Self-built code is limited to preview/confirm orchestration and command generation.",
+        "current_project": "OpenNori already has citty command modules, lifecycle install plans, doctor checks, Plugin package assets, and preview/confirm semantics for project writes.",
+        "standard_library": "Node child_process can run confirmed external commands and fs/path can inspect package.json and .opennori state, but Node does not provide Codex Plugin registration or npm package installation semantics.",
+        "official_sdk": "Codex exposes codex plugin marketplace add and codex plugin add as the official registration surface; npm/npx provide package execution and global CLI installation instead of postinstall side effects.",
+        "open_source": "TK references show plugin/skill bundle distribution and manifest-managed install boundaries; no extra installer framework is needed for this narrow explicit setup orchestration.",
+        "self_build_reason": "Only the OpenNori-specific setup plan schema and preview/confirm orchestration are self-built; plugin registration and CLI installation are delegated to official CLIs.",
+        "superseded_by": "",
+        "superseded_reason": "",
+        "path": ".opennori/architecture/decisions/setup-capability-bundle-installer.json"
+      },
+      {
         "id": "ts-source-runtime-use-node-native-strip",
         "schema_valid": true,
         "schema_errors": [],
@@ -2476,8 +2564,8 @@
     "build_vs_buy": {
       "status": "clear",
       "summary": "Every recorded build-vs-buy decision includes reviewable reuse candidates and any self-build reason.",
-      "decision_count": 11,
-      "total_decision_count": 11,
+      "decision_count": 12,
+      "total_decision_count": 12,
       "superseded_decision_count": 0,
       "findings": []
     },
@@ -2516,13 +2604,14 @@
     "protocol_version": "opennori/v1",
     "opennori_version": "0.1.8",
     "created_at": "2026-06-10T09:12:16.646Z",
-    "updated_at": "2026-06-14T08:29:24.900Z",
+    "updated_at": "2026-06-14T09:18:33.306Z",
     "capabilities": [
       "acceptance-contract",
       "evidence-ledger",
       "reviewable-evidence",
       "codex-plugin",
       "opennori-skills",
+      "setup",
       "brainstorm",
       "acceptance-discovery",
       "acceptance-quality-audit",
@@ -2916,6 +3005,24 @@
           "path": ".opennori/architecture/decisions/protocol-state-validation-ajv-runtime-public-json-schema.json"
         },
         {
+          "id": "setup-capability-bundle-installer",
+          "schema_valid": true,
+          "schema_errors": [],
+          "area": "install-distribution",
+          "need": "Provide one explicit OpenNori setup entry that installs the Codex Plugin, packaged Skills, global opennori CLI, project .opennori state, and doctor check without making users understand separate plugin/npm/bootstrap paths.",
+          "recommendation": "reuse",
+          "status": "active",
+          "summary": "Use the official codex plugin marketplace/add commands for Plugin registration, npm global install for the CLI binary, and existing OpenNori lifecycle install/doctor modules for project state. Self-built code is limited to preview/confirm orchestration and command generation.",
+          "current_project": "OpenNori already has citty command modules, lifecycle install plans, doctor checks, Plugin package assets, and preview/confirm semantics for project writes.",
+          "standard_library": "Node child_process can run confirmed external commands and fs/path can inspect package.json and .opennori state, but Node does not provide Codex Plugin registration or npm package installation semantics.",
+          "official_sdk": "Codex exposes codex plugin marketplace add and codex plugin add as the official registration surface; npm/npx provide package execution and global CLI installation instead of postinstall side effects.",
+          "open_source": "TK references show plugin/skill bundle distribution and manifest-managed install boundaries; no extra installer framework is needed for this narrow explicit setup orchestration.",
+          "self_build_reason": "Only the OpenNori-specific setup plan schema and preview/confirm orchestration are self-built; plugin registration and CLI installation are delegated to official CLIs.",
+          "superseded_by": "",
+          "superseded_reason": "",
+          "path": ".opennori/architecture/decisions/setup-capability-bundle-installer.json"
+        },
+        {
           "id": "ts-source-runtime-use-node-native-strip",
           "schema_valid": true,
           "schema_errors": [],
@@ -2937,8 +3044,8 @@
       "build_vs_buy": {
         "status": "clear",
         "summary": "Every recorded build-vs-buy decision includes reviewable reuse candidates and any self-build reason.",
-        "decision_count": 11,
-        "total_decision_count": 11,
+        "decision_count": 12,
+        "total_decision_count": 12,
         "superseded_decision_count": 0,
         "findings": []
       },
